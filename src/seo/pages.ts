@@ -60,6 +60,7 @@ export const ORDER_CONFIRMATION_PAGE: PageMeta = {
   file: 'order-confirmation.html',
   title: 'Order Confirmation | LuxeCard',
   description: HOME_PAGE.description,
+  noindex: true,
   prerender: false,
 };
 
@@ -89,6 +90,8 @@ export function renderHeadTags(page: PageMeta): string {
     `<meta name="description" content="${description}" />`,
     page.noindex ? `<meta name="robots" content="noindex" />` : `<link rel="canonical" href="${url}" />`,
     `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="LuxeCard" />`,
+    `<meta property="og:locale" content="en_KE" />`,
     `<meta property="og:title" content="${title}" />`,
     `<meta property="og:description" content="${description}" />`,
     `<meta property="og:url" content="${url}" />`,

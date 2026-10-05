@@ -12,13 +12,14 @@ export function ContactVisit() {
       <div className="mx-auto max-w-[1320px] px-[clamp(20px,4vw,48px)]">
         <div className="grid gap-[clamp(32px,5vw,64px)] md:grid-cols-2 md:items-center">
           <div ref={ref} style={style}>
-            <h2 className="m-0 mb-[clamp(28px,4vh,40px)] font-manrope text-[clamp(34px,5vw,68px)] font-bold leading-[.96] max-md:leading-[1.06] tracking-[-.032em] md:hidden">
-              FIND US.
-            </h2>
-            <h2 className="m-0 mb-[clamp(28px,4vh,40px)] hidden font-manrope text-[clamp(34px,5vw,68px)] font-bold leading-[.96] max-md:leading-[1.06] tracking-[-.032em] md:block">
-              CONTACT
-              <br />
-              &amp; VISIT US.
+            {/* One heading; its wording is shorter on phones. */}
+            <h2 className="m-0 mb-[clamp(28px,4vh,40px)] font-manrope text-[clamp(34px,5vw,68px)] font-bold leading-[.96] max-md:leading-[1.06] tracking-[-.032em]">
+              <span className="md:hidden">FIND US.</span>
+              <span className="hidden md:inline">
+                CONTACT
+                <br />
+                &amp; VISIT US.
+              </span>
             </h2>
 
             <p className="m-0 mb-8 max-w-[320px] text-[16.5px] leading-[1.6] text-[rgba(243,240,234,.7)] md:hidden">

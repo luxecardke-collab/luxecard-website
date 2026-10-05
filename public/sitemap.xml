@@ -1,18 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- lastmod: the date each page's content last changed. Update it when you
+     change a page's copy (homepage: src/data/content.ts and its sections;
+     /affiliate: the Affiliate* components and src/data/affiliate.ts; legal
+     pages: src/data/legal.ts). -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.luxecard.co.ke/</loc>
+    <lastmod>2026-10-05</lastmod>
   </url>
   <url>
     <loc>https://www.luxecard.co.ke/affiliate</loc>
+    <lastmod>2026-09-26</lastmod>
   </url>
   <url>
     <loc>https://www.luxecard.co.ke/terms</loc>
+    <lastmod>2026-09-26</lastmod>
   </url>
   <url>
     <loc>https://www.luxecard.co.ke/privacy</loc>
+    <lastmod>2026-09-26</lastmod>
   </url>
   <url>
     <loc>https://www.luxecard.co.ke/returns</loc>
+    <lastmod>2026-09-26</lastmod>
   </url>
 </urlset>
