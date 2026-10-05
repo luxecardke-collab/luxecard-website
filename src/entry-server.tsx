@@ -9,6 +9,7 @@ import { HYDRATABLE_MEDIA } from './hooks/useMediaQuery';
 import { routeKey } from './routes';
 
 export { PAGES, renderHeadTags } from './seo/pages';
+export { renderJsonLd } from './seo/structuredData';
 export { HYDRATABLE_MEDIA, routeKey };
 
 // The page's HTML, ready to be hydrated by main.tsx. prerender() waits for
