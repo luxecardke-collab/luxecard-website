@@ -6,7 +6,8 @@ export type Route =
   | { kind: 'home' }
   | { kind: 'affiliate' }
   | { kind: 'order-confirmation' }
-  | { kind: 'legal'; doc: LegalDoc };
+  | { kind: 'legal'; doc: LegalDoc }
+  | { kind: 'not-found' };
 
 // "/affiliate/" and "/affiliate" are the same page.
 export function normalizePath(pathname: string): string {
@@ -14,11 +15,12 @@ export function normalizePath(pathname: string): string {
 }
 
 export function routeFor(path: string): Route {
+  if (path === '/') return { kind: 'home' };
   if (path === '/affiliate') return { kind: 'affiliate' };
   if (path === '/order-confirmation') return { kind: 'order-confirmation' };
   const doc = LEGAL_DOCS.find((d) => d.path === path);
   if (doc) return { kind: 'legal', doc };
-  return { kind: 'home' };
+  return { kind: 'not-found' };
 }
 
 // Identifies which page some prerendered HTML is, so main.tsx only hydrates

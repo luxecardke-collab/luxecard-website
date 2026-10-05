@@ -34,9 +34,9 @@ const app = (
 // Each page's HTML is prerendered at build time (scripts/prerender.mjs), and
 // hydrating it reuses that markup instead of building the page again. It's
 // rendered as a phone with motion on, so that's where it's hydrated; other
-// screens (see HYDRATABLE_MEDIA), and HTML that was rendered for a different
-// page (e.g. a URL the homepage's HTML is served for), render from scratch
-// instead, exactly as the site did before prerendering.
+// screens (see HYDRATABLE_MEDIA), and any HTML that wasn't rendered for this
+// page, render from scratch instead, exactly as the site did before
+// prerendering.
 const canHydrate = container.dataset.route === routeKey(path) && window.matchMedia(HYDRATABLE_MEDIA).matches
 
 if (canHydrate) {

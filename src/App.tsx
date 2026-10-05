@@ -18,6 +18,7 @@ import { InquiryModalProvider } from './components/InquiryModalProvider';
 import { Nav } from './components/Nav';
 import { NavMenuProvider } from './components/NavMenuProvider';
 import { NetworkingMoment } from './components/NetworkingMoment';
+import { NotFound } from './components/NotFound';
 import { Problem } from './components/Problem';
 import { Professionals } from './components/Professionals';
 import { SmoothScroll } from './components/SmoothScroll';
@@ -186,6 +187,8 @@ function Page({ path }: { path: string }) {
               <BlurredContent>
                 {route.kind === 'legal' ? (
                   <LegalPage doc={route.doc} />
+                ) : route.kind === 'not-found' ? (
+                  <NotFound />
                 ) : route.kind === 'affiliate' ? (
                   <Suspense fallback={null}>
                     <AffiliateProgram />

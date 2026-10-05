@@ -63,7 +63,18 @@ export const ORDER_CONFIRMATION_PAGE: PageMeta = {
   prerender: false,
 };
 
-export const PAGES: PageMeta[] = [HOME_PAGE, AFFILIATE_PAGE, ...LEGAL_PAGES, ORDER_CONFIRMATION_PAGE];
+// Served by Vercel, with a 404 status, for any URL that isn't one of the
+// pages above (it serves a 404.html at the root of the build automatically).
+// `path` is only what it's rendered as; any unknown path renders the same.
+export const NOT_FOUND_PAGE: PageMeta = {
+  path: '/404',
+  file: '404.html',
+  title: 'Page Not Found | LuxeCard',
+  description: 'The page you’re looking for doesn’t exist or has moved.',
+  noindex: true,
+};
+
+export const PAGES: PageMeta[] = [HOME_PAGE, AFFILIATE_PAGE, ...LEGAL_PAGES, ORDER_CONFIRMATION_PAGE, NOT_FOUND_PAGE];
 
 const escapeAttr = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
