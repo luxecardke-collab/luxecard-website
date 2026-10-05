@@ -12,9 +12,10 @@
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#08080A" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LuxeCard: Your introduction, upgraded.</title>
-    <meta name="description" content="One tap connects people to your contact, socials, portfolio, business and more." />
-    <link rel="canonical" href="https://www.luxecard.co.ke/" />
+    <!-- Per-page title, description, canonical and Open Graph/Twitter tags
+         (src/seo/pages.ts). Filled in for each page by scripts/prerender.mjs
+         at build time, and with the homepage's tags by the dev server. -->
+    <!--app-head-->
     <!-- Set before any CSS has a chance to load, so there is never a flash
          of a default white/empty background while index.css is fetched
          and parsed. Same colour as --bg-base in index.css. -->
@@ -31,19 +32,6 @@
          the browser doesn't fetch the font twice. -->
     <link rel="preload" as="font" type="font/woff2" href="/fonts/manrope-800.woff2" crossorigin />
     <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-400.woff2" crossorigin />
-
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="LuxeCard: Your introduction, upgraded." />
-    <meta property="og:description" content="One tap connects people to your contact, socials, portfolio, business and more." />
-    <meta property="og:url" content="https://www.luxecard.co.ke/" />
-    <meta property="og:image" content="https://www.luxecard.co.ke/og-image.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:type" content="image/png" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://www.luxecard.co.ke/og-image.png" />
-    <meta name="twitter:title" content="LuxeCard: Your introduction, upgraded." />
-    <meta name="twitter:description" content="One tap connects people to your contact, socials, portfolio, business and more." />
   </head>
   <body>
     <div id="root"></div>
