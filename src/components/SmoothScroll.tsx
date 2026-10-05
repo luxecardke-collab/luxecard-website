@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import Lenis from 'lenis';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { setLenis } from '../utils/lenisInstance';
+import { scrollToSection, whenElementExists } from '../utils/scrollToSection';
 
 /**
  * Drives momentum/inertia scrolling for the whole page and intercepts
@@ -18,6 +19,36 @@ function isTopLink(anchor: Element | null | undefined) {
   return anchor?.getAttribute('href') === TOP_HREF;
 }
 
+// Lands an incoming section hash (e.g. "/#faqs", from a nav link clicked on
+// another page) just below the nav bar, through the shared Lenis instance
+// when it's running so it isn't fought over scroll ownership by a plain
+// window.scrollTo. The section may not exist yet — several are lazily
+// loaded — so this waits for it to appear, giving up if the visitor starts
+// scrolling on their own first. Returns a cleanup function.
+function landIncomingHash() {
+  const id = decodeURIComponent(window.location.hash.slice(1));
+  if (!id || id === 'top') return () => {};
+  let rafId: number | undefined;
+  let cancelWait = () => {};
+  const USER_SCROLL_EVENTS = ['wheel', 'touchstart', 'keydown'] as const;
+  const stopListening = () => USER_SCROLL_EVENTS.forEach((e) => window.removeEventListener(e, onUserScroll));
+  function onUserScroll() {
+    cancelWait();
+    stopListening();
+  }
+  USER_SCROLL_EVENTS.forEach((e) => window.addEventListener(e, onUserScroll, { passive: true }));
+  // May call back straight away, if the section is already on the page.
+  cancelWait = whenElementExists(id, (target) => {
+    stopListening();
+    rafId = requestAnimationFrame(() => scrollToSection(target));
+  });
+  return () => {
+    cancelWait();
+    stopListening();
+    if (rafId !== undefined) cancelAnimationFrame(rafId);
+  };
+}
+
 export function SmoothScroll() {
   const reduced = useReducedMotion();
 
@@ -30,7 +61,11 @@ export function SmoothScroll() {
         window.scrollTo({ top: 0, behavior: 'instant' });
       };
       document.addEventListener('click', onTopClick);
-      return () => document.removeEventListener('click', onTopClick);
+      const cancelHash = landIncomingHash();
+      return () => {
+        document.removeEventListener('click', onTopClick);
+        cancelHash();
+      };
     }
 
     const lenis = new Lenis({
@@ -47,18 +82,7 @@ export function SmoothScroll() {
       rafId = requestAnimationFrame(raf);
     });
 
-    // Land an incoming section hash (e.g. "/#products", from a nav link
-    // clicked on another page) once the DOM has settled, using the same
-    // Lenis instance as anchor clicks so it isn't fought over scroll
-    // ownership by a plain window.scrollTo.
-    let hashRafId: number | undefined;
-    const hashTarget = window.location.hash ? document.querySelector(window.location.hash) : null;
-    if (hashTarget) {
-      hashRafId = requestAnimationFrame(() => {
-        const navHeight = document.querySelector('nav')?.getBoundingClientRect().height ?? 0;
-        lenis.scrollTo(hashTarget as HTMLElement, { offset: -navHeight, duration: 1.4 });
-      });
-    }
+    const cancelHash = landIncomingHash();
 
     const onClick = (e: MouseEvent) => {
       const anchor = (e.target as HTMLElement).closest?.('a[href^="#"]');
@@ -81,7 +105,7 @@ export function SmoothScroll() {
     return () => {
       document.removeEventListener('click', onClick);
       cancelAnimationFrame(rafId);
-      if (hashRafId !== undefined) cancelAnimationFrame(hashRafId);
+      cancelHash();
       setLenis(null);
       lenis.destroy();
     };
