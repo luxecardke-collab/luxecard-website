@@ -67,6 +67,7 @@ export function Footer() {
   return (
     <footer
       ref={ref}
+      data-whatsapp-landmark="footer"
       style={style}
       className="border-t border-[rgba(255,255,255,.07)] bg-bg px-[clamp(20px,4vw,48px)] pb-[clamp(56px,8vh,88px)] pt-[clamp(56px,8vh,88px)]"
     >
@@ -174,7 +175,7 @@ export function Footer() {
       </div>
       <div className="mx-auto mt-[clamp(40px,6vh,64px)] flex max-w-[1320px] flex-wrap justify-between gap-x-7 gap-y-4 pt-[22px] font-inter text-[10px] tracking-[.14em] text-ivory">
         <span>© 2026 LUXECARD AFRICA</span>
-        <span>
+        <span data-whatsapp-landmark="footer-credit">
           DESIGNED & BUILT BY{' '}
           <a
             href="https://the-company-design-website.vercel.app/?utm_source=luxecard&utm_medium=footer"

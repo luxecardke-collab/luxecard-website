@@ -9,6 +9,7 @@ export function Faq() {
   return (
     <RevealSection
       id="faqs"
+      data-whatsapp-landmark="faq"
       className="scroll-mt-[84px] px-[clamp(20px,4vw,48px)] py-[clamp(90px,13vh,150px)] min-[900px]:scroll-mt-[80px]"
     >
       <div className="mx-auto max-w-[1000px]">

@@ -5,48 +5,120 @@ import { LINKS } from '../data/links';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
 const TRANSITION_MS = 250;
-// Dead band that stops the button flickering when a section's top edge sits
-// right at the bottom of the screen: it hides once the section is this far
-// into view, but only shows again once it has fully left the screen.
-const HIDE_AFTER_PX = 32;
 
+// Elements the button keeps clear of, marked with data-whatsapp-landmark:
+// the page's FAQ section (home, /affiliate), the footer, and the footer's
+// "Designed & built by" credit.
+type Landmarks = { faq: Element | null; footer: Element | null; credit: Element | null };
+
+function findLandmarks(): Landmarks {
+  const find = (name: string) => document.querySelector(`[data-whatsapp-landmark="${name}"]`);
+  return { faq: find('faq'), footer: find('footer'), credit: find('footer-credit') };
+}
+
+// The credit counts as close once it's within this much of the bottom of
+// the screen, so at a normal scrolling speed the button has finished fading
+// out before the credit scrolls up to where it sits.
+const CREDIT_NEAR_MARGIN = '0px 0px 120px 0px';
+
+const sameLandmarks = (a: Landmarks, b: Landmarks) => a.faq === b.faq && a.footer === b.footer && a.credit === b.credit;
+
+/**
+ * Floating WhatsApp shortcut. On pages with an FAQ it hides once the visitor
+ * has scrolled past the FAQ (the contact section and footer below cover the
+ * same ground) and shows again when the FAQ comes back into view; on other
+ * pages it hides while the footer is in view. Either way it's hidden while
+ * the footer's credit is on screen, so it can never sit on top of it.
+ * Hidden, it's out of the tab order and can't be clicked.
+ *
+ * It hides as the credit gets close (CREDIT_NEAR_MARGIN), and if the credit
+ * is ever actually on screen while the button is still showing or mid-fade
+ * (a fast fling, or a jump straight to the bottom), it disappears at once
+ * instead of fading.
+ */
 export function WhatsAppButton() {
-  const [hidden, setHidden] = useState(false);
+  const [{ hidden, instant }, setState] = useState({ hidden: false, instant: false });
   const { isOpen: cartOpen } = useCart();
   const { isOpen: menuOpen } = useNavMenu();
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    // The Contact & Visit section (home page only) and the footer both hide
-    // the button: it would otherwise sit on top of their content.
-    const candidates: (Element | null)[] = [document.getElementById('contact'), document.querySelector('footer')];
-    const targets = candidates.filter((el): el is Element => el !== null);
-    if (targets.length === 0) return;
+    let landmarks = findLandmarks();
+    let pastFaq = false;
+    let footerInView = false;
+    let creditInView = false;
+    let creditNear = false;
 
-    const deepTargets = new Set<Element>(); // at least HIDE_AFTER_PX into view
-    const anyTargets = new Set<Element>(); // at least partly in view
-    const update = () =>
-      setHidden((prev) => (deepTargets.size > 0 ? true : anyTargets.size > 0 ? prev : false));
-    const track = (inView: Set<Element>) => (entries: IntersectionObserverEntry[]) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) inView.add(entry.target);
-        else inView.delete(entry.target);
-      }
-      update();
+    const update = () => {
+      const next = landmarks.faq ? pastFaq || creditNear || creditInView : footerInView;
+      setState((prev) => {
+        // Snap instead of fading whenever the credit is actually on screen.
+        const instant = next && (prev.instant || creditInView);
+        return prev.hidden === next && prev.instant === instant ? prev : { hidden: next, instant };
+      });
     };
 
-    const deepObserver = new IntersectionObserver(track(deepTargets), {
-      rootMargin: `0px 0px -${HIDE_AFTER_PX}px 0px`,
+    // An observer only reports an element entering or leaving its area, so
+    // "scrolled past the FAQ" is watched as the FAQ being entirely inside an
+    // area covering everything above the screen. Watching the FAQ against
+    // the screen itself would miss a jump straight over it (End key, a
+    // fling), where it's never on screen at all.
+    const pastIo = new IntersectionObserver(
+      ([entry]) => {
+        pastFaq = entry.isIntersecting && entry.boundingClientRect.bottom <= (entry.rootBounds?.bottom ?? 0) + 0.5;
+        update();
+      },
+      { rootMargin: '1000000px 0px -100% 0px', threshold: [0, 1] }
+    );
+    const viewIo = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target === landmarks.footer) footerInView = entry.isIntersecting;
+        if (entry.target === landmarks.credit) creditInView = entry.isIntersecting;
+      }
+      update();
     });
-    const anyObserver = new IntersectionObserver(track(anyTargets));
+    const nearIo = new IntersectionObserver(
+      ([entry]) => {
+        creditNear = entry.isIntersecting;
+        update();
+      },
+      { rootMargin: CREDIT_NEAR_MARGIN }
+    );
+    const observers = [pastIo, viewIo, nearIo];
+    const observeAll = () => {
+      const { faq, footer, credit } = landmarks;
+      if (faq) pastIo.observe(faq);
+      if (footer) viewIo.observe(footer);
+      if (credit) {
+        viewIo.observe(credit);
+        nearIo.observe(credit);
+      }
+    };
+    observeAll();
 
-    for (const target of targets) {
-      deepObserver.observe(target);
-      anyObserver.observe(target);
-    }
+    // Several sections (the FAQ, the footer) are lazily loaded and mount
+    // after this button, so look for the landmarks again whenever the page's
+    // structure changes, at most once a frame.
+    let rafId = 0;
+    const mo = new MutationObserver(() => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        const next = findLandmarks();
+        if (sameLandmarks(next, landmarks)) return;
+        observers.forEach((o) => o.disconnect());
+        pastFaq = footerInView = creditInView = creditNear = false;
+        landmarks = next;
+        observeAll();
+        update();
+      });
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+
     return () => {
-      deepObserver.disconnect();
-      anyObserver.disconnect();
+      mo.disconnect();
+      observers.forEach((o) => o.disconnect());
+      cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -72,7 +144,9 @@ export function WhatsAppButton() {
         pointerEvents: hidden ? 'none' : 'auto',
         // visibility flips after the fade finishes when hiding, immediately when showing.
         visibility: hidden ? 'hidden' : 'visible',
-        transition: `opacity ${TRANSITION_MS}ms ease-out, transform ${TRANSITION_MS}ms ease-out, visibility 0s linear ${hidden ? `${TRANSITION_MS}ms` : '0s'}`,
+        transition: instant
+          ? 'none'
+          : `opacity ${TRANSITION_MS}ms ease-out, transform ${TRANSITION_MS}ms ease-out, visibility 0s linear ${hidden ? `${TRANSITION_MS}ms` : '0s'}`,
       }}
     >
       <svg viewBox="0 0 448 512" width="28" height="28" fill="#ffffff" aria-hidden="true">
