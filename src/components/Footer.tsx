@@ -3,7 +3,7 @@ import { useContactModal } from '../context/contactModalContext';
 import { FOOTER_LINKS } from '../data/content';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useReveal } from '../hooks/useReveal';
-import { resolveNavHref } from '../utils/navHref';
+import { useResolveNavHref } from '../utils/navHref';
 import { openCookieSettings } from '../utils/consent';
 import { META_PIXEL_ENABLED } from '../utils/metaPixel';
 
@@ -62,6 +62,7 @@ export function Footer() {
   const { ref, style } = useReveal<HTMLElement>();
   const wide = useMediaQuery('(min-width: 900px)');
   const { open: openContactModal } = useContactModal();
+  const resolveNavHref = useResolveNavHref();
 
   return (
     <footer

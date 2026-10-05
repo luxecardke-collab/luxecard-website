@@ -1,7 +1,9 @@
 import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import { createRoot, hydrateRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { normalizePath, routeKey } from './routes'
+import { HYDRATABLE_MEDIA } from './hooks/useMediaQuery'
 import { captureReferralCode } from './utils/referralCode'
 import { initMetaPixel } from './utils/metaPixel'
 
@@ -21,8 +23,29 @@ if (window.location.hash === '#top') {
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
 if (!window.location.hash) window.scrollTo(0, 0)
 
-createRoot(document.getElementById('root')!).render(
+const path = normalizePath(window.location.pathname)
+const container = document.getElementById('root')!
+const app = (
   <StrictMode>
-    <App />
-  </StrictMode>,
+    <App path={path} />
+  </StrictMode>
 )
+
+// Each page's HTML is prerendered at build time (scripts/prerender.mjs), and
+// hydrating it reuses that markup instead of building the page again. It's
+// rendered as a phone with motion on, so that's where it's hydrated; other
+// screens (see HYDRATABLE_MEDIA), and HTML that was rendered for a different
+// page (e.g. a URL the homepage's HTML is served for), render from scratch
+// instead, exactly as the site did before prerendering.
+const canHydrate = container.dataset.route === routeKey(path) && window.matchMedia(HYDRATABLE_MEDIA).matches
+
+if (canHydrate) {
+  hydrateRoot(container, app)
+} else {
+  // The prerendered markup is display:none on these screens (a style
+  // scripts/prerender.mjs adds, keyed to data-route), so it never cost any
+  // layout; clear it and start from an empty #root, as before prerendering.
+  container.replaceChildren()
+  delete container.dataset.route
+  createRoot(container).render(app)
+}

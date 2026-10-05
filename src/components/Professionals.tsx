@@ -18,6 +18,7 @@ import {
   type PhotoMaterial,
   type ProfessionalPhoto,
 } from '../data/content';
+import { useHydrated } from '../hooks/useHydrated';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useReveal } from '../hooks/useReveal';
@@ -505,6 +506,11 @@ function PhotoCarousel({
   // track only start fetching once swiped into view, which showed as a
   // few-second blank on everything past the first few photos.
   const [warm, setWarm] = useState(false);
+  // The prerendered HTML can't tell a phone from a desktop, so it leaves every
+  // photo lazy; the eager/priority hints only go on once hydration is done
+  // (on phones, the same moment this carousel used to first render), so the
+  // HTML never starts photo downloads that the old first render didn't.
+  const hydrated = useHydrated();
   const count = photos.length;
 
   useEffect(() => {
@@ -652,7 +658,11 @@ function PhotoCarousel({
               {/* No per-card staggered reveal here: the carousel fades in as
                   a whole, and an index-based delay left later slides blank
                   for seconds (slide 20 waited 1.6s, then 0.9s to fade). */}
-              <PhotoFrame photo={photo} eager={warm || Math.abs(i - near) <= 2} priority={i === near} />
+              <PhotoFrame
+                photo={photo}
+                eager={hydrated && (warm || Math.abs(i - near) <= 2)}
+                priority={hydrated && i === near}
+              />
             </div>
           ))}
         </div>

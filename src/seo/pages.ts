@@ -18,6 +18,9 @@ export type PageMeta = {
   // Pages that must not appear in search results: no canonical, and a
   // robots noindex instead.
   noindex?: boolean;
+  // false for pages that only make sense in the browser (they read the URL's
+  // query string to render): their HTML has an empty #root.
+  prerender?: false;
 };
 
 export const HOME_PAGE: PageMeta = {
@@ -50,7 +53,17 @@ export const LEGAL_PAGES: PageMeta[] = LEGAL_DOCS.map((doc) => ({
   description: LEGAL_DESCRIPTIONS[doc.path],
 }));
 
-export const PAGES: PageMeta[] = [HOME_PAGE, AFFILIATE_PAGE, ...LEGAL_PAGES];
+// Where Paystack sends a customer after paying; reads ?reference= to show
+// the order, so it's rendered in the browser only.
+export const ORDER_CONFIRMATION_PAGE: PageMeta = {
+  path: '/order-confirmation',
+  file: 'order-confirmation.html',
+  title: 'Order Confirmation | LuxeCard',
+  description: HOME_PAGE.description,
+  prerender: false,
+};
+
+export const PAGES: PageMeta[] = [HOME_PAGE, AFFILIATE_PAGE, ...LEGAL_PAGES, ORDER_CONFIRMATION_PAGE];
 
 const escapeAttr = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

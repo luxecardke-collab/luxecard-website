@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { LINKS } from '../data/links';
+import { useHydrated } from '../hooks/useHydrated';
 import { getConsent, onOpenCookieSettings, setConsent, type ConsentChoice } from '../utils/consent';
 import { META_PIXEL_ENABLED } from '../utils/metaPixel';
 
@@ -11,8 +12,13 @@ import { META_PIXEL_ENABLED } from '../utils/metaPixel';
 // that much bottom padding (so the end of the page can still be scrolled clear
 // of the bar rather than hidden under it) and the WhatsApp button lifts by the
 // same amount.
+//
+// The visitor's choice is in localStorage, which the prerendered HTML can't
+// know about, so the bar is never part of it: it renders from the first
+// render after hydration.
 export function CookieBanner() {
-  return META_PIXEL_ENABLED ? <ConsentBar /> : null;
+  const hydrated = useHydrated();
+  return META_PIXEL_ENABLED && hydrated ? <ConsentBar /> : null;
 }
 
 function ConsentBar() {

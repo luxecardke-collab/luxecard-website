@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, type ReactNode } from 'react';
+import { lazy, startTransition, Suspense, useEffect, type ReactNode } from 'react';
 import { CartProvider } from './components/CartProvider';
 import { ContactModalProvider } from './components/ContactModalProvider';
 import { CookieBanner } from './components/CookieBanner';
@@ -12,7 +12,8 @@ import { FinalCta } from './components/FinalCta';
 import { Hero } from './components/Hero';
 import { HowItWorks } from './components/HowItWorks';
 import { LegalPage } from './components/LegalPage';
-import { LEGAL_DOCS } from './data/legal';
+import { PagePathContext } from './context/pagePathContext';
+import { routeFor } from './routes';
 import { InquiryModalProvider } from './components/InquiryModalProvider';
 import { Nav } from './components/Nav';
 import { NavMenuProvider } from './components/NavMenuProvider';
@@ -45,11 +46,16 @@ function IdlePreloadModals() {
   const { preload: preloadContact } = useContactModal();
 
   useEffect(() => {
-    const run = () => {
-      preloadDrawer();
-      preloadInquiry();
-      preloadContact();
-    };
+    // Each preload flips a flag in its provider's context. As a transition,
+    // that update waits for any prerendered section still hydrating (its
+    // lazy chunk not loaded yet) rather than making React throw that
+    // section's server HTML away and render it again from scratch.
+    const run = () =>
+      startTransition(() => {
+        preloadDrawer();
+        preloadInquiry();
+        preloadContact();
+      });
     if (typeof window.requestIdleCallback === 'function') {
       const id = window.requestIdleCallback(run, { timeout: 2000 });
       return () => window.cancelIdleCallback(id);
@@ -143,19 +149,20 @@ function BlurredContent({ children }: { children: ReactNode }) {
   );
 }
 
-// True once per full page load; navigation to/from these paths is a plain
-// browser navigation (no client router), so neither needs to be reactive.
-const isAffiliatePage = window.location.pathname.replace(/\/$/, '') === '/affiliate';
-const isOrderConfirmationPage = window.location.pathname.replace(/\/$/, '') === '/order-confirmation';
-const legalDoc = LEGAL_DOCS.find((d) => d.path === window.location.pathname.replace(/\/$/, ''));
+// `path` is the page's normalized path (see routes.ts): passed in by
+// main.tsx in the browser, and by entry-server.tsx when prerendering.
+function App({ path }: { path: string }) {
+  return (
+    <PagePathContext.Provider value={path}>
+      <Page path={path} />
+    </PagePathContext.Provider>
+  );
+}
 
-function App() {
-  // On phones "Trusted Across Industries" comes before "Digitizing Networking
-  // Across Africa"; on larger screens the order is the other way round. Same
-  // breakpoint as the portfolio's own mobile layout.
-  const isMobile = useMediaQuery('(max-width: 767px)');
+function Page({ path }: { path: string }) {
+  const route = routeFor(path);
 
-  if (isOrderConfirmationPage) {
+  if (route.kind === 'order-confirmation') {
     return (
       <>
         <Suspense fallback={null}>
@@ -177,9 +184,9 @@ function App() {
               <IdlePreloadBelowFold />
               <Nav />
               <BlurredContent>
-                {legalDoc ? (
-                  <LegalPage doc={legalDoc} />
-                ) : isAffiliatePage ? (
+                {route.kind === 'legal' ? (
+                  <LegalPage doc={route.doc} />
+                ) : route.kind === 'affiliate' ? (
                   <Suspense fallback={null}>
                     <AffiliateProgram />
                   </Suspense>
@@ -189,17 +196,18 @@ function App() {
                     <Testimonials />
                     <Ecosystem />
                     <HowItWorks />
-                    {isMobile ? (
-                      <>
-                        <Professionals />
+                    {/* On phones "Trusted Across Industries" comes before
+                        "Digitizing Networking Across Africa"; on larger
+                        screens the order is the other way round. Done in CSS
+                        (same md breakpoint as the portfolio's own mobile
+                        layout) so the prerendered HTML is already in the
+                        right order on every screen. */}
+                    <div className="flex flex-col">
+                      <div className="max-md:order-1">
                         <Problem />
-                      </>
-                    ) : (
-                      <>
-                        <Problem />
-                        <Professionals />
-                      </>
-                    )}
+                      </div>
+                      <Professionals />
+                    </div>
                     <NetworkingMoment />
                     <Suspense fallback={<SectionPlaceholder mobilePx={1054} desktopPx={615} />}>
                       <ForBusiness />

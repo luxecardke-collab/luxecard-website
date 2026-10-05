@@ -5,11 +5,12 @@ import { useContactModal } from '../context/contactModalContext';
 import { useInquiryModal } from '../context/inquiryModalContext';
 import { useCart } from '../context/cartContext';
 import { useNavMenu } from '../context/navMenuContext';
+import { useHydrated } from '../hooks/useHydrated';
 import { useInert } from '../hooks/useInert';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { getLenis } from '../utils/lenisInstance';
-import { resolveNavHref } from '../utils/navHref';
+import { useResolveNavHref } from '../utils/navHref';
 
 // A little clearance below the nav, not scroll-margin-top: Lenis reads an
 // element's own scroll-margin-top AND adds any explicit `offset` passed to
@@ -67,6 +68,10 @@ export function Nav() {
   const { open: openInquiryModal, preload: preloadInquiryModal } = useInquiryModal();
   const { open: openContactModal, preload: preloadContactModal } = useContactModal();
   const { open: openCart, preloadDrawer, totalCount, isOpen: cartOpen } = useCart();
+  const resolveNavHref = useResolveNavHref();
+  // The cart is restored from localStorage, which the prerendered HTML can't
+  // know about, so its count only shows once hydration is done.
+  const cartCount = useHydrated() ? totalCount : 0;
 
   useEffect(() => {
     if (wide) closeMenu();
@@ -226,7 +231,7 @@ export function Nav() {
               ))}
             </div>
             <div className="flex items-center justify-self-end gap-3">
-              <CartButton onClick={openCart} onPreload={preloadDrawer} count={totalCount} />
+              <CartButton onClick={openCart} onPreload={preloadDrawer} count={cartCount} />
               <button
                 type="button"
                 onClick={() => openInquiryModal('individual')}
@@ -240,7 +245,7 @@ export function Nav() {
           </>
         ) : (
           <div className="flex items-center gap-3">
-            <CartButton onClick={openCart} onPreload={preloadDrawer} count={totalCount} />
+            <CartButton onClick={openCart} onPreload={preloadDrawer} count={cartCount} />
             <button
               ref={menuToggleRef}
               type="button"
