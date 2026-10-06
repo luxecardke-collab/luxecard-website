@@ -6,11 +6,14 @@ import { normalizePath, routeKey } from './routes'
 import { HYDRATABLE_MEDIA } from './hooks/useMediaQuery'
 import { captureReferralCode } from './utils/referralCode'
 import { initMetaPixel } from './utils/metaPixel'
+import { initAnalytics } from './utils/analytics'
 
 captureReferralCode()
 // Loads the Meta Pixel only if a Pixel ID is configured and the visitor has
 // accepted cookies (now, or later via the cookie banner).
 initMetaPixel()
+// Cookieless page-view analytics, started once the page has loaded (see there).
+initAnalytics()
 
 // A reload should always start at the top (the hero), never at wherever the
 // browser last left the page. A deep link with a #section hash is left alone.
