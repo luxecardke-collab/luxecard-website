@@ -11,7 +11,7 @@ export const LINKS = {
   PHONE2_TEL: 'tel:+254142492026',
   EMAIL,
   EMAIL_MAILTO: `mailto:${EMAIL}`,
-  ADDRESS: 'LuxeCard, Nairobi',
+  ADDRESS: 'LuxeCard Africa, Nairobi',
   MAP_EMBED_SRC: 'https://www.google.com/maps?cid=5612187112014979747&output=embed',
   SOCIAL: {
     instagram: 'https://www.instagram.com/luxecard_africa/',

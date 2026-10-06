@@ -174,7 +174,7 @@ export function Footer() {
         </div>
       </div>
       <div className="mx-auto mt-[clamp(40px,6vh,64px)] flex max-w-[1320px] flex-wrap justify-between gap-x-7 gap-y-4 pt-[22px] font-inter text-[10px] tracking-[.14em] text-ivory">
-        <span>© 2026 LUXECARD LIMITED</span>
+        <span>© 2026 LUXECARD AFRICA</span>
         <span data-whatsapp-landmark="footer-credit">
           DESIGNED & BUILT BY{' '}
           <a
