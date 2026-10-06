@@ -127,7 +127,9 @@ export const PRIVACY: LegalDoc = {
   path: '/privacy',
   navLabel: 'Privacy Policy',
   title: 'Privacy & Data Protection Policy',
-  effectiveDate: EFFECTIVE_DATE,
+  // Updated separately from the Terms and Returns policy (Vercel Web
+  // Analytics added to Cookies).
+  effectiveDate: '6 October 2026',
   intro:
     'LuxeCard Limited ("LuxeCard", "we", "us") processes personal data in accordance with the **Data Protection Act, 2019** and its Regulations. This policy explains what we collect, why, how we share it, and your rights.',
   sections: [
@@ -185,6 +187,7 @@ export const PRIVACY: LegalDoc = {
       title: 'Cookies',
       body: [
         "Our site uses cookies for core functionality, preferences, usage analytics, and security. We'll seek your consent before using non-essential cookies, as required by law.",
+        'We also use Vercel Web Analytics to count visits to our website; it does not use cookies or store anything on your device, and records only aggregated information such as the page visited, referring site, country and device type.',
       ],
     },
     {
