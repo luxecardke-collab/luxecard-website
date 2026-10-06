@@ -17,7 +17,7 @@ function organization() {
   return {
     '@type': 'Organization',
     '@id': ORGANIZATION_ID,
-    name: 'LuxeCard Africa',
+    name: 'LuxeCard',
     legalName: 'LuxeCard Limited',
     url: `${SITE_URL}/`,
     logo: `${SITE_URL}/icon-512.png`,
