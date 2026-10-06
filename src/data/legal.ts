@@ -187,7 +187,7 @@ export const PRIVACY: LegalDoc = {
       title: 'Cookies',
       body: [
         "Our site uses cookies for core functionality, preferences, usage analytics, and security. We'll seek your consent before using non-essential cookies, as required by law.",
-        'We also use Vercel Web Analytics to count visits to our website; it does not use cookies or store anything on your device, and records only aggregated information such as the page visited, referring site, country and device type.',
+        'We use cookieless analytics (Vercel Web Analytics) to see how many people visit our website, without storing anything on your device.',
       ],
     },
     {
