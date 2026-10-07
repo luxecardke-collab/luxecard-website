@@ -3,11 +3,14 @@ import { CARD_FINISHES } from '../data/content';
 import { useAnimatedNumber } from '../hooks/useAnimatedNumber';
 import { useMountReveal } from '../hooks/useMountReveal';
 import { useParallax } from '../hooks/useParallax';
-import { formatKes, parsePrice } from '../utils/formatPrice';
+import { FINISH_PRICES_BY_LABEL, offerUnitPrice } from '../../api/_lib/pricing';
+import { useOffer } from '../hooks/useOffer';
+import { formatKes } from '../utils/formatPrice';
+import { OfferPrice } from './OfferPrice';
 import { LiquidMetalButton } from './LiquidMetalButton';
 import { ShaderAnimation } from './ShaderAnimation';
 
-const FINISH_OPTIONS = CARD_FINISHES.map((f) => ({ name: f.name, price: parsePrice(f.price) }));
+const FINISH_OPTIONS = CARD_FINISHES.map((f) => ({ name: f.name, price: FINISH_PRICES_BY_LABEL[f.priceLabel] }));
 const COMMISSION_RATE = 0.1;
 const MIN_CARDS = 1;
 const MAX_CARDS = 20;
@@ -21,7 +24,11 @@ export function AffiliateHero() {
   const [finishIndex, setFinishIndex] = useState(DEFAULT_FINISH_INDEX);
 
   const finish = FINISH_OPTIONS[finishIndex];
-  const targetEarnings = useMemo(() => cards * finish.price * COMMISSION_RATE, [cards, finish.price]);
+  // Commission is a share of what the customer actually pays, so it follows
+  // any offer that's on.
+  const offer = useOffer();
+  const finishPrice = offerUnitPrice(finish.price, offer);
+  const targetEarnings = useMemo(() => cards * finishPrice * COMMISSION_RATE, [cards, finishPrice]);
   const displayEarnings = useAnimatedNumber(targetEarnings);
   const isSettling = Math.abs(displayEarnings - targetEarnings) > 1;
   const pct = ((cards - MIN_CARDS) / (MAX_CARDS - MIN_CARDS)) * 100;
@@ -97,7 +104,9 @@ export function AffiliateHero() {
                     >
                       {f.name}
                     </span>
-                    <span className="text-[10.5px] text-[rgba(243,240,234,.45)]">{formatKes(f.price)}</span>
+                    <span className="text-[10.5px] text-[rgba(243,240,234,.45)]">
+                      <OfferPrice price={f.price} offer={offer} />
+                    </span>
                   </button>
                 );
               })}

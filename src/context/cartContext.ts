@@ -1,3 +1,4 @@
+import type { Offer } from '../../api/_lib/pricing';
 import { createContext, useContext } from 'react';
 
 export type CartItem = {
@@ -35,9 +36,15 @@ type CartContextValue = {
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   totalCount: number;
+  // At regular prices.
   subtotal: number;
   discount: number;
   totalPrice: number;
+  // Which single discount applies (they never combine), and the offer on
+  // right now by the server's clock, if any — the same calculation
+  // checkout charges (computeTotals in api/_lib/pricing.ts).
+  discountType: 'offer' | 'bulk' | null;
+  offer: Offer | null;
   customerInfo: CustomerInfo | null;
   saveCustomerInfo: (info: CustomerInfo) => void;
   notify: (message: string, description?: string) => void;

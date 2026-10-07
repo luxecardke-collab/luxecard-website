@@ -9,7 +9,7 @@
 // more than once for the same reference is always safe: only the first
 // caller to win the race actually creates the row, sends the alert, and
 // records any commission.
-import { describeItems, formatKes, sendTeamEmail } from './email.js';
+import { describeDiscount, describeItems, formatEat, formatKes, sendTeamEmail } from './email.js';
 import { readEtims } from './kra.js';
 import { sendMetaPurchase } from './metaCapi.js';
 import { getSupabaseAdmin } from './supabaseAdmin.js';
@@ -25,6 +25,9 @@ export type PaystackOrderMetadata = {
   needs_etims?: boolean;
   kra_pin?: string | null;
   kra_business_name?: string | null;
+  // Server time checkout priced the order at (api/checkout.ts); decides
+  // which offer, if any, applied. Absent on orders from before offers.
+  priced_at?: string | null;
   // Present only when the customer accepted cookies (see api/checkout.ts).
   meta_consent?: boolean;
   meta_fbp?: string | null;
@@ -79,9 +82,17 @@ export async function recordPaidOrder(
     }
   }
 
+  // Priced exactly as checkout priced it, at the same moment - not now:
+  // this can run hours later (the reconciliation cron), after an offer that
+  // applied at checkout has ended, and must record what was actually
+  // charged. Orders from before priced_at existed had no offer.
+  const pricedAt =
+    typeof metadata.priced_at === 'string' && !Number.isNaN(Date.parse(metadata.priced_at))
+      ? new Date(metadata.priced_at)
+      : null;
   let totals;
   try {
-    totals = computeAuthoritativeTotals(metadata.items);
+    totals = computeAuthoritativeTotals(metadata.items, pricedAt);
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Invalid order items.' };
   }
@@ -188,7 +199,11 @@ export async function recordPaidOrder(
       ['Phone', customer_phone],
       ['Company', metadata.company],
       ['Items', describeItems(metadata.items)],
+      ['Discount', describeDiscount(totals)],
       ['Total', formatKes(totals.total)],
+      // When an offer applied, when checkout priced it, so a payment that
+      // only went through after the offer ended is easy to spot.
+      ['Priced at', totals.offer && pricedAt ? formatEat(pricedAt) : null],
       ['Payment reference', reference],
       ['Referral code', referralNote],
       ...(etimsRequested

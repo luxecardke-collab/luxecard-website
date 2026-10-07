@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CartContext, type CartItem, type CustomerInfo, type NewCartItem } from '../context/cartContext';
 import { CART_STORAGE_KEY as STORAGE_KEY } from '../utils/cartStorage';
-import { BULK_DISCOUNT_RATE, BULK_DISCOUNT_THRESHOLD, SUB_OPTIONS_BY_LABEL } from '../../api/_lib/pricing';
+import { computeTotals, FINISH_PRICES_BY_LABEL, offerUnitPrice, SUB_OPTIONS_BY_LABEL } from '../../api/_lib/pricing';
+import { useOffer } from '../hooks/useOffer';
 import { trackMetaEvent } from '../utils/metaPixel';
 import { Toast } from './Toast';
 
@@ -32,6 +33,8 @@ function loadInitialState(): PersistedState {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  // The offer on right now (if any) by the server's clock.
+  const offer = useOffer();
   const initial = useRef<PersistedState | null>(null);
   if (!initial.current) initial.current = loadInitialState();
 
@@ -86,13 +89,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Outside the state updater so it fires once per add, even when React
     // (StrictMode) runs updaters twice. No-op without cookie consent.
     const quantity = newItem.quantity ?? 1;
+    const unitPrice = offerUnitPrice(newItem.price, offer);
     trackMetaEvent('AddToCart', {
-      value: newItem.price * quantity,
+      value: unitPrice * quantity,
       currency: 'KES',
       content_type: 'product',
       content_name: newItem.name,
       content_ids: [newItem.name],
-      contents: [{ id: newItem.name, quantity, item_price: newItem.price }],
+      contents: [{ id: newItem.name, quantity, item_price: unitPrice }],
     });
     setItems((prev) => {
       const existing = prev.find((i) => i.name === newItem.name && i.subOption === newItem.subOption);
@@ -103,7 +107,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, { ...newItem, id: crypto.randomUUID(), quantity: newItem.quantity ?? 1 }];
     });
-  }, []);
+  }, [offer]);
 
   const removeItem = useCallback((id: string) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
@@ -128,12 +132,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const totalCount = useMemo(() => items.reduce((sum, i) => sum + i.quantity, 0), [items]);
-  const subtotal = useMemo(() => items.reduce((sum, i) => sum + i.price * i.quantity, 0), [items]);
-  // Applies across the whole cart, so it holds regardless of how many
-  // different finishes/quantities make up that total.
-  const discount = totalCount > BULK_DISCOUNT_THRESHOLD ? subtotal * BULK_DISCOUNT_RATE : 0;
-  const totalPrice = subtotal - discount;
+  // The same totals calculation checkout uses, from the current price list
+  // rather than the price stored when an item was added.
+  const totals = useMemo(
+    () =>
+      computeTotals(
+        items.map((i) => ({ price: FINISH_PRICES_BY_LABEL[i.name] ?? i.price, quantity: i.quantity })),
+        offer
+      ),
+    [items, offer]
+  );
+  const { totalCount, subtotal, discount, total: totalPrice, discountType } = totals;
 
   const value = useMemo(
     () => ({
@@ -148,6 +157,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       subtotal,
       discount,
       totalPrice,
+      discountType,
+      offer,
       customerInfo,
       saveCustomerInfo,
       notify,
@@ -166,6 +177,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       subtotal,
       discount,
       totalPrice,
+      discountType,
+      offer,
       customerInfo,
       saveCustomerInfo,
       notify,

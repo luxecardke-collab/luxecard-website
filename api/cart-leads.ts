@@ -1,8 +1,8 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import { sendTeamEmail, describeItems, formatKes } from './_lib/email.js';
+import { sendTeamEmail, describeDiscount, describeItems, formatEat, formatKes } from './_lib/email.js';
 import { cleanString, isEmail, isHoneypotTripped, oneHourAgo, MAX_MESSAGE, MAX_SHORT } from './_lib/input.js';
 import { readEtims } from './_lib/kra.js';
-import { computeAuthoritativeTotals, MAX_ITEMS, type CheckoutItem } from './_lib/pricing.js';
+import { computeAuthoritativeTotals, MAX_ITEMS, type CheckoutItem, type ValidatedTotals } from './_lib/pricing.js';
 import { getClientIp, isRateLimited } from './_lib/rateLimit.js';
 import { getSupabaseAdmin } from './_lib/supabaseAdmin.js';
 
@@ -113,9 +113,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     quantity: typeof item?.quantity === 'number' ? item.quantity : 0,
   }));
 
-  let total: number;
+  // At today's prices by the server's clock, including any offer on now.
+  let totals: ValidatedTotals;
   try {
-    total = computeAuthoritativeTotals(items).total;
+    totals = computeAuthoritativeTotals(items, new Date());
   } catch (err) {
     res.status(400).json({ error: err instanceof Error ? err.message : 'Invalid items.' });
     return;
@@ -158,7 +159,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       email,
       phone,
       items,
-      total,
+      total: totals.total,
       message: message || null,
       // Only sent when requested, so ordinary leads don't depend on these columns.
       ...(etims ? { needs_etims: true, kra_pin: etims.kraPin, kra_business_name: etims.businessName } : {}),
@@ -185,7 +186,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ['Email', email],
         ['Phone', phone],
         ['Items', describeItems(items)],
-        ['Total', formatKes(total)],
+        ['Discount', describeDiscount(totals)],
+        ['Total', formatKes(totals.total)],
         ['Message', message],
         ...(etims
           ? ([
@@ -198,6 +200,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       note:
         [
           quoteRequested ? 'Send them a written quotation for the items and total above.' : '',
+          // The offer price is only good until the offer ends; checkout
+          // charges whatever applies when they actually pay.
+          totals.offer
+            ? `The total includes ${totals.offer.name} pricing, which ends ${formatEat(new Date(Date.parse(totals.offer.endsAt) - 60_000))}.`
+            : '',
           etims ? `eTIMS invoice requested with this enquiry: issue a tax invoice to KRA PIN ${etims.kraPin}, business name ${etims.businessName} once they pay.` : '',
           saved ? '' : `This ${quoteRequested ? 'quote request' : 'enquiry'} could NOT be saved to Supabase, so this email is the only record of it.`,
         ]

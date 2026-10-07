@@ -1,21 +1,57 @@
 import { Fragment, useState } from 'react';
+import { FINISH_PRICES_BY_LABEL } from '../../api/_lib/pricing';
+import { FINISH_LABELS_IN_ORDER } from '../data/content';
 import { LINKS } from '../data/links';
+import { useOffer } from '../hooks/useOffer';
+import { offerHeadline, offerLastDay } from '../utils/offerText';
+import { OfferPrice } from './OfferPrice';
 import { useReveal } from '../hooks/useReveal';
 
 // `group` (optional) prints a small heading above the first question of each
-// group. `{contact}` in an answer renders as a "Contact us" WhatsApp link.
+// group. Answers can hold placeholders: see TOKEN_PATTERN below.
 export type FaqItem = { q: string; a: string; group?: string };
 
-const CONTACT_TOKEN = '{contact}';
+// Placeholders an answer can contain (see content.ts).
+const TOKEN_PATTERN = /(\{contact\}|\{prices\}|\{offer\})/;
 
-function FaqAnswer({ text }: { text: string }) {
-  const parts = text.split(CONTACT_TOKEN);
+// "Plastic KES 7,000, Wood KES 9,000, …", with any offer applied.
+function FinishPriceList() {
+  const offer = useOffer();
   return (
     <>
-      {parts.map((part, i) => (
-        <Fragment key={i}>
-          {i > 0 && (
+      {FINISH_LABELS_IN_ORDER.map((label, i, all) => (
+        <Fragment key={label}>
+          {i > 0 && (i === all.length - 1 ? ', and ' : ', ')}
+          {label} <OfferPrice price={FINISH_PRICES_BY_LABEL[label]} offer={offer} />
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+// Only while an offer is on: it replaces the bulk discount, it doesn't add to it.
+function OfferNote() {
+  const offer = useOffer();
+  if (!offer) return null;
+  return (
+    <>
+      {' '}
+      <span className="text-accent">
+        {offerHeadline(offer)} every card until {offerLastDay(offer)}, 23:59 EAT. It replaces the bulk discount rather
+        than adding to it.
+      </span>
+    </>
+  );
+}
+
+function FaqAnswer({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(TOKEN_PATTERN).map((part, i) => {
+        if (part === '{contact}') {
+          return (
             <a
+              key={i}
               href={LINKS.CONTACT}
               target="_blank"
               rel="noopener noreferrer"
@@ -23,10 +59,12 @@ function FaqAnswer({ text }: { text: string }) {
             >
               Contact us
             </a>
-          )}
-          {part}
-        </Fragment>
-      ))}
+          );
+        }
+        if (part === '{prices}') return <FinishPriceList key={i} />;
+        if (part === '{offer}') return <OfferNote key={i} />;
+        return <Fragment key={i}>{part}</Fragment>;
+      })}
     </>
   );
 }

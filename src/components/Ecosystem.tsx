@@ -5,6 +5,8 @@ import { CARD_FINISHES } from '../data/content';
 import { trackMetaEvent } from '../utils/metaPixel';
 import { useInquiryModal } from '../context/inquiryModalContext';
 import { useAutoCycle } from '../hooks/useAutoCycle';
+import { useOffer } from '../hooks/useOffer';
+import { OfferBadge, OfferPrice } from './OfferPrice';
 import { RevealSection } from './RevealSection';
 
 // Matches the site's other circular secondary controls (the cart button,
@@ -21,6 +23,7 @@ export function Ecosystem() {
     sectionRef
   );
   const finish = CARD_FINISHES[index];
+  const offer = useOffer();
   const cardDurationMs = cardIn ? enterMs : exitMs;
   const cardStyle = {
     opacity: cardIn ? 1 : 0,
@@ -96,8 +99,9 @@ export function Ecosystem() {
                   {finish.name}
                 </h3>
                 <div className="mt-2 font-inter text-[15px] font-semibold tracking-[.02em] text-accent" style={priceStyle}>
-                  {finish.price}
+                  <OfferPrice price={FINISH_PRICES_BY_LABEL[finish.priceLabel]} offer={offer} />
                 </div>
+                {offer && <OfferBadge offer={offer} showEnd className="mt-3" />}
               </div>
               <span className="shrink-0 whitespace-nowrap font-inter text-[10px] font-medium tracking-[.13em] text-grey-1">
                 NFC + QR

@@ -6,6 +6,10 @@ import { getReferralCode } from '../utils/referralCode';
 import { getMetaCheckoutTracking, trackMetaEvent } from '../utils/metaPixel';
 import { HONEYPOT_NAME } from '../utils/honeypot';
 import { sendQuoteRequest } from '../utils/cartLead';
+import { BULK_DISCOUNT_THRESHOLD, FINISH_PRICES_BY_LABEL, offerUnitPrice, type Offer } from '../../api/_lib/pricing';
+import { offerHeadline, offerLastDay } from '../utils/offerText';
+import { syncServerClock } from '../utils/serverClock';
+import { OfferPrice } from './OfferPrice';
 
 const QUOTE_CONFIRMATION_MESSAGE = 'Request received. Your quotation will be in your inbox shortly.';
 
@@ -14,8 +18,36 @@ function formatPrice(value: number) {
 }
 
 export function CartDrawer() {
-  const { items, isOpen, close, removeItem, updateQuantity, totalCount, subtotal, discount, totalPrice, customerInfo, notify } =
-    useCart();
+  const {
+    items,
+    isOpen,
+    close,
+    removeItem,
+    updateQuantity,
+    totalCount,
+    subtotal,
+    discount,
+    totalPrice,
+    discountType,
+    offer,
+    customerInfo,
+    notify,
+  } = useCart();
+  // Item prices show the offer only when it's the discount that applies.
+  const rowOffer = discountType === 'offer' ? offer : null;
+  // After checkout reports that prices changed, the server's new total —
+  // shown to the customer in that message — is what the next attempt
+  // agrees to pay, even if this page still can't read the server's time.
+  const confirmedTotal = useRef<number | null>(null);
+  useEffect(() => {
+    confirmedTotal.current = null;
+  }, [items]);
+
+  // The cart can't wait for the page-load sync: prices must follow the
+  // server's clock (and any offer) the moment it's open.
+  useEffect(() => {
+    if (isOpen) void syncServerClock();
+  }, [isOpen]);
   const { open: openInquiryModal, preload: preloadInquiryModal } = useInquiryModal();
   const panelRef = useRef<HTMLDivElement>(null);
   const honeypotRef = useRef<HTMLInputElement>(null);
@@ -102,7 +134,7 @@ export function CartDrawer() {
       num_items: totalCount,
       content_type: 'product',
       content_ids: items.map((i) => i.name),
-      contents: items.map((i) => ({ id: i.name, quantity: i.quantity, item_price: i.price })),
+      contents: items.map((i) => ({ id: i.name, quantity: i.quantity, item_price: offerUnitPrice(unitPrice(i), rowOffer) })),
     });
 
     setCheckingOut(true);
@@ -117,9 +149,20 @@ export function CartDrawer() {
           // Only present when the visitor accepted cookies; without it the
           // server never sends this purchase to Meta.
           metaTracking: getMetaCheckoutTracking() ?? undefined,
+          // Checkout refuses to charge anything other than this.
+          expectedTotal: confirmedTotal.current ?? totalPrice,
         }),
       });
       const data = await res.json();
+      if (res.status === 409 && data.code === 'PRICE_CHANGED') {
+        // e.g. the offer ended while the cart was open: show the new price
+        // rather than charging it unannounced.
+        confirmedTotal.current = typeof data.total === 'number' ? data.total : null;
+        void syncServerClock(true);
+        notify('Prices have changed', data.error);
+        setCheckingOut(false);
+        return;
+      }
       if (!res.ok || !data.authorization_url) {
         throw new Error(data.error ?? 'Could not start checkout.');
       }
@@ -173,6 +216,7 @@ export function CartDrawer() {
               <CartRow
                 key={item.id}
                 item={item}
+                offer={rowOffer}
                 onQuantityChange={(quantity) => updateQuantity(item.id, quantity)}
                 onRemove={() => removeItem(item.id)}
               />
@@ -185,15 +229,27 @@ export function CartDrawer() {
         {discount > 0 && (
           <div className="mb-3 flex items-center justify-between">
             <span className="text-[13px] text-[rgba(243,240,234,.5)]">
-              Subtotal ({totalCount} cards)
+              Subtotal ({totalCount} {totalCount === 1 ? 'card' : 'cards'})
             </span>
             <span className="text-[13px] text-[rgba(243,240,234,.5)] line-through">{formatPrice(subtotal)}</span>
           </div>
         )}
-        {discount > 0 && (
+        {discountType === 'bulk' && (
           <div className="mb-3 flex items-center justify-between">
             <span className="text-[13px] text-accent">Bulk discount (10% off 4+ cards)</span>
             <span className="text-[13px] text-accent">-{formatPrice(discount)}</span>
+          </div>
+        )}
+        {discountType === 'offer' && offer && (
+          <div className="mb-3 flex items-start justify-between gap-4">
+            <span className="text-[13px] leading-[1.45] text-accent">
+              {offerHeadline(offer)}
+              <span className="block text-[11.5px] text-[rgba(253,211,3,.7)]">
+                Ends {offerLastDay(offer)}, 23:59 EAT
+                {totalCount > BULK_DISCOUNT_THRESHOLD && ". Doesn't combine with the 4+ card bulk discount."}
+              </span>
+            </span>
+            <span className="shrink-0 text-[13px] text-accent">-{formatPrice(discount)}</span>
           </div>
         )}
         <div className="mb-4 flex items-center justify-between">
@@ -252,12 +308,19 @@ export function CartDrawer() {
   );
 }
 
+// The current list price (an item stores the price from when it was added).
+function unitPrice(item: CartItem): number {
+  return FINISH_PRICES_BY_LABEL[item.name] ?? item.price;
+}
+
 function CartRow({
   item,
+  offer,
   onQuantityChange,
   onRemove,
 }: {
   item: CartItem;
+  offer: Offer | null;
   onQuantityChange: (quantity: number) => void;
   onRemove: () => void;
 }) {
@@ -303,8 +366,12 @@ function CartRow({
       </div>
 
       <div className="flex flex-col items-end gap-0.5 pt-0.5">
-        <span className="text-[15px] font-medium text-ivory">{formatPrice(item.price * item.quantity)}</span>
-        <span className="text-[12px] text-[rgba(243,240,234,.4)]">{formatPrice(item.price)} each</span>
+        <span className="text-[15px] font-medium text-ivory">
+          <OfferPrice price={unitPrice(item)} quantity={item.quantity} offer={offer} />
+        </span>
+        <span className="text-[12px] text-[rgba(243,240,234,.4)]">
+          {formatPrice(offerUnitPrice(unitPrice(item), offer))} each
+        </span>
       </div>
     </div>
   );

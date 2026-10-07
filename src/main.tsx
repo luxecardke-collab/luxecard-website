@@ -7,6 +7,8 @@ import { HYDRATABLE_MEDIA } from './hooks/useMediaQuery'
 import { captureReferralCode } from './utils/referralCode'
 import { initMetaPixel } from './utils/metaPixel'
 import { initAnalytics } from './utils/analytics'
+import { afterPageLoad } from './utils/afterPageLoad'
+import { syncServerClock } from './utils/serverClock'
 
 captureReferralCode()
 // Loads the Meta Pixel only if a Pixel ID is configured and the visitor has
@@ -14,6 +16,9 @@ captureReferralCode()
 initMetaPixel()
 // Cookieless page-view analytics, started once the page has loaded (see there).
 initAnalytics()
+// The server's time, which decides whether an offer's prices show (see
+// utils/serverClock). The cart and order form also fetch it when opened.
+afterPageLoad(() => void syncServerClock())
 
 // A reload should always start at the top (the hero), never at wherever the
 // browser last left the page. A deep link with a #section hash is left alone.

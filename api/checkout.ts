@@ -20,6 +20,10 @@ type CheckoutRequestBody = {
   referralCode?: string | null;
   // Sent by the browser only when the visitor accepted cookies.
   metaTracking?: { consent?: unknown; fbp?: unknown; fbc?: unknown };
+  // The total the cart showed the customer. Checkout is refused if the
+  // server's total differs (e.g. an offer ended while the cart was open),
+  // so they're never charged an amount they didn't see.
+  expectedTotal?: unknown;
 };
 
 const clip = (value: unknown, max: number): string | null =>
@@ -81,7 +85,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const { items, customer, referralCode, metaTracking } = body ?? {};
+  const { items, customer, referralCode, metaTracking, expectedTotal } = body ?? {};
 
   if (!customer?.name || !customer?.email || !customer?.phone) {
     res.status(400).json({ error: 'Missing customer name, email, or phone.' });
@@ -92,11 +96,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  // Priced by the server's clock, never the visitor's: this is the moment
+  // that decides whether an offer applies, and it's stored with the order
+  // (priced_at) so recording the payment later prices it the same way.
+  const pricedAt = new Date();
   let totals;
   try {
-    totals = computeAuthoritativeTotals(items);
+    totals = computeAuthoritativeTotals(items, pricedAt);
   } catch (err) {
     res.status(400).json({ error: err instanceof Error ? err.message : 'Invalid cart.' });
+    return;
+  }
+
+  if (typeof expectedTotal === 'number' && Math.round(expectedTotal) !== Math.round(totals.total)) {
+    res.status(409).json({
+      error: `Prices have changed since your cart was updated. Your total is now KES ${Math.round(totals.total).toLocaleString('en-US')}. Please check your cart and try again.`,
+      code: 'PRICE_CHANGED',
+      total: totals.total,
+    });
     return;
   }
 
@@ -135,6 +152,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             items,
             subtotal: totals.subtotal,
             discount_applied: totals.discount > 0,
+            discount: totals.discount,
+            offer_id: totals.offer?.id ?? null,
+            priced_at: pricedAt.toISOString(),
             total: totals.total,
             referral_code: referralCode ?? null,
             needs_etims: !!etims,

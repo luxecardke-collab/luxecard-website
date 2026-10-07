@@ -1,5 +1,5 @@
 import { FINISH_PRICES_BY_LABEL } from '../../api/_lib/pricing';
-import { CARD_FINISHES, FAQS } from '../data/content';
+import { CARD_FINISHES, FAQS, faqAnswerText } from '../data/content';
 import { LINKS } from '../data/links';
 import { SITE_URL } from './pages';
 
@@ -38,7 +38,7 @@ function organization() {
 // from the finish shown in the products section.
 function products() {
   return Object.entries(FINISH_PRICES_BY_LABEL).map(([label, price]) => {
-    const finish = CARD_FINISHES.find((f) => f.name === label || f.name.startsWith(`${label}:`));
+    const finish = CARD_FINISHES.find((f) => f.priceLabel === label);
     if (!finish) throw new Error(`No CARD_FINISHES entry for the "${label}" finish in the price list`);
     return {
       '@type': 'Product',
@@ -64,8 +64,7 @@ function faqPage() {
     mainEntity: FAQS.map((faq) => ({
       '@type': 'Question',
       name: faq.q,
-      // "{contact}" renders as a "Contact us" link on the page.
-      acceptedAnswer: { '@type': 'Answer', text: faq.a.replace(/\{contact\}/g, 'Contact us') },
+      acceptedAnswer: { '@type': 'Answer', text: faqAnswerText(faq.a) },
     })),
   };
 }

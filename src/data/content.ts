@@ -76,7 +76,9 @@ export const PRODUCTS: Product[] = [
 
 export type CardFinish = {
   name: string;
-  price: string;
+  // Key into the checkout's price list (api/_lib/pricing.ts), which is
+  // where the price itself comes from.
+  priceLabel: string;
   blurb: string;
   image: string;
   alt: string;
@@ -90,7 +92,7 @@ export type CardFinish = {
 export const CARD_FINISHES: CardFinish[] = [
   {
     name: "Chairman's Card",
-    price: 'KES 19,000',
+    priceLabel: "Chairman's Card",
     blurb: 'Solid gold finish. Reserved for the boldest introductions.',
     image: '/images/card-chairman.webp',
     alt: "LuxeCard in Chairman's Card finish",
@@ -99,7 +101,7 @@ export const CARD_FINISHES: CardFinish[] = [
   },
   {
     name: 'Plastic',
-    price: 'KES 7,000',
+    priceLabel: 'Plastic',
     blurb: 'Lightweight, durable and built for everyday carry, in any colour you like.',
     image: '/images/card-plastic.webp',
     alt: 'LuxeCard in plastic finish',
@@ -108,7 +110,7 @@ export const CARD_FINISHES: CardFinish[] = [
   },
   {
     name: 'Wood: Natural & Black',
-    price: 'KES 9,000',
+    priceLabel: 'Wood',
     blurb: 'Naturally lightweight, with a warm, distinctive grain.',
     image: '/images/card-wood.webp',
     alt: 'LuxeCard in wood finish',
@@ -117,7 +119,7 @@ export const CARD_FINISHES: CardFinish[] = [
   },
   {
     name: 'Metallic: Silver & Black',
-    price: 'KES 12,000',
+    priceLabel: 'Metallic',
     blurb: 'Solid metal weight. A tactile statement piece.',
     image: '/images/card-metallic.webp',
     alt: 'LuxeCard in metallic finish',
@@ -204,8 +206,10 @@ export const FOR_BUSINESS_BENEFITS = [
 ];
 
 // `group` labels the section a question sits under; the accordion prints a
-// small heading whenever it changes. "{contact}" inside an answer becomes a
-// "Contact us" link to the site's WhatsApp contact (see FaqAccordion).
+// small heading whenever it changes. Placeholders inside an answer (see
+// FaqAccordion): "{contact}" becomes a "Contact us" link to the site's
+// WhatsApp contact; "{prices}" the card price list, with any offer applied;
+// "{offer}" a sentence about the offer, only while one is on.
 export type Faq = { q: string; a: string; group?: string };
 
 const GROUP_ORDERING = 'Ordering and pricing';
@@ -220,6 +224,8 @@ const FINISH_LABELS = Object.keys(FINISH_PRICES_BY_LABEL);
 const NUMBER_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 const joinList = (items: string[], serialComma: boolean) =>
   items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')}${serialComma ? ',' : ''} and ${items[items.length - 1]}`;
+export const FINISH_LABELS_IN_ORDER = FINISH_LABELS;
+export const joinFinishList = (items: string[]) => joinList(items, true);
 const FINISH_PRICE_LIST = joinList(
   FINISH_LABELS.map((label) => `${label} ${formatKes(FINISH_PRICES_BY_LABEL[label])}`),
   true
@@ -232,7 +238,7 @@ export const FAQS: Faq[] = [
   {
     group: GROUP_ORDERING,
     q: 'How much does a LuxeCard cost?',
-    a: `It depends on the material you choose: ${FINISH_PRICE_LIST}. Ordering more than ${BULK_DISCOUNT_THRESHOLD} cards? You automatically get ${BULK_DISCOUNT} at checkout.`,
+    a: `It depends on the material you choose: {prices}. Ordering more than ${BULK_DISCOUNT_THRESHOLD} cards? You automatically get ${BULK_DISCOUNT} at checkout.{offer}`,
   },
   {
     group: GROUP_ORDERING,
@@ -328,3 +334,9 @@ export const FOOTER_LINKS = {
     ],
   },
 };
+
+// An FAQ answer as plain text (structured data, anything that can't render
+// the accordion's placeholders): regular prices, no offer sentence.
+export function faqAnswerText(answer: string): string {
+  return answer.replace(/\{prices\}/g, FINISH_PRICE_LIST).replace(/\{offer\}/g, '').replace(/\{contact\}/g, 'Contact us');
+}

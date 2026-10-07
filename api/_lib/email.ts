@@ -1,4 +1,4 @@
-import type { CheckoutItem } from './pricing.js';
+import { BULK_DISCOUNT_RATE, type CartTotals, type CheckoutItem } from './pricing.js';
 
 // Where replies to an alert go by default. Ready for when ALERT_FROM_EMAIL
 // switches to a no-reply style address on the LuxeCard domain.
@@ -43,6 +43,32 @@ export function describeItems(items: CheckoutItem[]): string {
 
 export function formatKes(value: number): string {
   return `KES ${value.toLocaleString('en-US')}`;
+}
+
+// The discount line for an alert, e.g. "Customer Service Week 10% off
+// (-KES 2,800)", or null when no discount applied.
+export function describeDiscount(totals: CartTotals): string | null {
+  if (totals.discountType === 'offer' && totals.offer) {
+    return `${totals.offer.name} ${Math.round(totals.offer.rate * 100)}% off (-${formatKes(totals.discount)})`;
+  }
+  if (totals.discountType === 'bulk') {
+    return `Bulk ${Math.round(BULK_DISCOUNT_RATE * 100)}% off 4+ cards (-${formatKes(totals.discount)})`;
+  }
+  return null;
+}
+
+// e.g. "Sun 11 Oct 2026, 23:58 EAT".
+export function formatEat(date: Date): string {
+  return `${new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Africa/Nairobi',
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date)} EAT`;
 }
 
 function render(email: TeamEmail) {

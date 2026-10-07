@@ -15,8 +15,11 @@ import { HoneypotField } from './HoneypotField';
 import type { InquiryTab } from '../context/inquiryModalContext';
 import { useCart } from '../context/cartContext';
 import { ETIMS_INVOICE_NOTE } from '../data/etims';
-import { formatKes } from '../utils/formatPrice';
 import { FINISH_PRICES_BY_LABEL } from '../../api/_lib/pricing';
+import { useOffer } from '../hooks/useOffer';
+import { offerPriceText } from '../utils/offerText';
+import { syncServerClock } from '../utils/serverClock';
+import { OfferBadge } from './OfferPrice';
 import { Field } from './FormField';
 import { inputClass } from '../utils/inputClass';
 
@@ -158,6 +161,12 @@ export function InquiryModal({
   useEffect(() => {
     if (isOpen) setTab(preselectedTab);
   }, [isOpen, preselectedTab]);
+
+  // Prices here follow the server's clock (and any offer) as soon as the
+  // form is open, without waiting for the page-load sync.
+  useEffect(() => {
+    if (isOpen) void syncServerClock();
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen || !customerInfo) return;
@@ -421,8 +430,10 @@ function FinishRowsField<T extends { rows: FinishRow[] }>({
   setForm: (updater: (prev: T) => T) => void;
   attempted: boolean;
 }) {
+  const offer = useOffer();
   return (
     <div className="flex flex-col gap-3">
+      {offer && <OfferBadge offer={offer} showEnd className="self-start" />}
       {rows.map((row, i) => {
         const subOptions = row.finish ? SUB_OPTIONS[row.finish] : undefined;
         const missingSubOption = attempted && !!row.finish && !!subOptions && !row.subOption;
@@ -463,7 +474,7 @@ function FinishRowsField<T extends { rows: FinishRow[] }>({
               </option>
               {FINISH_OPTIONS.map((f) => (
                 <option key={f.value} value={f.value} style={optionStyle}>
-                  {f.label} — {formatKes(FINISH_PRICES[f.value])}
+                  {f.label} — {offerPriceText(FINISH_PRICES[f.value], offer)}
                 </option>
               ))}
             </select>
