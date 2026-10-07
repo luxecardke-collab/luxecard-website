@@ -72,7 +72,7 @@ export function OrderConfirmation() {
               clearCartItems();
               setState('paid');
               // Only now that payment is confirmed. No-op without cookie consent.
-              if (typeof data.value === 'number') trackMetaPurchase(reference, data.value);
+              if (typeof data.value === 'number') trackMetaPurchase(reference, data.value, Array.isArray(data.contents) ? data.contents : []);
             }
             return;
           }

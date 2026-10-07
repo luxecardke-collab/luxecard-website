@@ -6,6 +6,7 @@ import { useReveal } from '../hooks/useReveal';
 import { useResolveNavHref } from '../utils/navHref';
 import { openCookieSettings } from '../utils/consent';
 import { META_PIXEL_ENABLED } from '../utils/metaPixel';
+import { WHATSAPP_SOURCES, whatsappLinkProps } from '../utils/whatsapp';
 
 // Brand icons, all from the same set, Tabler Icons (outline style, MIT
 // licence, v3.48.0), so they share one 24px grid, cap/join style and stroke
@@ -121,9 +122,10 @@ export function Footer() {
                 return (
                   <a
                     key={link.label}
-                    href={link.href}
                     className="text-sm text-[rgba(243,240,234,.6)] hover:text-accent"
-                    {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    {...(link.label === 'Contact'
+                      ? whatsappLinkProps(WHATSAPP_SOURCES.footer)
+                      : { href: link.href, ...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {}) })}
                   >
                     {link.label}
                   </a>

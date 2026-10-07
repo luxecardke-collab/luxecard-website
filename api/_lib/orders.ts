@@ -11,7 +11,8 @@
 // records any commission.
 import { describeDiscount, describeItems, formatEat, formatKes, sendTeamEmail } from './email.js';
 import { readEtims } from './kra.js';
-import { sendMetaPurchase } from './metaCapi.js';
+import { attributionRows, isTestEnvironment, readAttribution } from './attribution.js';
+import { describeMetaResult, sendMetaPurchase, type MetaResult } from './metaCapi.js';
 import { getSupabaseAdmin } from './supabaseAdmin.js';
 import { computeAuthoritativeTotals, type CheckoutItem } from './pricing.js';
 
@@ -25,6 +26,14 @@ export type PaystackOrderMetadata = {
   needs_etims?: boolean;
   kra_pin?: string | null;
   kra_business_name?: string | null;
+  // Where the customer came from (landing page UTM parameters + fbclid),
+  // added by api/checkout.ts.
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_content?: string | null;
+  utm_term?: string | null;
+  fbclid?: string | null;
   // Server time checkout priced the order at (api/checkout.ts); decides
   // which offer, if any, applied. Absent on orders from before offers.
   priced_at?: string | null;
@@ -44,6 +53,10 @@ export type PaystackOrderMetadata = {
 // the team knows to double check it.
 export type OrderSource = 'webhook' | 'order-status' | 'cron';
 
+// The parts of Paystack's own transaction record used here: what was
+// actually collected (in KES cents) and when.
+export type PaystackPayment = { amount?: number | null; paid_at?: string | null; paidAt?: string | null };
+
 export type RecordOrderResult =
   | { ok: true; created: boolean; orderId: string | null }
   | { ok: false; error: string };
@@ -53,7 +66,8 @@ const COMMISSION_RATE = 0.1;
 export async function recordPaidOrder(
   reference: string,
   metadata: PaystackOrderMetadata,
-  source: OrderSource
+  source: OrderSource,
+  payment: PaystackPayment = {}
 ): Promise<RecordOrderResult> {
   if (!metadata?.items || !metadata.customer_email || !metadata.customer_name || !metadata.customer_phone) {
     return { ok: false, error: 'Missing order metadata.' };
@@ -97,6 +111,9 @@ export async function recordPaidOrder(
     return { ok: false, error: err instanceof Error ? err.message : 'Invalid order items.' };
   }
 
+  const attribution = readAttribution(metadata);
+  const isTest = isTestEnvironment();
+
   // Upsert on the DB's own unique constraint (migration 0006) rather than a
   // separate check-then-insert: whichever caller (webhook, self-heal, or
   // cron) gets here first for a given reference wins the row; every other
@@ -118,6 +135,8 @@ export async function recordPaidOrder(
         payment_status: 'paid',
         paystack_reference: reference,
         referral_code: metadata.referral_code ?? null,
+        ...attribution,
+        ...(isTest ? { is_test: true } : {}),
         ...(etimsRequested ? { needs_etims: true, kra_pin: etimsPin, kra_business_name: etimsName } : {}),
       },
       { onConflict: 'paystack_reference', ignoreDuplicates: true }
@@ -172,12 +191,17 @@ export async function recordPaidOrder(
   // the caller's response: sendTeamEmail and sendMetaPurchase both log
   // their own failures instead of throwing, and both have their own
   // timeout. The Meta Purchase goes only to customers who accepted
-  // cookies, and carries no KRA, name or company details.
-  const metaPurchase =
+  // cookies, and carries no KRA, name or company details. It's sent first
+  // so the team's alert can say what happened to it.
+  const paidValue = typeof payment.amount === 'number' && payment.amount > 0 ? payment.amount / 100 : totals.total;
+  const paidAtRaw = payment.paid_at ?? payment.paidAt;
+  const paidAtMs = paidAtRaw ? Date.parse(paidAtRaw) : NaN;
+  const metaResult: MetaResult =
     metadata.meta_consent === true
-      ? sendMetaPurchase({
+      ? await sendMetaPurchase({
           reference,
-          value: totals.total,
+          value: paidValue,
+          eventTime: Number.isNaN(paidAtMs) ? undefined : Math.floor(paidAtMs / 1000),
           email: customer_email,
           phone: customer_phone,
           items: metadata.items.map((i) => ({ name: i.name, quantity: i.quantity })),
@@ -187,11 +211,11 @@ export async function recordPaidOrder(
           fbp: metadata.meta_fbp,
           fbc: metadata.meta_fbc,
         })
-      : Promise.resolve();
+      : { status: 'skipped', reason: "the buyer didn't accept cookies, so nothing may be sent" };
 
   const recovered = source === 'cron';
   const teamEmail = sendTeamEmail({
-    subject: `${recovered ? 'Recovered order' : 'New paid order'}${etimsRequested ? ' (eTIMS invoice needed)' : ''}: ${customer_name} (${formatKes(totals.total)})`,
+    subject: `${isTest ? '[TEST] ' : ''}${recovered ? 'Recovered order' : 'New paid order'}${etimsRequested ? ' (eTIMS invoice needed)' : ''}: ${customer_name} (${formatKes(totals.total)})`,
     heading: recovered ? 'Recovered order (missed by the webhook)' : 'New paid order',
     rows: [
       ['Customer', customer_name],
@@ -206,6 +230,8 @@ export async function recordPaidOrder(
       ['Priced at', totals.offer && pricedAt ? formatEat(pricedAt) : null],
       ['Payment reference', reference],
       ['Referral code', referralNote],
+      ...attributionRows(attribution),
+      ['Meta', describeMetaResult('Purchase', metaResult)],
       ...(etimsRequested
         ? ([
             ['eTIMS invoice', 'REQUESTED'],
@@ -230,7 +256,7 @@ export async function recordPaidOrder(
     replyTo: customer_email,
   });
 
-  await Promise.allSettled([teamEmail, metaPurchase]);
+  await teamEmail;
 
   return { ok: true, created: true, orderId: order.id };
 }

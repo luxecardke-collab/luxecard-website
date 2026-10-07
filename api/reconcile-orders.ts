@@ -18,6 +18,9 @@ type PaystackTransaction = {
   reference: string;
   status: string;
   metadata?: PaystackOrderMetadata | null;
+  amount?: number;
+  paid_at?: string | null;
+  paidAt?: string | null;
 };
 
 // Last-resort safety net for H1 (a paid order that never got recorded,
@@ -93,7 +96,7 @@ export default async function handler(req: IncomingMessage, res: VercelResponse)
         checked++;
         if (existingRefs.has(txn.reference)) continue;
 
-        const result = await recordPaidOrder(txn.reference, txn.metadata ?? {}, 'cron');
+        const result = await recordPaidOrder(txn.reference, txn.metadata ?? {}, 'cron', txn);
         if (!result.ok) {
           console.error(`Reconciliation: could not recover ${txn.reference}:`, result.error);
           continue;

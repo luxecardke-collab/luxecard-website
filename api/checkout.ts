@@ -3,6 +3,7 @@ import { fetchWithTimeout } from './_lib/http.js';
 import { isEmail } from './_lib/input.js';
 import { readEtims } from './_lib/kra.js';
 import { getClientIp, isRateLimited } from './_lib/rateLimit.js';
+import { readAttribution } from './_lib/attribution.js';
 import { computeAuthoritativeTotals, type CheckoutItem } from './_lib/pricing.js';
 
 const PAYSTACK_TIMEOUT_MS = 8000;
@@ -24,6 +25,8 @@ type CheckoutRequestBody = {
   // server's total differs (e.g. an offer ended while the cart was open),
   // so they're never charged an amount they didn't see.
   expectedTotal?: unknown;
+  // Landing page UTM parameters + fbclid (src/utils/attribution.ts).
+  attribution?: unknown;
 };
 
 const clip = (value: unknown, max: number): string | null =>
@@ -85,7 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const { items, customer, referralCode, metaTracking, expectedTotal } = body ?? {};
+  const { items, customer, referralCode, metaTracking, expectedTotal, attribution } = body ?? {};
 
   if (!customer?.name || !customer?.email || !customer?.phone) {
     res.status(400).json({ error: 'Missing customer name, email, or phone.' });
@@ -157,6 +160,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             priced_at: pricedAt.toISOString(),
             total: totals.total,
             referral_code: referralCode ?? null,
+            // Saved on the order when the payment is recorded.
+            ...readAttribution(attribution),
             needs_etims: !!etims,
             kra_pin: etims?.kraPin ?? null,
             kra_business_name: etims?.businessName ?? null,

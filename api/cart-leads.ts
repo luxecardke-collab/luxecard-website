@@ -5,6 +5,7 @@ import { readEtims } from './_lib/kra.js';
 import { computeAuthoritativeTotals, MAX_ITEMS, type CheckoutItem, type ValidatedTotals } from './_lib/pricing.js';
 import { getClientIp, isRateLimited } from './_lib/rateLimit.js';
 import { getSupabaseAdmin } from './_lib/supabaseAdmin.js';
+import { attributionRows, isTestEnvironment, readAttribution } from './_lib/attribution.js';
 
 type CartLeadBody = {
   type?: unknown;
@@ -21,6 +22,8 @@ type CartLeadBody = {
   // Business only: the cart's "Request a quote" link, sent with the same
   // details already captured on the order form (no separate form).
   quoteRequested?: unknown;
+  // Landing page UTM parameters + fbclid (src/utils/attribution.ts).
+  attribution?: unknown;
   hp?: unknown;
 };
 
@@ -97,6 +100,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
   const { etims } = etimsResult;
 
+  // Where they came from (landing page UTM parameters + fbclid).
+  const attribution = readAttribution(body?.attribution);
+  const isTest = isTestEnvironment();
+
   // Only meaningful for a business submission; a spoofed flag on an
   // individual one is silently ignored, same as eTIMS above.
   const quoteRequested = type === 'business' && body?.quoteRequested === true;
@@ -161,6 +168,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       items,
       total: totals.total,
       message: message || null,
+      ...attribution,
+      ...(isTest ? { is_test: true } : {}),
       // Only sent when requested, so ordinary leads don't depend on these columns.
       ...(etims ? { needs_etims: true, kra_pin: etims.kraPin, kra_business_name: etims.businessName } : {}),
       ...(quoteRequested ? { quote_requested: true, quote_requested_at: new Date().toISOString() } : {}),
@@ -176,9 +185,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (sendAlert) {
     await sendTeamEmail({
-      subject: quoteRequested
+      subject: (isTest ? '[TEST] ' : '') + (quoteRequested
         ? `Quotation requested: ${company || fullName}${etims ? ' (eTIMS invoice requested)' : ''}`
-        : `New business enquiry${etims ? ' (eTIMS invoice requested)' : ''}: ${company || fullName}`,
+        : `New business enquiry${etims ? ' (eTIMS invoice requested)' : ''}: ${company || fullName}`),
       heading: quoteRequested ? 'Quotation requested' : 'New business enquiry (items added to cart)',
       rows: [
         ['Organization', company],
@@ -189,6 +198,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ['Discount', describeDiscount(totals)],
         ['Total', formatKes(totals.total)],
         ['Message', message],
+        ...attributionRows(attribution),
         ...(etims
           ? ([
               ['eTIMS invoice', 'REQUESTED'],

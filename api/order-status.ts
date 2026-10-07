@@ -3,6 +3,17 @@ import { fetchWithTimeout } from './_lib/http.js';
 import { recordPaidOrder, type PaystackOrderMetadata } from './_lib/orders.js';
 import { getClientIp, isRateLimited } from './_lib/rateLimit.js';
 import { getSupabaseAdmin } from './_lib/supabaseAdmin.js';
+import { productId, type CheckoutItem } from './_lib/pricing.js';
+
+// Product IDs and quantities only (nothing about the customer), so the
+// confirmation page's browser Purchase carries the same products as the
+// server's.
+function purchaseContents(items: unknown): { id: string; quantity: number }[] {
+  if (!Array.isArray(items)) return [];
+  return (items as CheckoutItem[])
+    .filter((i) => i && typeof i.name === 'string' && typeof i.quantity === 'number')
+    .map((i) => ({ id: productId(i.name), quantity: i.quantity }));
+}
 
 type VercelResponse = ServerResponse & {
   status: (code: number) => VercelResponse;
@@ -38,14 +49,14 @@ export default async function handler(req: IncomingMessage, res: VercelResponse)
   const supabase = getSupabaseAdmin();
   const { data: order } = await supabase
     .from('orders')
-    .select('payment_status, total')
+    .select('payment_status, total, items')
     .eq('paystack_reference', reference)
     .maybeSingle();
 
   // `value` (the order total in KES, nothing else about the order) lets the
   // confirmation page report the Purchase to Meta with the right amount.
   if (order?.payment_status === 'paid') {
-    res.status(200).json({ paid: true, value: Number(order.total) });
+    res.status(200).json({ paid: true, value: Number(order.total), contents: purchaseContents(order.items) });
     return;
   }
 
@@ -65,7 +76,7 @@ export default async function handler(req: IncomingMessage, res: VercelResponse)
       PAYSTACK_TIMEOUT_MS
     );
     const verifyData = (await verifyRes.json()) as {
-      data?: { status?: string; amount?: number; metadata?: PaystackOrderMetadata };
+      data?: { status?: string; amount?: number; paid_at?: string | null; paidAt?: string | null; metadata?: PaystackOrderMetadata };
     };
     const paid = verifyRes.ok && verifyData?.data?.status === 'success';
 
@@ -78,7 +89,7 @@ export default async function handler(req: IncomingMessage, res: VercelResponse)
     // customer's own confirmation page is waiting on.
     if (paid && verifyData.data?.metadata) {
       try {
-        await recordPaidOrder(reference, verifyData.data.metadata, 'order-status');
+        await recordPaidOrder(reference, verifyData.data.metadata, 'order-status', verifyData.data);
       } catch (err) {
         console.error('order-status self-heal failed:', err);
       }
@@ -86,7 +97,13 @@ export default async function handler(req: IncomingMessage, res: VercelResponse)
 
     const amount = verifyData?.data?.amount;
     // Paystack amounts are in the smallest subunit (KES cents).
-    res.status(200).json(paid && typeof amount === 'number' ? { paid, value: amount / 100 } : { paid });
+    res
+      .status(200)
+      .json(
+        paid && typeof amount === 'number'
+          ? { paid, value: amount / 100, contents: purchaseContents(verifyData.data?.metadata?.items) }
+          : { paid }
+      );
   } catch {
     res.status(200).json({ paid: false });
   }

@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { Minus, Plus, Trash2, X } from 'lucide-react';
 import { useCart, type CartItem } from '../context/cartContext';
 import { useInquiryModal } from '../context/inquiryModalContext';
+import { LINKS } from '../data/links';
 import { getReferralCode } from '../utils/referralCode';
-import { getMetaCheckoutTracking, trackMetaEvent } from '../utils/metaPixel';
+import { getMetaCheckoutTracking, trackMetaEventWithServer } from '../utils/metaPixel';
+import { getAttribution } from '../utils/attribution';
 import { HONEYPOT_NAME } from '../utils/honeypot';
 import { sendQuoteRequest } from '../utils/cartLead';
-import { BULK_DISCOUNT_THRESHOLD, FINISH_PRICES_BY_LABEL, offerUnitPrice, type Offer } from '../../api/_lib/pricing';
+import { BULK_DISCOUNT_THRESHOLD, FINISH_PRICES_BY_LABEL, offerUnitPrice, productId, type Offer } from '../../api/_lib/pricing';
 import { offerHeadline, offerLastDay } from '../utils/offerText';
 import { syncServerClock } from '../utils/serverClock';
 import { OfferPrice } from './OfferPrice';
@@ -128,14 +130,19 @@ export function CartDrawer() {
       return;
     }
 
-    trackMetaEvent('InitiateCheckout', {
-      value: totalPrice,
-      currency: 'KES',
-      num_items: totalCount,
-      content_type: 'product',
-      content_ids: items.map((i) => i.name),
-      contents: items.map((i) => ({ id: i.name, quantity: i.quantity, item_price: offerUnitPrice(unitPrice(i), rowOffer) })),
-    });
+    // Browser + Conversions API, same event ID; no-op without cookie consent.
+    trackMetaEventWithServer(
+      'InitiateCheckout',
+      {
+        value: totalPrice,
+        currency: 'KES',
+        num_items: totalCount,
+        content_type: 'product',
+        content_ids: [...new Set(items.map((i) => productId(i.name)))],
+        contents: items.map((i) => ({ id: productId(i.name), quantity: i.quantity, item_price: offerUnitPrice(unitPrice(i), rowOffer) })),
+      },
+      { email: customerInfo.email, phone: customerInfo.phone }
+    );
 
     setCheckingOut(true);
     try {
@@ -151,6 +158,8 @@ export function CartDrawer() {
           metaTracking: getMetaCheckoutTracking() ?? undefined,
           // Checkout refuses to charge anything other than this.
           expectedTotal: confirmedTotal.current ?? totalPrice,
+          // Which campaign/ad set/ad they came from, saved on the order.
+          attribution: getAttribution(),
         }),
       });
       const data = await res.json();
@@ -258,7 +267,7 @@ export function CartDrawer() {
         </div>
         {items.length > 0 && (
           <p className="m-0 mb-4 text-[12.5px] leading-[1.55] text-[rgba(243,240,234,.5)]">
-            We'll be in touch within 24 hours to bring your design to life.
+            Pay → approve your design → ready in 2 business days.
           </p>
         )}
         <button
@@ -271,6 +280,17 @@ export function CartDrawer() {
         >
           {checkingOut ? 'Redirecting to payment…' : 'Proceed to Checkout'}
         </button>
+        {items.length > 0 && (
+          <p className="m-0 mt-3 text-center text-[11.5px] leading-[1.5] text-[rgba(243,240,234,.45)]">
+            Secure payment by Paystack · M-Pesa, Airtel Money or card ·{' '}
+            <a
+              href={LINKS.LEGAL.returns}
+              className="whitespace-nowrap underline decoration-[rgba(243,240,234,.3)] underline-offset-[3px] transition-colors hover:text-accent hover:decoration-accent"
+            >
+              Returns policy
+            </a>
+          </p>
+        )}
 
         {items.length > 0 && isBusinessOrder && (
           <>

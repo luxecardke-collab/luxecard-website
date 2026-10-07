@@ -32,7 +32,9 @@ type CartContextValue = {
   isOpen: boolean;
   open: () => void;
   close: () => void;
-  addItem: (item: NewCartItem) => void;
+  // `customer` (the order form's email/phone) only improves Meta's matching
+  // of the AddToCart event; it's never stored by the cart.
+  addItem: (item: NewCartItem, customer?: { email?: string; phone?: string }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   totalCount: number;

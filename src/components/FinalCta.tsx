@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { LINKS } from '../data/links';
 import { useInquiryModal } from '../context/inquiryModalContext';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+import { WHATSAPP_SOURCES, whatsappLinkProps } from '../utils/whatsapp';
 
 // Unlike the site's other sections (useReveal), this entrance has to be
 // replayable every time the section comes back into view, not just once:
@@ -74,9 +74,7 @@ export function FinalCta() {
             Order Your LuxeCard
           </button>
           <a
-            href={LINKS.CONTACT}
-            target="_blank"
-            rel="noopener noreferrer"
+            {...whatsappLinkProps(WHATSAPP_SOURCES.finalCta)}
             className="inline-flex shrink-0 items-center gap-2 text-[14px] text-[rgba(243,240,234,.7)] underline decoration-[rgba(243,240,234,.3)] underline-offset-4 transition-colors duration-300 hover:text-accent hover:decoration-accent"
           >
             Talk to us on WhatsApp
