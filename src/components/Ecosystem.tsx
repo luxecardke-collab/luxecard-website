@@ -145,13 +145,15 @@ export function Ecosystem() {
                 />
               </div>
             </div>
-            <div className="flex items-center justify-between gap-4">
+            {/* Below 390px, slightly tighter spacing and text keep "Order Your
+                LuxeCard →" on one line; the chevrons stay where they are. */}
+            <div className="flex items-center justify-between gap-2 min-[390px]:gap-4">
               <button
                 type="button"
                 onClick={() => openInquiryModal('individual')}
                 onMouseEnter={preloadInquiryModal}
                 onFocus={preloadInquiryModal}
-                className="inline-flex items-center gap-2.5 text-[14.5px] text-ivory"
+                className="inline-flex items-center gap-1.5 whitespace-nowrap text-[14px] text-ivory min-[390px]:gap-2.5 min-[390px]:text-[14.5px]"
               >
                 Order Your LuxeCard <span className="font-inter">→</span>
               </button>
