@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { activeOffer, FINISH_PRICES_BY_LABEL, offerUnitPrice, productId } from '../../api/_lib/pricing';
 import { cardPageFaqs, HERO_IMAGE_SIZES, headlineParts, type CardFinishChoice, type CardPage } from '../data/cardPages';
 import { PHOTOS_BY_MATERIAL } from '../data/content';
-import { useMountReveal } from '../hooks/useMountReveal';
 import { useOffer } from '../hooks/useOffer';
 import { hasAdConsent, onConsentChange } from '../utils/consent';
 import { formatKes } from '../utils/formatPrice';
@@ -247,9 +246,9 @@ function PrimaryButton({ children, onClick, className = '' }: { children: ReactN
 }
 
 function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string | null; onFinish: (f: string) => void }) {
-  // Only the text rises in; the photo is there from the first paint (it's
-  // the page's largest paint, so a fade-in would hold that back).
-  const textStyle = useMountReveal(80);
+  // The text rises in like the homepage hero's (useMountReveal), but in CSS
+  // from the first paint: on phones the heading is the page's largest
+  // paint, and waiting for JavaScript to start the fade held it back.
   const choices = card.finishes ?? (card.image ? [card.image] : []);
 
   return (
@@ -263,7 +262,7 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
         className="relative z-[1] mx-auto grid max-w-[1320px] items-center gap-[clamp(40px,6vw,80px)] min-[900px]:min-h-[clamp(480px,62vh,650px)]"
         style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))' }}
       >
-        <div style={textStyle}>
+        <div className="animate-hero-rise">
           <div className={EYEBROW}>{card.hero.eyebrow}</div>
           {/* From 900px: exactly the homepage hero heading's size (.hero-title)
               and line height. */}

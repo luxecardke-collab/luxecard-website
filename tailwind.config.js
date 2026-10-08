@@ -24,6 +24,12 @@ export default {
         lux: 'cubic-bezier(.16, 1, .3, 1)',
       },
       keyframes: {
+        // useMountReveal's rise-and-fade as plain CSS, so it starts at the
+        // first paint instead of waiting for the page's JavaScript.
+        heroRise: {
+          from: { opacity: '0', transform: 'translateY(32px)' },
+          to: { opacity: '1', transform: 'none' },
+        },
         lcFloat: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-16px)' },
@@ -47,6 +53,7 @@ export default {
         },
       },
       animation: {
+        'hero-rise': 'heroRise 1.1s 80ms cubic-bezier(.16,1,.3,1) both',
         'lc-float': 'lcFloat 4.5s ease-in-out infinite',
         'marquee-left': 'marqueeLeft 32s linear infinite',
         'marquee-right': 'marqueeRight 38s linear infinite',
