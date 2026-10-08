@@ -1,5 +1,6 @@
 import metallicBlackPlaceholder from '../assets/portfolio/metallic-04.webp';
 import woodBlackPlaceholder from '../assets/portfolio/wood-14.webp';
+import chairmanBoxedPhoto from '../assets/landing/chairman/gold-boxed.webp';
 import metallicBlackPhoto from '../assets/landing/metal/metallic-black.webp';
 import woodBlackPhoto from '../assets/landing/wood/wood-black.webp';
 import woodNaturalPhoto from '../assets/landing/wood/wood-natural.webp';
@@ -37,7 +38,7 @@ export type CardPage = {
   // How customers see the card's name ("Metallic", not "metal").
   name: string;
   cta: string;
-  hero: { eyebrow: string; headline: string; subtext: string };
+  hero: { headline: string; subtext: string };
   // Swatches, or null for a card with no choice (see image, finishNote).
   finishes: CardFinishChoice[] | null;
   // The one picture for a card without swatches.
@@ -51,12 +52,14 @@ export type CardPage = {
   showcase: { headline: string; label: string; items: CardFinish[] };
   // That section's button ("Get your Wood LuxeCard").
   showcaseCta: string;
+  // An optional section after the card(s): how the card is presented.
+  presentation?: { headline: string; line: string; image: string; alt: string; width: number; height: number };
   // The light "What you get" section (the homepage's For Business layout).
   whatYouGet: { headline: string; points: { title: string; body: string }[] };
-  // null: no gallery until there are photos. `exclude` leaves out portfolio
-  // photos of another card (e.g. gold cards from the metallic folder) by
-  // file name ("metallic-01").
-  gallery: { material: PhotoMaterial; exclude?: string[] } | null;
+  // null: no gallery until there are photos. By portfolio file name
+  // ("metallic-01"): `exclude` leaves out photos of another card, `only`
+  // keeps just these (the Chairman's Cards, which sit in the metallic folder).
+  gallery: { material: PhotoMaterial; exclude?: string[]; only?: string[] } | null;
   // This card's own questions (shown first, under "About the … card"), then
   // the site's own answers by id.
   faqs: Faq[];
@@ -86,6 +89,13 @@ const cardPhoto = (name: string, width: number) => ({
 });
 
 // The site's answers every card page reuses, in the homepage FAQ's order.
+// The Chairman's Cards (gold) in the portfolio's metallic folder: on
+// /chairman's gallery, never /metal's.
+const CHAIRMAN_PHOTOS = [
+  'metallic-01', 'metallic-03', 'metallic-06', 'metallic-08', 'metallic-11', 'metallic-13',
+  'metallic-16', 'metallic-18', 'metallic-21', 'metallic-23', 'metallic-26', 'metallic-28',
+];
+
 const SHARED_FAQ_IDS = ['after-order', 'teams', 'etims', 'how-it-works', 'phones', 'update-profile', 'fees'];
 const NFC_POINT = { title: 'NFC + QR', body: 'Tap, or scan the QR code.' };
 const PROFILE_POINT = { title: 'Your digital profile', body: 'Update it any time.' };
@@ -98,7 +108,6 @@ const PLASTIC: CardPage = {
   name: 'Plastic',
   cta: 'Get my Plastic LuxeCard',
   hero: {
-    eyebrow: 'LUXECARD PLASTIC · NFC BUSINESS CARD',
     headline: 'YOUR BRAND. [YOUR COLOURS.]',
     subtext: 'Any colour you like. One tap shares your contact, socials and more.',
   },
@@ -141,7 +150,6 @@ const WOOD: CardPage = {
   name: 'Wood',
   cta: 'Get my Wood LuxeCard',
   hero: {
-    eyebrow: 'LUXECARD WOOD · NFC BUSINESS CARD',
     headline: 'A BUSINESS CARD PEOPLE [REMEMBER.]',
     subtext: 'Real wood. One tap shares your contact, socials and more.',
   },
@@ -199,7 +207,6 @@ const METALLIC: CardPage = {
   name: 'Metallic',
   cta: 'Get my Metallic LuxeCard',
   hero: {
-    eyebrow: 'LUXECARD METALLIC · NFC BUSINESS CARD',
     headline: 'A CARD WITH [REAL WEIGHT.]',
     // "Solid metal weight": the products section's own words for this card.
     subtext: 'Solid metal weight. One tap shares your contact, socials and more.',
@@ -231,11 +238,10 @@ const METALLIC: CardPage = {
         name: 'Metallic: Black',
         priceLabel: 'Metallic',
         blurb: 'Solid metal weight, in black.',
-        // Portfolio photo metallic-04, cropped to the card.
         image: metallicBlackPhoto,
-        alt: 'A black metallic LuxeCard, held up',
-        width: 720,
-        height: 536,
+        alt: 'LuxeCard in black metallic',
+        width: 800,
+        height: 499,
       },
     ],
   },
@@ -245,12 +251,8 @@ const METALLIC: CardPage = {
   },
   gallery: {
     material: 'metallic',
-    // Gold cards (the Chairman's Card's finish, not a Metallic option),
-    // and two whose colour isn't clearly Silver or Black.
-    exclude: [
-      'metallic-01', 'metallic-03', 'metallic-06', 'metallic-08', 'metallic-11', 'metallic-13', 'metallic-16',
-      'metallic-18', 'metallic-21', 'metallic-23', 'metallic-26', 'metallic-28', 'metallic-10', 'metallic-22',
-    ],
+    // The Chairman's Cards, and two whose colour isn't clearly Silver or Black.
+    exclude: [...CHAIRMAN_PHOTOS, 'metallic-10', 'metallic-22'],
   },
   faqs: [
     { q: 'What finishes are available?', a: 'Silver and Black. You’ll see yours on your mockup before production.' },
@@ -267,7 +269,6 @@ const CHAIRMAN: CardPage = {
   name: "Chairman's Card",
   cta: 'Get my Chairman’s Card',
   hero: {
-    eyebrow: 'LUXECARD CHAIRMAN’S CARD · NFC BUSINESS CARD',
     headline: 'RESERVED FOR THE [BOLDEST INTRODUCTIONS.]',
     subtext: 'A gold finish. One tap shares your contact, socials and more.',
   },
@@ -295,6 +296,14 @@ const CHAIRMAN: CardPage = {
       },
     ],
   },
+  presentation: {
+    headline: 'IN A PREMIUM [BLACK BOX.]',
+    line: 'Your Chairman’s Card, in its gold finish, comes in a premium black box.',
+    image: chairmanBoxedPhoto,
+    alt: 'The LuxeCard Chairman’s Card in its premium black box',
+    width: 800,
+    height: 703,
+  },
   whatYouGet: {
     headline: 'ONE CARD. [EVERYTHING] YOU NEED.',
     points: [
@@ -304,8 +313,7 @@ const CHAIRMAN: CardPage = {
       DESIGN_POINT,
     ],
   },
-  // Until there are Chairman's Card photos.
-  gallery: null,
+  gallery: { material: 'metallic', only: CHAIRMAN_PHOTOS },
   faqs: [
     {
       q: 'What makes the Chairman’s Card different?',
@@ -326,7 +334,7 @@ export const CARD_PAGES: CardPage[] = CARD_PAGE_SEO.map((seo) => {
 
 // How wide a card page's hero photo shows, for its srcset (desktop only;
 // phones don't show it).
-export const HERO_IMAGE_SIZES = '460px';
+export const HERO_IMAGE_SIZES = '(min-width: 1024px) 380px, 460px';
 
 // The image a card page shows first (for a high-priority preload).
 export function cardPageHeroImage(path: string): { image: string; srcSet?: string; sizes: string } | undefined {
