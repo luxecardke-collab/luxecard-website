@@ -10,6 +10,9 @@ const ROW_TWO = TESTIMONIALS.slice(3, 6);
 export function Testimonials({ testimonials }: { testimonials?: Testimonial[] } = {}) {
   return (
     <RevealSection
+      // Can be on screen at load (the card pages on phones), so its entrance
+      // starts from the first paint; elsewhere it reveals on scroll as before.
+      revealOnFirstPaint
       id="testimonials"
       className="scroll-mt-[84px] overflow-hidden border-t border-[rgba(255,255,255,.06)] py-[clamp(90px,13vh,150px)] min-[900px]:scroll-mt-[80px]"
     >

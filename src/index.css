@@ -251,7 +251,8 @@ button {
   .animate-lc-glow,
   .animate-lc-ripple,
   .animate-lc-float,
-  .animate-hero-rise {
+  .animate-hero-rise,
+  .animate-reveal-rise {
     animation: none;
   }
 

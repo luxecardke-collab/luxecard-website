@@ -1,13 +1,14 @@
 import { forwardRef, type ComponentPropsWithoutRef } from 'react';
 import { useReveal } from '../hooks/useReveal';
 
-type RevealSectionProps = ComponentPropsWithoutRef<'section'>;
+// revealOnFirstPaint: see useReveal's `firstPaint`.
+type RevealSectionProps = ComponentPropsWithoutRef<'section'> & { revealOnFirstPaint?: boolean };
 
 export const RevealSection = forwardRef<HTMLElement, RevealSectionProps>(function RevealSection(
-  { style, ...rest },
+  { style, className, revealOnFirstPaint = false, ...rest },
   forwardedRef
 ) {
-  const { ref, style: revealStyle } = useReveal<HTMLElement>();
+  const { ref, style: revealStyle, className: revealClass } = useReveal<HTMLElement>(0, { firstPaint: revealOnFirstPaint });
 
   return (
     <section
@@ -17,6 +18,7 @@ export const RevealSection = forwardRef<HTMLElement, RevealSectionProps>(functio
         else if (forwardedRef) forwardedRef.current = node;
       }}
       style={{ ...revealStyle, ...style }}
+      className={revealClass ? `${className ?? ''} ${revealClass}` : className}
       {...rest}
     />
   );

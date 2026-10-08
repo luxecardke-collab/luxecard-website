@@ -5,8 +5,8 @@ import { LINKS } from './links';
 import { PRODUCTION_TIMEFRAME } from './production';
 
 export const NAV_LINKS = [
-  { label: 'Products', href: '#products' },
   { label: 'How It Works', href: '#how' },
+  { label: 'Products', href: '#products' },
   { label: 'For Business', href: '#business' },
   { label: 'FAQs', href: '#faqs' },
   { label: 'Become an Affiliate', href: '/affiliate' },

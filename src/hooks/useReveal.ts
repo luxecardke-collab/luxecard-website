@@ -11,11 +11,20 @@ import { onScrollToTop } from './scrollTopReset';
  * Scrolling all the way back to the top re-arms every instance, so the next
  * scroll down plays the same entrance again, the same as a fresh load —
  * including a section that's already on screen when it re-arms.
+ *
+ * `firstPaint`: the same entrance starts in CSS (animate-reveal-rise) from
+ * the page's first paint, without waiting for JavaScript, for a section
+ * that can be on screen at load (the reviews, right under a short hero).
+ * Once the page is running, a section that wasn't on screen at load
+ * switches to the normal on-scroll reveal before it's seen, so it looks
+ * and behaves exactly as without this option.
  */
-export function useReveal<T extends HTMLElement>(delayMs = 0) {
+export function useReveal<T extends HTMLElement>(delayMs = 0, { firstPaint = false }: { firstPaint?: boolean } = {}) {
   const ref = useRef<T | null>(null);
   const reduced = useReducedMotion();
   const [visible, setVisible] = useState(reduced);
+  // 'css' while the first-paint animation is in charge; 'js' otherwise.
+  const [mode, setMode] = useState<'css' | 'js'>(firstPaint ? 'css' : 'js');
 
   useEffect(() => {
     if (reduced) {
@@ -63,8 +72,15 @@ export function useReveal<T extends HTMLElement>(delayMs = 0) {
       io.observe(el);
     };
 
-    arm();
+    if (firstPaint && el.getBoundingClientRect().top <= window.innerHeight * 0.88) {
+      // On screen at load: the CSS entrance is already playing.
+      setVisible(true);
+    } else {
+      setMode('js');
+      arm();
+    }
     const unsubscribe = onScrollToTop(() => {
+      setMode('js');
       setVisible(false);
       arm();
     });
@@ -73,17 +89,19 @@ export function useReveal<T extends HTMLElement>(delayMs = 0) {
       disarm();
       unsubscribe();
     };
-  }, [reduced]);
+  }, [reduced, firstPaint]);
 
-  const style: CSSProperties = reduced
-    ? {}
-    : {
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'none' : 'translateY(34px) scale(.98)',
-        transition: 'opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1)',
-        transitionDelay: `${delayMs}ms`,
-        willChange: 'opacity, transform',
-      };
+  const style: CSSProperties =
+    reduced || mode === 'css'
+      ? {}
+      : {
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'none' : 'translateY(34px) scale(.98)',
+          transition: 'opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1)',
+          transitionDelay: `${delayMs}ms`,
+          willChange: 'opacity, transform',
+        };
+  const className = !reduced && mode === 'css' ? 'animate-reveal-rise' : '';
 
-  return { ref, style, visible };
+  return { ref, style, className, visible };
 }
