@@ -70,10 +70,9 @@ export function ForBusiness({
             )}
           </div>
         </div>
-        <div
-          className="grid gap-px"
-          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', background: 'rgba(11,11,13,.12)' }}
-        >
+        {/* One column on phones, two from 640px: the four points always fill
+            the grid (auto-fit left an empty cell with three per row). */}
+        <div className="grid grid-cols-1 gap-px sm:grid-cols-2" style={{ background: 'rgba(11,11,13,.12)' }}>
           {benefits.map((b) => (
             <div key={b.title} className="bg-ivory px-[22px] py-[26px]">
               <div className="font-manrope text-[19px] tracking-[-.02em]">{b.title}</div>
