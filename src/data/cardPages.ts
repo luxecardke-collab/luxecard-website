@@ -17,6 +17,8 @@ export type CardFinishChoice = {
   // Exactly as the server's allow-list has it (SUB_OPTIONS_BY_LABEL).
   label: string;
   image: string;
+  // Smaller copies for phones, as an <img srcset>.
+  srcSet?: string;
   alt: string;
   // 'contain' for a cut-out card photo; 'cover' for a photo with a
   // background, cropped to the card (objectPosition says where).
@@ -83,7 +85,11 @@ const WOOD: CardPage = {
     {
       label: 'Natural',
       alt: 'LuxeCard in natural wood',
-      ...heroImage('wood', 'hero-natural', { image: '/images/card-wood.webp', fit: 'contain' }),
+      ...heroImage('wood', 'hero-natural', {
+        image: '/images/card-wood.webp',
+        srcSet: '/images/card-wood-640.webp 640w, /images/card-wood.webp 960w',
+        fit: 'contain',
+      }),
     },
     {
       label: 'Black',
@@ -142,10 +148,14 @@ export const CARD_PAGES: CardPage[] = CARD_PAGE_SEO.map((seo) => {
   return page;
 });
 
+// How wide a card page's hero photo shows, for its srcset.
+export const HERO_IMAGE_SIZES = '(min-width: 900px) 620px, calc(100vw - 40px)';
+
 // The image a card page shows first (for a high-priority preload).
-export function cardPageHeroImage(path: string): string | undefined {
+export function cardPageHeroImage(path: string): { image: string; srcSet?: string; sizes: string } | undefined {
   const card = cardPageFor(path);
-  return (card?.finishes?.[0] ?? card?.image)?.image;
+  const first = card?.finishes?.[0] ?? card?.image;
+  return first && { image: first.image, srcSet: first.srcSet, sizes: HERO_IMAGE_SIZES };
 }
 
 export function cardPageFor(path: string): CardPage | undefined {

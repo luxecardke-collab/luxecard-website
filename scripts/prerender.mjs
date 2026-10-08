@@ -49,7 +49,11 @@ for (const page of PAGES) {
   // A card page's first photo, fetched at high priority (it's the page's
   // largest paint).
   const heroImage = cardPageHeroImage(page.path);
-  const preload = heroImage ? `<link rel="preload" as="image" href="${heroImage}" fetchpriority="high" />` : '';
+  const preload = heroImage
+    ? heroImage.srcSet
+      ? `<link rel="preload" as="image" imagesrcset="${heroImage.srcSet}" imagesizes="${heroImage.sizes}" fetchpriority="high" />`
+      : `<link rel="preload" as="image" href="${heroImage.image}" fetchpriority="high" />`
+    : '';
   const head = [renderHeadTags(page), preload, page.prerender === false ? '' : HIDE_UNHYDRATED, renderJsonLd(page.path)]
     .filter(Boolean)
     .join('\n    ');

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check } from 'lucide-react';
 import { activeOffer, FINISH_PRICES_BY_LABEL, offerUnitPrice, productId } from '../../api/_lib/pricing';
-import { BULK_LINE, cardPageFaqs, headlineParts, type CardFinishChoice, type CardPage } from '../data/cardPages';
+import { BULK_LINE, cardPageFaqs, HERO_IMAGE_SIZES, headlineParts, type CardFinishChoice, type CardPage } from '../data/cardPages';
 import { FinishSwatches, Headline } from './CardPageParts';
 import { CUSTOMER_COUNT, PHOTOS_BY_MATERIAL, TESTIMONIALS } from '../data/content';
 import { useMountReveal } from '../hooks/useMountReveal';
@@ -111,10 +111,22 @@ function useViewContent(card: CardPage) {
 
 // The card photo for a finish: a cut-out card floats on the glow; a photo
 // with its own background is cropped to the card's shape.
-function FinishImage({ choice, eager, className = '' }: { choice: CardFinishChoice; eager?: boolean; className?: string }) {
+function FinishImage({
+  choice,
+  eager,
+  sizes,
+  className = '',
+}: {
+  choice: CardFinishChoice;
+  eager?: boolean;
+  sizes: string;
+  className?: string;
+}) {
   return (
     <img
       src={choice.image}
+      srcSet={choice.srcSet}
+      sizes={choice.srcSet ? sizes : undefined}
       alt={choice.alt}
       loading={eager ? 'eager' : 'lazy'}
       decoding="async"
@@ -156,8 +168,9 @@ function PrimaryButton({ children, onClick, className = '' }: { children: ReactN
 }
 
 function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string | null; onFinish: (f: string) => void }) {
+  // Only the text rises in; the photo is there from the first paint (it's
+  // the page's largest paint, so a fade-in would hold that back).
   const textStyle = useMountReveal(80);
-  const visualStyle = useMountReveal(280);
   const choices = card.finishes ?? (card.image ? [card.image] : []);
 
   return (
@@ -189,7 +202,7 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
           </p>
         </div>
 
-        <div style={visualStyle} className="relative">
+        <div className="relative">
           {/* A soft gold glow behind the card, like the homepage hero's. */}
           <div
             aria-hidden="true"
@@ -204,6 +217,7 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
                 // The first finish is preloaded from <head>; the others are
                 // fetched lazily (they're on screen, so straight away).
                 eager={i === 0}
+                sizes={HERO_IMAGE_SIZES}
                 className={`transition-opacity duration-500 ${
                   (finish ? choice.label === finish : i === 0) ? 'opacity-100' : 'opacity-0'
                 }`}
@@ -251,7 +265,7 @@ function WhySection({ card }: { card: CardPage }) {
                   style={{ background: 'radial-gradient(110% 80% at 50% 20%, #17171B, #0B0B0D 70%)' }}
                 >
                   <div className="relative h-full w-full">
-                    <FinishImage choice={choice} />
+                    <FinishImage choice={choice} sizes="(min-width: 900px) 280px, 42vw" />
                   </div>
                 </div>
                 <figcaption className="mt-3 text-center font-inter text-[11px] font-medium uppercase tracking-[.14em] text-grey-1">
