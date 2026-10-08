@@ -91,8 +91,11 @@ export function Ecosystem() {
             </p>
           </div>
 
+          {/* Its height comes from its contents, the same for every card
+              (the photo sits in a fixed-size frame), so switching cards never
+              changes it; only the offer badge adds height while an offer is on. */}
           <div
-            className="group relative mx-auto flex min-h-[clamp(400px,52vh,560px)] w-full max-w-[640px] flex-col justify-between overflow-hidden rounded-[20px] border border-[rgba(255,255,255,.08)] p-[clamp(28px,3vw,44px)] transition-colors duration-500 hover:border-[rgba(253,211,3,.34)] min-[900px]:mx-0 min-[900px]:ml-auto min-[900px]:mr-0"
+            className="group relative mx-auto flex w-full max-w-[640px] flex-col justify-between overflow-hidden rounded-[20px] border border-[rgba(255,255,255,.08)] p-[clamp(28px,3vw,44px)] transition-colors duration-500 hover:border-[rgba(253,211,3,.34)] min-[900px]:mx-0 min-[900px]:ml-auto min-[900px]:mr-0"
             style={{ background: 'radial-gradient(110% 80% at 70% 20%, #17171B, #0B0B0D 65%)' }}
           >
             <div className="flex items-start justify-between">
@@ -115,31 +118,42 @@ export function Ecosystem() {
                 NFC + QR
               </span>
             </div>
+            {/* Space around the floating photo. The float lifts it up to 16px,
+                so below 900px it rests 16px lower in that space (pt 16px more
+                than pb): the gap above it at the float's highest point then
+                matches the gap below it at its lowest. */}
             <div
-              className="flex flex-1 items-center justify-center py-6 sm:py-10"
+              className="flex flex-1 items-center justify-center pb-[52px] pt-[68px] min-[900px]:py-[59px]"
               style={cardStyle}
               onTransitionEnd={(e) => {
                 if (e.propertyName === 'opacity') onCardTransitionEnd();
               }}
             >
-              <img
-                src={finish.image}
-                alt={finish.alt}
-                width={finish.width}
-                height={finish.height}
-                loading="lazy"
-                decoding="async"
-                className="animate-lc-float max-h-[168px] w-auto max-w-[74%] rounded-lg sm:max-h-[210px] sm:max-w-[72%] sm:rounded-2xl"
-                style={{ boxShadow: '0 50px 90px -40px rgba(0,0,0,.95)' }}
-              />
+              {/* A fixed frame the size of the tallest card photo (210px high
+                  on desktop), so every card photo fits it at the same size it
+                  always had. */}
+              <div className="flex aspect-[960/574] w-[74%] max-w-[281px] items-center justify-center sm:w-[72%] sm:max-w-[351px] min-[900px]:aspect-auto min-[900px]:h-[210px] min-[900px]:max-w-[367px]">
+                <img
+                  src={finish.image}
+                  alt={finish.alt}
+                  width={finish.width}
+                  height={finish.height}
+                  loading="lazy"
+                  decoding="async"
+                  className="animate-lc-float h-auto max-h-full w-auto max-w-full rounded-lg sm:rounded-2xl"
+                  style={{ boxShadow: '0 50px 90px -40px rgba(0,0,0,.95)' }}
+                />
+              </div>
             </div>
-            <div className="flex items-center justify-between gap-4">
+            {/* Below 390px, slightly tighter spacing and text keep "Order Your
+                LuxeCard →" on one line; the chevrons stay where they are. */}
+            <div className="flex items-center justify-between gap-2 min-[390px]:gap-4">
               <button
                 type="button"
                 onClick={() => openInquiryModal('individual')}
                 onMouseEnter={preloadInquiryModal}
                 onFocus={preloadInquiryModal}
-                className="inline-flex items-center gap-2.5 text-[14.5px] text-ivory"
+                className="inline-flex items-center gap-1.5 whitespace-nowrap text-[14px] text-ivory min-[390px]:gap-2.5 min-[390px]:text-[14.5px]"
               >
                 Order Your LuxeCard <span className="font-inter">→</span>
               </button>
@@ -154,12 +168,21 @@ export function Ecosystem() {
             </div>
           </div>
 
-          <p
-            className="m-0 -mt-8 max-w-[300px] text-[14.5px] leading-[1.5] text-accent min-[900px]:hidden"
-            style={cardStyle}
-          >
-            {finish.blurb}
-          </p>
+          {/* Every card's line is laid out in the same spot (all but the
+              current one invisible), so the space is always that of the
+              longest and nothing below moves when the card changes. */}
+          <div className="-mt-8 grid max-w-[300px] min-[900px]:hidden">
+            {CARD_FINISHES.map((f) => (
+              <p
+                key={f.name}
+                aria-hidden={f !== finish}
+                className={`m-0 text-[14.5px] leading-[1.5] text-accent [grid-area:1/1] ${f === finish ? '' : 'invisible'}`}
+                style={f === finish ? cardStyle : undefined}
+              >
+                {f.blurb}
+              </p>
+            ))}
+          </div>
         </div>
       </div>
     </RevealSection>
