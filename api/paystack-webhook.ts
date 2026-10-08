@@ -1,6 +1,8 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import crypto from 'crypto';
+import { isTestEnvironment } from './_lib/attribution.js';
 import { recordPaidOrder, type PaystackOrderMetadata } from './_lib/orders.js';
+import { getSupabaseAdmin } from './_lib/supabaseAdmin.js';
 
 // Disables Vercel's automatic JSON body parsing so we can verify Paystack's
 // signature against the exact raw bytes they signed — parsing and
@@ -43,7 +45,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const expectedSignature = crypto.createHmac('sha512', secretKey).update(rawBody).digest('hex');
   const receivedSignature = req.headers['x-paystack-signature'];
 
-  if (!receivedSignature || receivedSignature !== expectedSignature) {
+  const signatureOk = !!receivedSignature && receivedSignature === expectedSignature;
+  await noteDelivery(signatureOk ? 'signature-ok' : !rawBody ? 'empty-body' : !receivedSignature ? 'no-signature' : 'bad-signature', rawBody.length);
+  if (!signatureOk) {
     // Do not process anything from a request that didn't genuinely come
     // from Paystack.
     res.status(401).json({ error: 'Invalid signature.' });
@@ -84,4 +88,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   res.status(200).json({ received: true, alreadyProcessed: !result.created });
+}
+
+// Testing aid, Preview and local only (never the live site): notes each
+// delivery and whether its signature checked out, in the short-lived
+// rate_limit_hits table (cleared daily), so a test run can see whether
+// Paystack's webhooks arrive.
+async function noteDelivery(outcome: string, bytes: number) {
+  if (!isTestEnvironment()) return;
+  try {
+    await getSupabaseAdmin().from('rate_limit_hits').insert({ route: 'paystack-webhook-test', key: `${outcome} (${bytes} bytes)` });
+  } catch {
+    // diagnostics only
+  }
 }
