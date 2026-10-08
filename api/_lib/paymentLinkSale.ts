@@ -6,11 +6,16 @@ import type { OrderSource, PaystackPayment, RecordOrderResult } from './orders.j
 import { getSupabaseAdmin } from './supabaseAdmin.js';
 
 // A sale closed on WhatsApp and paid through a Paystack payment link (a
-// Payment Page). The payment carries no cart, only what the team filled in
-// on the link's custom fields:
-//   "WhatsApp reference"  the customer's LC- code from their WhatsApp message
-//   "Payment type"        Full / Deposit / Balance
-//   "Referral code"       optional, an affiliate's code
+// Payment Page). The payment carries no cart, only the link's custom
+// fields. There are three pages, one per payment type, and each page's
+// reference field says which it is in its own name (Paystack's payment data
+// has no documented page ID, but always carries the custom fields):
+//   "WhatsApp reference (full payment)"   on the Full payment page
+//   "WhatsApp reference (deposit)"        on the Deposit page
+//   "WhatsApp reference (balance)"        on the Balance page
+//   "Referral code"                       optional, on each page
+// A single page with a plain "WhatsApp reference" field and a separate
+// "Payment type" field (Full / Deposit / Balance) is still understood.
 // Recorded from the same three places as website orders (webhook,
 // confirmation self-heal, nightly reconciliation); every payment is stored
 // once (order_payments.paystack_reference is unique), so it never matters
@@ -45,15 +50,39 @@ export function customField(metadata: unknown, names: string[]): string | null {
   return null;
 }
 
-const REFERENCE_FIELD = ['WhatsApp reference', 'whatsapp_reference'];
 const PAYMENT_TYPE_FIELD = ['Payment type', 'payment_type'];
 const REFERRAL_FIELD = ['Referral code', 'referral_code'];
+const REFERENCE_PREFIX = 'whatsappreference';
+
+// The page's "WhatsApp reference…" field: what was typed in it, and the
+// payment type its name gives (null for the plain "WhatsApp reference").
+export function referenceField(metadata: unknown): { present: boolean; value: string | null; typeFromPage: PaymentType | null } {
+  const fields = metadata && typeof metadata === 'object' ? (metadata as { custom_fields?: unknown }).custom_fields : null;
+  if (Array.isArray(fields)) {
+    for (const f of fields as CustomField[]) {
+      if (!f || typeof f !== 'object') continue;
+      const key = [fieldKey(f.display_name), fieldKey(f.variable_name)].find((k) => k.startsWith(REFERENCE_PREFIX));
+      if (!key) continue;
+      const suffix = key.slice(REFERENCE_PREFIX.length);
+      const typeFromPage: PaymentType | null = suffix.includes('deposit')
+        ? 'deposit'
+        : suffix.includes('balance')
+          ? 'balance'
+          : suffix.includes('full')
+            ? 'full'
+            : null;
+      const value = typeof f.value === 'string' ? f.value.trim().slice(0, 200) : typeof f.value === 'number' ? String(f.value) : '';
+      return { present: true, value: value || null, typeFromPage };
+    }
+  }
+  return { present: false, value: null, typeFromPage: null };
+}
 
 // True for a payment made through one of our WhatsApp payment links (it has
 // our custom fields); any other Paystack payment without a cart is left
 // alone, as before.
 export function isPaymentLinkSale(metadata: unknown): boolean {
-  return !!(customField(metadata, PAYMENT_TYPE_FIELD) || customField(metadata, REFERENCE_FIELD));
+  return !!(customField(metadata, PAYMENT_TYPE_FIELD) || referenceField(metadata).present);
 }
 
 // "lc 4f2a7k", "LC4F2A7K", " Lc-4F2A7K " -> "LC-4F2A7K"; anything that
@@ -100,9 +129,11 @@ export async function recordPaymentLinkSale(
     'Unknown customer';
   const customerPhone = (customer.phone ?? customField(metadata, ['Phone', 'Phone number']) ?? '').trim();
 
-  const rawCode = customField(metadata, REFERENCE_FIELD);
+  const refField = referenceField(metadata);
+  const rawCode = refField.value;
   const code = normalizeRefCode(rawCode);
-  const typedType = parsePaymentType(customField(metadata, PAYMENT_TYPE_FIELD));
+  // The page used decides the type; the older "Payment type" field is the fallback.
+  const typedType = refField.typeFromPage ?? parsePaymentType(customField(metadata, PAYMENT_TYPE_FIELD));
   const paymentType: PaymentType = typedType ?? 'full';
 
   // The visitor behind the code, with the ad they came from.
@@ -236,7 +267,7 @@ export async function recordPaymentLinkSale(
     ['Customer', customerName],
     ['Email', customerEmail],
     ['Phone', customerPhone],
-    ['Payment type', typedType ? typeLabel : `${typeLabel} (no payment type given, treated as Full)`],
+    ['Payment type', typedType ? `${typeLabel}${refField.typeFromPage ? ' (from the payment page used)' : ''}` : `${typeLabel} (payment page not recognised, treated as Full)`],
     ['Amount paid', formatKes(amount)],
     ['Order total so far', paymentType === 'balance' ? formatKes(newTotal) : null],
     ['Paid at', paidAt ? formatEat(new Date(paidAt)) : null],
