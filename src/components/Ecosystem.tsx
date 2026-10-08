@@ -91,8 +91,11 @@ export function Ecosystem() {
             </p>
           </div>
 
+          {/* Tall enough for the offer badge too, so the card is the same
+              height with or without an offer; any spare height goes above
+              and below the floating card photo, which stays centred. */}
           <div
-            className="group relative mx-auto flex min-h-[clamp(400px,52vh,560px)] w-full max-w-[640px] flex-col justify-between overflow-hidden rounded-[20px] border border-[rgba(255,255,255,.08)] p-[clamp(28px,3vw,44px)] transition-colors duration-500 hover:border-[rgba(253,211,3,.34)] min-[900px]:mx-0 min-[900px]:ml-auto min-[900px]:mr-0"
+            className="group relative mx-auto flex min-h-[500px] w-full sm:min-h-[560px] min-[900px]:min-h-[630px] max-w-[640px] flex-col justify-between overflow-hidden rounded-[20px] border border-[rgba(255,255,255,.08)] p-[clamp(28px,3vw,44px)] transition-colors duration-500 hover:border-[rgba(253,211,3,.34)] min-[900px]:mx-0 min-[900px]:ml-auto min-[900px]:mr-0"
             style={{ background: 'radial-gradient(110% 80% at 70% 20%, #17171B, #0B0B0D 65%)' }}
           >
             <div className="flex items-start justify-between">
@@ -116,7 +119,7 @@ export function Ecosystem() {
               </span>
             </div>
             <div
-              className="flex flex-1 items-center justify-center py-6 sm:py-10"
+              className="flex flex-1 items-center justify-center py-10 sm:py-14"
               style={cardStyle}
               onTransitionEnd={(e) => {
                 if (e.propertyName === 'opacity') onCardTransitionEnd();
