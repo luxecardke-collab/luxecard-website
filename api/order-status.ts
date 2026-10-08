@@ -58,11 +58,12 @@ export default async function handler(req: IncomingMessage, res: VercelResponse)
   // confirmation page report the Purchase to Meta with the right amount.
   // A WhatsApp sale's Purchase is decided on the server (only a full or
   // deposit payment, only with cookie consent): its confirmation page gets
-  // no value, so it never sends a browser Purchase of its own.
+  // no value, so it never sends a browser Purchase of its own, and is told
+  // the source so it can show the WhatsApp message instead.
   if (order?.payment_status === 'paid') {
     res
       .status(200)
-      .json(order.order_source === 'whatsapp' ? { paid: true } : { paid: true, value: Number(order.total), contents: purchaseContents(order.items) });
+      .json(order.order_source === 'whatsapp' ? { paid: true, source: 'whatsapp' } : { paid: true, value: Number(order.total), contents: purchaseContents(order.items) });
     return;
   }
 
@@ -109,13 +110,16 @@ export default async function handler(req: IncomingMessage, res: VercelResponse)
     }
 
     const amount = verifyData?.data?.amount;
+    const whatsappSale = isPaymentLinkSale(verifyData.data?.metadata);
     // Paystack amounts are in the smallest subunit (KES cents).
     res
       .status(200)
       .json(
-        paid && typeof amount === 'number' && !isPaymentLinkSale(verifyData.data?.metadata)
-          ? { paid, value: amount / 100, contents: purchaseContents(verifyData.data?.metadata?.items) }
-          : { paid }
+        paid && whatsappSale
+          ? { paid, source: 'whatsapp' }
+          : paid && typeof amount === 'number'
+            ? { paid, value: amount / 100, contents: purchaseContents(verifyData.data?.metadata?.items) }
+            : { paid }
       );
   } catch {
     res.status(200).json({ paid: false });
