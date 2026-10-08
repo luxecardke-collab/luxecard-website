@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { activeOffer, FINISH_PRICES_BY_LABEL, offerUnitPrice, productId } from '../../api/_lib/pricing';
 import { serverNow } from '../utils/serverClock';
-import { CARD_FINISHES } from '../data/content';
+import { CARD_FINISHES, type CardFinish } from '../data/content';
 import { trackMetaEventWithServer } from '../utils/metaPixel';
 import { useInquiryModal } from '../context/inquiryModalContext';
 import { useAutoCycle } from '../hooks/useAutoCycle';
@@ -16,14 +16,31 @@ import { RevealSection } from './RevealSection';
 const NAV_BUTTON_CLASS =
   'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgba(255,255,255,.16)] text-ivory transition-colors duration-300 hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
 
-export function Ecosystem() {
+// The card pages show their own card(s) here, with their own heading and
+// label; their Order button goes to the page's order form, and they send
+// their own ViewContent. The homepage uses the defaults.
+export function Ecosystem({
+  id = 'products',
+  heading,
+  label = 'Four Finishes. One Card.',
+  items = CARD_FINISHES,
+  onOrder,
+  trackViewContent = true,
+}: {
+  id?: string;
+  heading?: ReactNode;
+  label?: string;
+  items?: CardFinish[];
+  onOrder?: () => void;
+  trackViewContent?: boolean;
+} = {}) {
   const { open: openInquiryModal, preload: preloadInquiryModal } = useInquiryModal();
   const sectionRef = useRef<HTMLElement>(null);
   const { index, cardIn, priceIn, exitMs, enterMs, priceMs, onCardTransitionEnd, goToNext, goToPrev } = useAutoCycle(
-    CARD_FINISHES.length,
+    items.length,
     sectionRef
   );
-  const finish = CARD_FINISHES[index];
+  const finish = items[index];
   const offer = useOffer();
   const cardDurationMs = cardIn ? enterMs : exitMs;
   const cardStyle = {
@@ -41,7 +58,7 @@ export function Ecosystem() {
   // properly on screen. No-op without cookie consent.
   useEffect(() => {
     const section = sectionRef.current;
-    if (!section) return;
+    if (!section || !trackViewContent) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
@@ -66,21 +83,25 @@ export function Ecosystem() {
     );
     observer.observe(section);
     return () => observer.disconnect();
-  }, []);
+  }, [trackViewContent]);
 
   return (
     <RevealSection
       ref={sectionRef}
-      id="products"
+      id={id}
       className="scroll-mt-[84px] border-t border-[rgba(255,255,255,.06)] px-[clamp(20px,4vw,48px)] py-[clamp(90px,13vh,150px)] min-[900px]:scroll-mt-[80px]"
     >
       <div className="mx-auto max-w-[1320px]">
         <div className="flex flex-col gap-[clamp(44px,6vh,72px)] min-[900px]:flex-row min-[900px]:items-stretch">
           <div className="flex flex-col min-[900px]:justify-between">
             <h2 className="m-0 font-manrope text-[clamp(34px,5vw,68px)] font-bold leading-[.96] max-md:leading-[1.06] tracking-[-.032em]">
-              CRAFTED TO
-              <br />
-              IMPRESS.
+              {heading ?? (
+                <>
+                  CRAFTED TO
+                  <br />
+                  IMPRESS.
+                </>
+              )}
             </h2>
 
             <p
@@ -101,7 +122,7 @@ export function Ecosystem() {
             <div className="flex items-start justify-between">
               <div>
                 <div className="font-inter text-[10px] font-medium tracking-[.15em] text-accent">
-                  Four Finishes. One Card.
+                  {label}
                 </div>
                 <h3
                   className="mt-3 flex min-h-[2.3em] items-end font-manrope text-[clamp(24px,2.6vw,32px)] font-semibold leading-[.96] tracking-[-.03em]"
@@ -150,14 +171,16 @@ export function Ecosystem() {
             <div className="flex items-center justify-between gap-2 min-[390px]:gap-4">
               <button
                 type="button"
-                onClick={() => openInquiryModal('individual')}
-                onMouseEnter={preloadInquiryModal}
-                onFocus={preloadInquiryModal}
+                onClick={onOrder ?? (() => openInquiryModal('individual'))}
+                onMouseEnter={onOrder ? undefined : preloadInquiryModal}
+                onFocus={onOrder ? undefined : preloadInquiryModal}
                 className="inline-flex items-center gap-1.5 whitespace-nowrap text-[14px] text-ivory min-[390px]:gap-2.5 min-[390px]:text-[14.5px]"
               >
                 Order Your LuxeCard <span className="font-inter">→</span>
               </button>
-              <div className="flex items-center gap-2">
+              {/* With a single card there's nothing to switch to; the
+                  buttons keep their space so the card's layout is the same. */}
+              <div className={`flex items-center gap-2${items.length < 2 ? ' invisible' : ''}`}>
                 <button type="button" onClick={goToPrev} aria-label="Previous card" className={NAV_BUTTON_CLASS}>
                   <ChevronLeft size={18} strokeWidth={1.8} aria-hidden="true" />
                 </button>
@@ -172,7 +195,7 @@ export function Ecosystem() {
               current one invisible), so the space is always that of the
               longest and nothing below moves when the card changes. */}
           <div className="-mt-8 grid max-w-[300px] min-[900px]:hidden">
-            {CARD_FINISHES.map((f) => (
+            {items.map((f) => (
               <p
                 key={f.name}
                 aria-hidden={f !== finish}

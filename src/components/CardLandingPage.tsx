@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check } from 'lucide-react';
 import { activeOffer, FINISH_PRICES_BY_LABEL, offerUnitPrice, productId } from '../../api/_lib/pricing';
-import { BULK_LINE, cardPageFaqs, HERO_IMAGE_SIZES, headlineParts, type CardFinishChoice, type CardPage } from '../data/cardPages';
-import { FinishSwatches, Headline } from './CardPageParts';
+import { cardPageFaqs, HERO_IMAGE_SIZES, headlineParts, type CardFinishChoice, type CardPage } from '../data/cardPages';
 import { CUSTOMER_COUNT, PHOTOS_BY_MATERIAL, TESTIMONIALS } from '../data/content';
 import { useMountReveal } from '../hooks/useMountReveal';
 import { useOffer } from '../hooks/useOffer';
@@ -13,63 +11,111 @@ import { scrollToSection } from '../utils/scrollToSection';
 import { serverNow } from '../utils/serverClock';
 import { cardPageWhatsAppSource } from '../utils/whatsapp';
 import { CardOrderForm } from './CardOrderForm';
-import { FaqAccordion } from './FaqAccordion';
+import { FinishSwatches, Headline } from './CardPageParts';
+import { Ecosystem } from './Ecosystem';
+import { Faq } from './Faq';
 import { FinalCta, FinalCtaGlow } from './FinalCta';
+import { ForBusiness } from './ForBusiness';
 import { HowItWorks } from './HowItWorks';
 import { OfferBadge, OfferPrice } from './OfferPrice';
-import { RevealSection } from './RevealSection';
-import { TestimonialCard } from './Testimonials';
+import { Professionals } from './Professionals';
+import { Testimonials } from './Testimonials';
 
-// A card's landing page (/wood, …), for ads: everything on it is about that
-// one card, built from its entry in src/data/cardPages.ts and the site's
-// shared data and sections. Ordering happens on the page itself (#order),
-// straight to checkout without the cart.
+// A card's landing page (/wood, …), for ads. It's the homepage's own
+// sections in the homepage's order, with this card's content (from
+// src/data/cardPages.ts): hero, reviews, the card ("Crafted to Impress"),
+// how it works, real cards (the portfolio), what you get (the homepage's
+// light section), then the page's own order form, the FAQ and the closing
+// call to action. Ordering happens on the page itself (#order), straight to
+// checkout without the cart.
 
-const SECTION = 'scroll-mt-[84px] border-t border-[rgba(255,255,255,.06)] px-[clamp(20px,4vw,48px)] py-[clamp(90px,13vh,150px)] min-[900px]:scroll-mt-[80px]';
 const EYEBROW = 'mb-4 font-inter text-[10.5px] font-medium tracking-[.15em] text-accent';
-const H2 = 'm-0 font-manrope text-[clamp(32px,4.4vw,58px)] font-bold leading-[.98] max-md:leading-[1.06] tracking-[-.032em] text-balance';
-const LEAD = 'm-0 text-[16.5px] leading-[1.6] text-[rgba(243,240,234,.55)]';
 
 function scrollToOrder() {
   const form = document.getElementById('order');
   if (form) scrollToSection(form);
 }
 
+// A portfolio photo's file name ("wood-03") from its caption ("WOOD 03").
+const photoFile = (caption: string) => caption.toLowerCase().replace(' ', '-');
+
 export function CardLandingPage({ card }: { card: CardPage }) {
   const [finish, setFinish] = useRememberedFinish(card);
   useViewContent(card);
+  const testimonials = card.testimonials
+    .map((name) => TESTIMONIALS.find((t) => t.name === name))
+    .filter((t) => t !== undefined);
+  const gallery = card.gallery;
+  const photos = gallery
+    ? PHOTOS_BY_MATERIAL[gallery.material].filter((p) => !gallery.exclude?.includes(photoFile(p.caption)))
+    : [];
 
   return (
     <main className="pt-[var(--nav-h)]">
       <CardHero card={card} finish={finish} onFinish={setFinish} />
-      <WhySection card={card} />
-      <HowItWorks
-        heading={<Headline text={card.how.headline} />}
-        intro="Four simple steps to a more powerful connection."
-        note="Can’t tap? Every card has a QR code that opens the same profile."
+      <Testimonials testimonials={testimonials} />
+      <Ecosystem
+        id="card"
+        heading={<Headline text={card.showcase.headline} />}
+        label={card.showcase.label}
+        items={card.showcase.items}
+        onOrder={scrollToOrder}
+        trackViewContent={false}
       />
-      <WhatYouGet card={card} />
-      <Gallery card={card} />
-      <WhoItsFor card={card} />
-      <RevealSection id="faqs" className={SECTION}>
-        <div className="mx-auto max-w-[1000px]">
-          <h2 className={`${H2} mb-[clamp(36px,5vh,60px)]`}>
-            QUESTIONS,
-            <br />
-            ANSWERED.
-          </h2>
-          <FaqAccordion faqs={cardPageFaqs(card)} />
-        </div>
-      </RevealSection>
+      <HowItWorks heading={<Headline text="TAP. [CONNECT.] DONE." />} />
+      {photos.length > 0 && (
+        <Professionals
+          heading={
+            <>
+              MADE FOR BRANDS
+              <br />
+              ACROSS KENYA.
+            </>
+          }
+          cardPhotos={photos}
+        />
+      )}
+      <ForBusiness
+        id="what-you-get"
+        eyebrow="WHAT YOU GET"
+        // Plain (no gold) on the light background, as on the homepage.
+        heading={headlineParts(card.whatYouGet.headline).map((part) => part.text).join('')}
+        intro={<PriceOnLight card={card} />}
+        button={{ label: card.cta, onClick: scrollToOrder }}
+        showWhatsApp={false}
+        benefits={card.whatYouGet.points}
+      />
       <CardOrderForm card={card} finish={finish} onFinish={setFinish} />
+      <Faq faqs={cardPageFaqs(card)} />
       <FinalCta
-        heading={<FinalHeading text={card.finalCta.headline} />}
+        heading={<FinalHeading text="MAKE YOUR NEXT INTRODUCTION [COUNT.]" />}
         buttonLabel={`${card.cta} →`}
         onButtonClick={scrollToOrder}
         whatsappSource={cardPageWhatsAppSource(card, 'talk-to-us')}
       />
       <StickyOrderBar card={card} />
     </main>
+  );
+}
+
+// "One card, KES 9,000. A one-off payment …" for the light section, with the
+// offer price (struck-through regular price in a dark grey that reads on it).
+function PriceOnLight({ card }: { card: CardPage }) {
+  const offer = useOffer();
+  const price = FINISH_PRICES_BY_LABEL[card.priceLabel];
+  return (
+    <>
+      One card,{' '}
+      {offer && (
+        <>
+          <span className="sr-only">was </span>
+          <s className="whitespace-nowrap text-[rgba(11,11,13,.4)]">{formatKes(price)}</s>
+          <span className="sr-only">, now</span>{' '}
+        </>
+      )}
+      <span className="whitespace-nowrap font-semibold text-ink">{formatKes(offerUnitPrice(price, offer))}</span>
+      {offer && ` during ${offer.name}`}. A one-off payment, with no monthly or yearly fees.
+    </>
   );
 }
 
@@ -218,7 +264,6 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
             {card.hero.subtext}
           </p>
           <FinishSwatches card={card} finish={finish} onFinish={onFinish} label="Choose your finish" />
-          {card.finishNote && <p className="m-0 text-[14.5px] text-[rgba(243,240,234,.6)]">{card.finishNote}</p>}
           <CardPrice card={card} className="mt-7" />
           <PrimaryButton onClick={scrollToOrder} className="mt-7">
             {card.cta} <span className="font-inter">→</span>
@@ -235,7 +280,9 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
             className="pointer-events-none absolute left-1/2 top-1/2 h-[120%] w-[120%] -translate-x-1/2 -translate-y-1/2"
             style={{ background: 'radial-gradient(closest-side, rgba(253,211,3,.16), rgba(253,211,3,.04) 60%, transparent)' }}
           />
-          <div className="relative mx-auto aspect-[960/550] w-full max-w-[620px]">
+          {/* Smaller on phones; it floats like the cards in the homepage's
+              "Crafted to Impress" (no motion with reduced motion). */}
+          <div className="animate-lc-float relative mx-auto aspect-[960/550] w-full max-w-[260px] sm:max-w-[420px] min-[900px]:max-w-[620px]">
             {choices.map((choice, i) => (
               <FinishImage
                 key={choice.label}
@@ -258,201 +305,6 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
         style={{ background: 'linear-gradient(to bottom, transparent, var(--bg-base))' }}
       />
     </section>
-  );
-}
-
-function WhySection({ card }: { card: CardPage }) {
-  return (
-    <RevealSection id="why" className={SECTION}>
-      <div className="mx-auto grid max-w-[1320px] items-center gap-[clamp(44px,6vw,90px)] min-[900px]:grid-cols-2">
-        <div>
-          <div className={EYEBROW}>{card.why.eyebrow}</div>
-          <h2 className={H2}>
-            <Headline text={card.why.headline} />
-          </h2>
-          <p className={`${LEAD} mt-7 max-w-[520px]`}>{card.why.body}</p>
-          <ul className="m-0 mt-8 flex list-none flex-col gap-4 p-0">
-            {card.why.points.map((point) => (
-              <li key={point.title} className="flex items-start gap-3.5">
-                <Check size={18} strokeWidth={2} className="mt-[3px] shrink-0 text-accent" aria-hidden="true" />
-                <span className="text-[16px] leading-[1.55] text-[rgba(243,240,234,.75)]">
-                  <span className="font-semibold text-ivory">{point.title}:</span> {point.body}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        {/* The finishes side by side, or the card's one photo. */}
-        {(card.finishes ?? (card.image ? [card.image] : [])).length > 0 && (
-          <div className={`grid gap-[clamp(14px,2vw,24px)] ${card.finishes ? 'grid-cols-2' : 'mx-auto w-full max-w-[460px] grid-cols-1'}`}>
-            {(card.finishes ?? (card.image ? [card.image] : [])).map((choice) => (
-              <figure key={choice.label} className="m-0">
-                <div
-                  className="relative aspect-[960/550] rounded-2xl border border-[rgba(255,255,255,.06)] p-[8%]"
-                  style={{ background: 'radial-gradient(110% 80% at 50% 20%, #17171B, #0B0B0D 70%)' }}
-                >
-                  <div className="relative h-full w-full">
-                    <FinishImage choice={choice} sizes="(min-width: 900px) 280px, 42vw" />
-                  </div>
-                </div>
-                <figcaption className="mt-3 text-center font-inter text-[11px] font-medium uppercase tracking-[.14em] text-grey-1">
-                  {choice.label}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        )}
-      </div>
-    </RevealSection>
-  );
-}
-
-function WhatYouGet({ card }: { card: CardPage }) {
-  return (
-    <RevealSection id="what-you-get" className={SECTION}>
-      <div className="mx-auto grid max-w-[1320px] items-start gap-[clamp(44px,6vw,90px)] min-[900px]:grid-cols-[1.2fr_1fr]">
-        <div>
-          <div className={EYEBROW}>WHAT YOU GET</div>
-          <h2 className={H2}>
-            <Headline text={card.whatYouGet.headline} />
-          </h2>
-          <ul className="m-0 mt-9 flex list-none flex-col gap-4 p-0">
-            {card.whatYouGet.items.map((item) => (
-              <li key={item} className="flex items-start gap-3.5">
-                <Check size={18} strokeWidth={2} className="mt-[3px] shrink-0 text-accent" aria-hidden="true" />
-                <span className="text-[16px] leading-[1.55] text-[rgba(243,240,234,.75)]">{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div
-          className="rounded-[20px] border border-[rgba(255,255,255,.08)] p-[clamp(26px,3vw,40px)]"
-          style={{ background: 'radial-gradient(110% 80% at 70% 20%, #17171B, #0B0B0D 65%)' }}
-        >
-          <div className="font-inter text-[11px] font-medium tracking-[.14em] text-grey-1">ONE CARD</div>
-          <CardPrice card={card} className="mt-3" />
-          <p className="m-0 mt-5 text-[15px] leading-[1.55] text-[rgba(243,240,234,.7)]">{BULK_LINE}</p>
-          <OfferBulkNote />
-          <p className="m-0 mt-2 text-[15px] leading-[1.55] text-[rgba(243,240,234,.7)]">No monthly or yearly fees.</p>
-          <PrimaryButton onClick={scrollToOrder} className="mt-8">
-            {card.cta} <span className="font-inter">→</span>
-          </PrimaryButton>
-        </div>
-      </div>
-    </RevealSection>
-  );
-}
-
-// While an offer runs it takes the bulk discount's place (they never
-// combine), as checkout charges.
-function OfferBulkNote() {
-  const offer = useOffer();
-  if (!offer) return null;
-  return (
-    <p className="m-0 mt-2 text-[13.5px] leading-[1.5] text-[rgba(253,211,3,.8)]">
-      During {offer.name}, the offer replaces the bulk discount rather than adding to it.
-    </p>
-  );
-}
-
-const GALLERY_PREVIEW = 8;
-
-// A portfolio photo's file name ("wood-03") from its caption ("WOOD 03").
-const photoFile = (caption: string) => caption.toLowerCase().replace(' ', '-');
-
-// Real cards from the portfolio, then testimonials; a card without photos
-// yet shows the testimonials alone, under the site's own heading for them.
-function Gallery({ card }: { card: CardPage }) {
-  const gallery = card.gallery;
-  const photos = gallery
-    ? PHOTOS_BY_MATERIAL[gallery.material].filter((p) => !gallery.exclude?.includes(photoFile(p.caption)))
-    : [];
-  const [showAll, setShowAll] = useState(false);
-  const shown = showAll ? photos : photos.slice(0, GALLERY_PREVIEW);
-  const testimonials = card.testimonials
-    .map((name) => TESTIMONIALS.find((t) => t.name === name))
-    .filter((t) => t !== undefined);
-
-  return (
-    <RevealSection id="gallery" className={SECTION}>
-      <div className="mx-auto max-w-[1320px]">
-        <div className={EYEBROW}>{gallery ? 'REAL CARDS, REAL CLIENTS' : 'REAL CLIENTS'}</div>
-        <h2 className={H2}>
-          {gallery ? (
-            <Headline text={gallery.headline} />
-          ) : (
-            <>
-              LOVED BY <span className="text-accent">{CUSTOMER_COUNT}+</span> PROFESSIONALS ACROSS KENYA.
-            </>
-          )}
-        </h2>
-        {photos.length > 0 && (
-          <div className="mt-[clamp(36px,5vh,56px)] grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-            {shown.map((photo) => {
-              const label = gallery?.labels?.[photoFile(photo.caption)];
-              return (
-                <figure key={photo.image} className="relative m-0 overflow-hidden rounded-2xl border border-[rgba(255,255,255,.06)]">
-                  <img
-                    src={photo.image}
-                    alt={photo.alt}
-                    width={800}
-                    height={800}
-                    loading="lazy"
-                    decoding="async"
-                    className="aspect-square h-auto w-full object-cover"
-                  />
-                  {label && (
-                    <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(0,0,0,.75)] to-transparent px-3 pb-3 pt-8 text-[12.5px] text-ivory">
-                      {label}
-                    </figcaption>
-                  )}
-                </figure>
-              );
-            })}
-          </div>
-        )}
-        {!showAll && photos.length > GALLERY_PREVIEW && (
-          <button
-            type="button"
-            onClick={() => setShowAll(true)}
-            className="mt-6 rounded-full border border-[rgba(255,255,255,.14)] px-5 py-2.5 text-[14px] font-medium text-[rgba(243,240,234,.78)] transition-colors duration-300 hover:border-accent hover:text-accent"
-          >
-            See all {photos.length}
-          </button>
-        )}
-
-        {testimonials.length > 0 && (
-          <div className="mt-[clamp(56px,8vh,96px)] flex flex-wrap justify-center gap-4 sm:gap-5">
-            {testimonials.map((t) => (
-              <TestimonialCard key={t.name} testimonial={t} />
-            ))}
-          </div>
-        )}
-      </div>
-    </RevealSection>
-  );
-}
-
-function WhoItsFor({ card }: { card: CardPage }) {
-  return (
-    <RevealSection id="who-its-for" className={SECTION}>
-      <div className="mx-auto max-w-[1000px] text-center">
-        <h2 className={H2}>
-          <Headline text={card.whoFor.headline} />
-        </h2>
-        <ul className="m-0 mt-[clamp(32px,5vh,48px)] flex list-none flex-wrap justify-center gap-2.5 p-0">
-          {card.whoFor.tags.map((tag) => (
-            <li
-              key={tag}
-              className="rounded-full border border-[rgba(255,255,255,.12)] px-4 py-2 font-inter text-[12px] font-medium uppercase tracking-[.12em] text-[rgba(243,240,234,.75)]"
-            >
-              {tag}
-            </li>
-          ))}
-        </ul>
-        <p className={`${LEAD} mx-auto mt-8 max-w-[520px]`}>{card.whoFor.line}</p>
-      </div>
-    </RevealSection>
   );
 }
 

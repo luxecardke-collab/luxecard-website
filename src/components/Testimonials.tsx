@@ -5,7 +5,9 @@ import { RevealSection } from './RevealSection';
 const ROW_ONE = TESTIMONIALS.slice(0, 3);
 const ROW_TWO = TESTIMONIALS.slice(3, 6);
 
-export function Testimonials() {
+// The card pages pass their chosen testimonials (one row); the homepage
+// shows all of them in two rows.
+export function Testimonials({ testimonials }: { testimonials?: Testimonial[] } = {}) {
   return (
     <RevealSection
       id="testimonials"
@@ -23,8 +25,14 @@ export function Testimonials() {
       </h2>
 
       <div className="flex flex-col gap-4 sm:gap-5">
-        <MarqueeRow testimonials={ROW_ONE} animationClassName="animate-marquee-left" />
-        <MarqueeRow testimonials={ROW_TWO} animationClassName="animate-marquee-right" />
+        {testimonials ? (
+          <MarqueeRow testimonials={testimonials} animationClassName="animate-marquee-left" />
+        ) : (
+          <>
+            <MarqueeRow testimonials={ROW_ONE} animationClassName="animate-marquee-left" />
+            <MarqueeRow testimonials={ROW_TWO} animationClassName="animate-marquee-right" />
+          </>
+        )}
       </div>
     </RevealSection>
   );
@@ -53,7 +61,7 @@ function MarqueeRow({
   );
 }
 
-export function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
+function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
   return (
     <div className="w-[260px] shrink-0 rounded-2xl border border-[rgba(255,255,255,.08)] bg-surface p-5 transition-colors duration-300 hover:border-[rgba(253,211,3,.32)] sm:w-[340px] sm:p-6">
       <div className="mb-4 flex items-center gap-1.5 text-accent">
