@@ -1,4 +1,4 @@
-import { TESTIMONIALS, type Testimonial } from '../data/content';
+import { CUSTOMER_COUNT, TESTIMONIALS, type Testimonial } from '../data/content';
 import { CountUp } from './CountUp';
 import { RevealSection } from './RevealSection';
 
@@ -14,7 +14,7 @@ export function Testimonials() {
       <h2 className="m-0 mb-[clamp(36px,5vh,56px)] px-[clamp(20px,4vw,48px)] text-center font-manrope text-[clamp(32px,4.4vw,58px)] font-bold leading-[.98] max-md:leading-[1.06] tracking-[-.032em] md:mb-[clamp(48px,7vh,80px)]">
         {/* Mobile: "LOVED BY 1000+ PROFESSIONALS." From md up the heading
             continues onto a second line: "ACROSS KENYA." */}
-        LOVED BY <CountUp from={100} to={1000} suffix="+" className="text-accent" /> PROFESSIONALS
+        LOVED BY <CountUp from={100} to={CUSTOMER_COUNT} suffix="+" className="text-accent" /> PROFESSIONALS
         <span className="hidden md:inline">
           <br />
           ACROSS KENYA
@@ -53,7 +53,7 @@ function MarqueeRow({
   );
 }
 
-function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
+export function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
   return (
     <div className="w-[260px] shrink-0 rounded-2xl border border-[rgba(255,255,255,.08)] bg-surface p-5 transition-colors duration-300 hover:border-[rgba(253,211,3,.32)] sm:w-[340px] sm:p-6">
       <div className="mb-4 flex items-center gap-1.5 text-accent">

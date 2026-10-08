@@ -1,3 +1,4 @@
+import { CARD_PAGE_SEO } from '../data/cardPageSeo';
 import { LEGAL_DOCS } from '../data/legal';
 
 // Every URL the site serves as its own page, with the <head> each one gets.
@@ -53,6 +54,14 @@ export const LEGAL_PAGES: PageMeta[] = LEGAL_DOCS.map((doc) => ({
   description: LEGAL_DESCRIPTIONS[doc.path],
 }));
 
+// One per card landing page (src/data/cardPages.ts).
+export const CARD_LANDING_PAGES: PageMeta[] = CARD_PAGE_SEO.map((card) => ({
+  path: `/${card.slug}`,
+  file: `${card.slug}.html`,
+  title: card.title,
+  description: card.description,
+}));
+
 // Where Paystack sends a customer after paying; reads ?reference= to show
 // the order, so it's rendered in the browser only.
 export const ORDER_CONFIRMATION_PAGE: PageMeta = {
@@ -75,7 +84,14 @@ export const NOT_FOUND_PAGE: PageMeta = {
   noindex: true,
 };
 
-export const PAGES: PageMeta[] = [HOME_PAGE, AFFILIATE_PAGE, ...LEGAL_PAGES, ORDER_CONFIRMATION_PAGE, NOT_FOUND_PAGE];
+export const PAGES: PageMeta[] = [
+  HOME_PAGE,
+  AFFILIATE_PAGE,
+  ...LEGAL_PAGES,
+  ...CARD_LANDING_PAGES,
+  ORDER_CONFIRMATION_PAGE,
+  NOT_FOUND_PAGE,
+];
 
 const escapeAttr = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

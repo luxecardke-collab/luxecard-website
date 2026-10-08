@@ -29,6 +29,8 @@ import { WhatsAppButton } from './components/WhatsAppButton';
 // — /affiliate, /order-confirmation — so neither needs to be in the bundle
 // that renders the homepage's first paint.
 const AffiliateProgram = lazy(() => import('./components/AffiliateProgram').then((m) => ({ default: m.AffiliateProgram })));
+// The card landing pages (/wood, …), reached from ads and the nav.
+const CardLandingPage = lazy(() => import('./components/CardLandingPage').then((m) => ({ default: m.CardLandingPage })));
 const OrderConfirmation = lazy(() =>
   import('./components/OrderConfirmation').then((m) => ({ default: m.OrderConfirmation })),
 );
@@ -189,6 +191,10 @@ function Page({ path }: { path: string }) {
                   <LegalPage doc={route.doc} />
                 ) : route.kind === 'not-found' ? (
                   <NotFound />
+                ) : route.kind === 'card' ? (
+                  <Suspense fallback={null}>
+                    <CardLandingPage card={route.page} />
+                  </Suspense>
                 ) : route.kind === 'affiliate' ? (
                   <Suspense fallback={null}>
                     <AffiliateProgram />

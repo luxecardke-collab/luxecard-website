@@ -1,5 +1,7 @@
 import { getAttribution } from './attribution';
 
+export const QUOTE_CONFIRMATION_MESSAGE = 'Request received. Your quotation will be in your inbox shortly.';
+
 export type CartLeadPayload = {
   type: 'individual' | 'business';
   fullName: string;

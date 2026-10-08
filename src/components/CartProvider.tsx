@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CartContext, type CartItem, type CustomerInfo, type NewCartItem } from '../context/cartContext';
 import { CART_STORAGE_KEY as STORAGE_KEY } from '../utils/cartStorage';
-import { computeTotals, FINISH_PRICES_BY_LABEL, offerUnitPrice, productId, SUB_OPTIONS_BY_LABEL } from '../../api/_lib/pricing';
+import { computeTotals, FINISH_PRICES_BY_LABEL, SUB_OPTIONS_BY_LABEL } from '../../api/_lib/pricing';
 import { useOffer } from '../hooks/useOffer';
-import { trackMetaEventWithServer } from '../utils/metaPixel';
+import { trackAddToCart } from '../utils/checkout';
 import { Toast } from './Toast';
 
 type PersistedState = { items: CartItem[]; customerInfo: CustomerInfo | null; droppedInvalidItem: boolean };
@@ -87,23 +87,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback((newItem: NewCartItem, customer?: { email?: string; phone?: string }) => {
     // Outside the state updater so it fires once per add, even when React
-    // (StrictMode) runs updaters twice. Browser + Conversions API, same
-    // event ID; no-op without cookie consent. Value is after any offer.
-    const quantity = newItem.quantity ?? 1;
-    const unitPrice = offerUnitPrice(FINISH_PRICES_BY_LABEL[newItem.name] ?? newItem.price, offer);
-    const id = productId(newItem.name);
-    trackMetaEventWithServer(
-      'AddToCart',
-      {
-        value: unitPrice * quantity,
-        currency: 'KES',
-        content_type: 'product',
-        content_name: newItem.name,
-        content_ids: [id],
-        contents: [{ id, quantity, item_price: unitPrice }],
-      },
-      customer
-    );
+    // (StrictMode) runs updaters twice.
+    trackAddToCart({ name: newItem.name, price: newItem.price, quantity: newItem.quantity ?? 1 }, offer, customer);
     setItems((prev) => {
       const existing = prev.find((i) => i.name === newItem.name && i.subOption === newItem.subOption);
       if (existing) {
