@@ -1,5 +1,6 @@
 import { FINISH_PRICES_BY_LABEL } from '../../api/_lib/pricing';
-import { CARD_FINISHES, FAQS, faqAnswerText } from '../data/content';
+import { cardPageFaqs, cardPageFor, type CardPage } from '../data/cardPages';
+import { CARD_FINISHES, FAQS, faqAnswerText, type Faq } from '../data/content';
 import { LINKS } from '../data/links';
 import { SITE_URL } from './pages';
 
@@ -58,10 +59,10 @@ function products() {
   });
 }
 
-function faqPage() {
+function faqPage(faqs: Faq[] = FAQS) {
   return {
     '@type': 'FAQPage',
-    mainEntity: FAQS.map((faq) => ({
+    mainEntity: faqs.map((faq) => ({
       '@type': 'Question',
       name: faq.q,
       acceptedAnswer: { '@type': 'Answer', text: faqAnswerText(faq.a) },
@@ -71,9 +72,39 @@ function faqPage() {
 
 // A <script type="application/ld+json"> for the given page's <head>, or ''
 // for pages without structured data.
+// A card page: that card as a Product (regular price, from the price list),
+// and its FAQ.
+function cardPageGraph(card: CardPage) {
+  const finish = CARD_FINISHES.find((f) => f.priceLabel === card.priceLabel);
+  if (!finish) throw new Error(`No CARD_FINISHES entry for the "${card.priceLabel}" card page`);
+  return [
+    organization(),
+    {
+      '@type': 'Product',
+      name: `LuxeCard ${finish.name}`,
+      description: card.productDescription ?? finish.blurb,
+      image: `${SITE_URL}${finish.image}`,
+      brand: { '@type': 'Brand', name: 'LuxeCard' },
+      offers: {
+        '@type': 'Offer',
+        price: String(FINISH_PRICES_BY_LABEL[card.priceLabel]),
+        priceCurrency: 'KES',
+        availability: 'https://schema.org/InStock',
+        url: `${SITE_URL}${card.path}`,
+        seller: { '@id': ORGANIZATION_ID },
+      },
+    },
+    faqPage(cardPageFaqs(card)),
+  ];
+}
+
 export function renderJsonLd(path: string): string {
-  if (path !== '/') return '';
-  const graph = { '@context': 'https://schema.org', '@graph': [organization(), ...products(), faqPage()] };
+  const card = cardPageFor(path);
+  if (path !== '/' && !card) return '';
+  const graph = {
+    '@context': 'https://schema.org',
+    '@graph': card ? cardPageGraph(card) : [organization(), ...products(), faqPage()],
+  };
   // "<" escaped so no string in the data can close the <script> early.
   return `<script type="application/ld+json">${JSON.stringify(graph).replace(/</g, '\\u003c')}</script>`;
 }

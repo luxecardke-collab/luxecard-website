@@ -27,7 +27,13 @@ type CheckoutRequestBody = {
   expectedTotal?: unknown;
   // Landing page UTM parameters + fbclid (src/utils/attribution.ts).
   attribution?: unknown;
+  // Set by a card page's order form (e.g. "/wood"): where a cancelled
+  // checkout goes back to, instead of the cart.
+  returnTo?: unknown;
 };
+
+// The card landing pages (src/data/cardPages.ts) a checkout can return to.
+const RETURN_PATHS = /^\/(wood|plastic|metal|chairman)$/;
 
 const clip = (value: unknown, max: number): string | null =>
   typeof value === 'string' && value.trim() ? value.trim().slice(0, max) : null;
@@ -88,7 +94,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const { items, customer, referralCode, metaTracking, expectedTotal, attribution } = body ?? {};
+  const { items, customer, referralCode, metaTracking, expectedTotal, attribution, returnTo } = body ?? {};
 
   if (!customer?.name || !customer?.email || !customer?.phone) {
     res.status(400).json({ error: 'Missing customer name, email, or phone.' });
@@ -175,8 +181,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               : undefined,
             // Sends the user back here with their cart reopened when they
             // cancel from Paystack's checkout page (the X button), rather
-            // than leaving them on whatever default Paystack falls back to.
-            cancel_action: `${origin}/?checkout=cancelled`,
+            // than leaving them on whatever default Paystack falls back to;
+            // from a card page, back to that page's order form.
+            cancel_action:
+              typeof returnTo === 'string' && RETURN_PATHS.test(returnTo)
+                ? `${origin}${returnTo}#order`
+                : `${origin}/?checkout=cancelled`,
             ...metaTrackingMetadata(req, metaTracking, origin),
           },
         }),

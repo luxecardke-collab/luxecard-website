@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ReactNode,
   type KeyboardEvent as ReactKeyboardEvent,
   type MutableRefObject,
   type Ref,
@@ -45,7 +46,9 @@ const MATERIAL_FILTERS: { value: PhotoMaterial; label: string }[] = [
   { value: 'metallic', label: 'Metallic' },
 ];
 
-export function Professionals() {
+// A card page passes its own heading and that card's photos (no finish
+// filter then); the homepage shows every finish.
+export function Professionals({ heading, cardPhotos }: { heading?: ReactNode; cardPhotos?: ProfessionalPhoto[] } = {}) {
   const isMobile = useMediaQuery('(max-width: 767px)');
   const [filter, setFilter] = useState<PhotoMaterial | null>('plastic');
   // Each finish keeps its own slide position, independent of the others.
@@ -61,7 +64,7 @@ export function Professionals() {
   useEffect(() => {
     const section = sectionRef.current;
     const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
-    if (!isMobile || !section || saveData) return;
+    if (!isMobile || !section || saveData || cardPhotos) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
@@ -91,9 +94,9 @@ export function Professionals() {
     );
     observer.observe(section);
     return () => observer.disconnect();
-  }, [isMobile]);
+  }, [isMobile, cardPhotos]);
   const photos =
-    isMobile && filter ? PROFESSIONAL_PHOTOS.filter((p) => p.material === filter) : PROFESSIONAL_PHOTOS;
+    cardPhotos ?? (isMobile && filter ? PROFESSIONAL_PHOTOS.filter((p) => p.material === filter) : PROFESSIONAL_PHOTOS);
 
   const { ref: headingRef, style: headingStyle } = useReveal<HTMLHeadingElement>();
 
@@ -106,9 +109,13 @@ export function Professionals() {
             style={headingStyle}
             className="m-0 font-manrope text-[clamp(34px,5vw,68px)] font-bold leading-[.96] max-md:leading-[1.06] tracking-[-.032em]"
           >
-            TRUSTED ACROSS
-            <br />
-            INDUSTRIES.
+            {heading ?? (
+              <>
+                TRUSTED ACROSS
+                <br />
+                INDUSTRIES.
+              </>
+            )}
           </h2>
           <div className="flex max-w-[420px] flex-wrap gap-2">
             {PROFESSIONAL_CHIPS.map((chip) => (
@@ -118,12 +125,17 @@ export function Professionals() {
         </div>
 
         {isMobile ? (
-          <PhotoCarousel key={filter ?? 'all'} id={filter ?? 'all'} photos={photos} positions={positions} />
+          <PhotoCarousel
+            key={cardPhotos ? 'card' : (filter ?? 'all')}
+            id={cardPhotos ? 'card' : (filter ?? 'all')}
+            photos={photos}
+            positions={positions}
+          />
         ) : (
           <PhotoGrid photos={photos} />
         )}
 
-        {isMobile && <FilterPills active={filter} onChange={setFilter} />}
+        {isMobile && !cardPhotos && <FilterPills active={filter} onChange={setFilter} />}
       </div>
     </RevealSection>
   );

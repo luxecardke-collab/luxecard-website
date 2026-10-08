@@ -79,7 +79,9 @@ export function CountUp({ from, to, suffix = '', durationMs = 2400, className }:
   const final = `${to}${suffix}`;
 
   return (
-    <span ref={ref} aria-label={final} className={`inline-grid justify-items-center ${className ?? ''}`}>
+    <span ref={ref} className={`inline-grid justify-items-center ${className ?? ''}`}>
+      {/* What screen readers read: the final number, never the count. */}
+      <span className="sr-only">{final}</span>
       <span aria-hidden="true" className="invisible [grid-area:1/1]">
         {final}
       </span>

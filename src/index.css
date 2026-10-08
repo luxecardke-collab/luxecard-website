@@ -23,7 +23,9 @@
   font-style: normal;
   font-display: swap;
   font-weight: 700;
-  src: url('@fontsource/manrope/files/manrope-latin-700-normal.woff2') format('woff2');
+  /* From public/fonts and preloaded, like 800 below: section headings
+     (e.g. the reviews', on screen at load on the card pages) use it. */
+  src: url('/fonts/manrope-700.woff2') format('woff2');
 }
 @font-face {
   font-family: 'Manrope';
@@ -241,6 +243,16 @@ button {
   animation: finalCtaGlowIn 1.2s ease-out forwards;
 }
 
+/* A card page's hero on phones: room under the price for the offer badge,
+   only while an offer is on by the visitor's clock (the offer-space class,
+   set before the first paint by the head script in src/seo/offerSpace.ts). */
+@media (max-width: 639px) {
+  .offer-space .offer-reserve {
+    min-height: 62px;
+    align-content: flex-start;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -250,7 +262,9 @@ button {
   .animate-marquee-right,
   .animate-lc-glow,
   .animate-lc-ripple,
-  .animate-lc-float {
+  .animate-lc-float,
+  .animate-hero-rise,
+  .animate-reveal-rise {
     animation: none;
   }
 

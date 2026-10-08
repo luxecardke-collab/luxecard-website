@@ -1,9 +1,10 @@
-import { FAQS } from '../data/content';
+import { FAQS, type Faq as FaqItem } from '../data/content';
 import { useReveal } from '../hooks/useReveal';
 import { FaqAccordion } from './FaqAccordion';
 import { RevealSection } from './RevealSection';
 
-export function Faq() {
+// A card page passes its own questions (grouped like the homepage's).
+export function Faq({ faqs = FAQS }: { faqs?: FaqItem[] } = {}) {
   const { ref, style } = useReveal<HTMLHeadingElement>();
 
   return (
@@ -22,7 +23,7 @@ export function Faq() {
           <br />
           ANSWERED.
         </h2>
-        <FaqAccordion faqs={FAQS} />
+        <FaqAccordion faqs={faqs} />
       </div>
     </RevealSection>
   );

@@ -5,8 +5,8 @@ import { LINKS } from './links';
 import { PRODUCTION_TIMEFRAME } from './production';
 
 export const NAV_LINKS = [
-  { label: 'Products', href: '#products' },
   { label: 'How It Works', href: '#how' },
+  { label: 'Products', href: '#products' },
   { label: 'For Business', href: '#business' },
   { label: 'FAQs', href: '#faqs' },
   { label: 'Become an Affiliate', href: '/affiliate' },
@@ -111,9 +111,9 @@ export const CARD_FINISHES: CardFinish[] = [
   {
     name: 'Wood: Natural & Black',
     priceLabel: 'Wood',
-    blurb: 'Naturally lightweight, with a warm, distinctive grain.',
+    blurb: 'Real wood, naturally lightweight, with a warm, distinctive grain.',
     image: '/images/card-wood.webp',
-    alt: 'LuxeCard in wood finish',
+    alt: 'LuxeCard in real wood',
     width: 960,
     height: 550,
   },
@@ -189,7 +189,7 @@ function discoverPortfolioPhotos(): Record<PhotoMaterial, ProfessionalPhoto[]> {
   >;
 }
 
-const PHOTOS_BY_MATERIAL = discoverPortfolioPhotos();
+export const PHOTOS_BY_MATERIAL = discoverPortfolioPhotos();
 
 // Interleaved (plastic, wood, metallic, plastic, ...) so every row of the
 // desktop grid mixes finishes; the mobile filter pills pick out one material.
@@ -210,7 +210,10 @@ export const FOR_BUSINESS_BENEFITS = [
 // FaqAccordion): "{contact}" becomes a "Contact us" link to the site's
 // WhatsApp contact; "{prices}" the card price list, with any offer applied;
 // "{offer}" a sentence about the offer, only while one is on.
-export type Faq = { q: string; a: string; group?: string };
+// `id` lets other pages (the card pages) reuse an answer without copying it;
+// `cardPageA` is the answer's wording there, where it differs (the card
+// pages order through their own form, not the cart).
+export type Faq = { q: string; a: string; group?: string; id?: string; cardPageA?: string };
 
 const GROUP_ORDERING = 'Ordering and pricing';
 const GROUP_BUSINESSES = 'For businesses';
@@ -247,6 +250,7 @@ export const FAQS: Faq[] = [
   },
   {
     group: GROUP_ORDERING,
+    id: 'after-order',
     q: 'What happens after I order, and how long does it take?',
     a: `Our team will reach out within 24 hours to collect your details and brand assets. We’ll then design your card and share mockups for your review. Once you approve, production takes anywhere from a few hours to ${PRODUCTION_TIMEFRAME}, depending on your design. For large corporate orders, we’ll confirm the timeline with you. Delivery fees vary by location and are paid by you upon arrival, except for the Chairman’s Card, where LuxeCard covers all transport costs.`,
   },
@@ -257,21 +261,27 @@ export const FAQS: Faq[] = [
   },
   {
     group: GROUP_BUSINESSES,
+    id: 'teams',
     q: 'Can businesses get LuxeCards for their teams?',
     a: `Yes. Choose “For teams” when ordering to add cards for your whole team in one order, with ${BULK_DISCOUNT} when you order more than ${BULK_DISCOUNT_THRESHOLD} cards.`,
+    cardPageA: `Yes. Tick “Ordering for a business?” in the order form and choose how many cards your team needs, with ${BULK_DISCOUNT} when you order more than ${BULK_DISCOUNT_THRESHOLD} cards.`,
   },
   {
     group: GROUP_BUSINESSES,
+    id: 'etims',
     q: 'Do you provide eTIMS tax invoices?',
     a: `Yes. On a “For teams” order, tick “I need an eTIMS tax invoice” and enter your KRA PIN and registered business name. Your eTIMS invoice will be emailed within ${ETIMS_INVOICE_TIMEFRAME} of payment. Need a quotation first? Request one from your cart. Quotation orders need a 50% deposit to begin, with the balance due when your cards are ready.`,
+    cardPageA: `Yes. In the order form, tick “Ordering for a business?”, then “I need an eTIMS tax invoice”, and enter your KRA PIN and registered business name. Your eTIMS invoice will be emailed within ${ETIMS_INVOICE_TIMEFRAME} of payment. Need a quotation first? Request a quote from the order form. Quotation orders need a 50% deposit to begin, with the balance due when your cards are ready.`,
   },
   {
     group: GROUP_USING,
+    id: 'how-it-works',
     q: 'How does it work? Do I need an app?',
     a: 'No app needed, for you or the person you’re sharing with. Tap your card on their phone and your digital profile opens instantly in their browser, ready to save your contact details.',
   },
   {
     group: GROUP_USING,
+    id: 'phones',
     q: 'Which phones does it work with?',
     a: 'Most modern smartphones read LuxeCard with a simple tap: iPhone XR and newer, and most Android phones with NFC switched on. If a phone doesn’t support tapping, they can scan the QR code on your card instead.',
   },
@@ -282,6 +292,7 @@ export const FAQS: Faq[] = [
   },
   {
     group: GROUP_USING,
+    id: 'update-profile',
     q: 'Can I update what’s on my profile?',
     // Merges the original "Can I update my information after getting my
     // card?" and "What can I include on my digital profile?" answers.
@@ -289,10 +300,14 @@ export const FAQS: Faq[] = [
   },
   {
     group: GROUP_AFTER,
+    id: 'fees',
     q: 'Are there any monthly or yearly fees?',
     a: 'No. Each LuxeCard is a one-off payment, with no subscriptions or recurring fees.',
   },
 ];
+
+// The customer count the site quotes ("1000+ professionals").
+export const CUSTOMER_COUNT = 1000;
 
 export type Testimonial = { quote: string; name: string };
 
@@ -313,7 +328,11 @@ export const TESTIMONIALS: Testimonial[] = [
 ];
 
 export const FOOTER_LINKS = {
-  columnOne: { title: 'Explore', links: NAV_LINKS },
+  // "Cards" to match the nav, where the card pages replaced "Products".
+  columnOne: {
+    title: 'Explore',
+    links: NAV_LINKS.map((link) => (link.href === '#products' ? { ...link, label: 'Cards' } : link)),
+  },
   columnTwo: {
     title: 'Connect',
     links: [

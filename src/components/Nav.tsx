@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
-import { ShoppingCart } from 'lucide-react';
+import { ChevronDown, ShoppingCart } from 'lucide-react';
+import { CARD_PAGES, cardPageFor } from '../data/cardPages';
 import { NAV_LINKS } from '../data/content';
 import { useContactModal } from '../context/contactModalContext';
 import { useInquiryModal } from '../context/inquiryModalContext';
 import { useCart } from '../context/cartContext';
 import { useNavMenu } from '../context/navMenuContext';
+import { usePagePath } from '../context/pagePathContext';
 import { useHydrated } from '../hooks/useHydrated';
 import { useInert } from '../hooks/useInert';
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -32,6 +34,16 @@ export function Nav() {
   const { open: openContactModal, preload: preloadContactModal } = useContactModal();
   const { open: openCart, preloadDrawer, totalCount, isOpen: cartOpen } = useCart();
   const resolveNavHref = useResolveNavHref();
+  // On a card page the order buttons go to that page's own order form.
+  const onCardPage = !!cardPageFor(usePagePath());
+  const orderNow = () => {
+    if (onCardPage) {
+      const form = document.getElementById('order');
+      if (form) scrollToSection(form);
+    } else {
+      openInquiryModal('individual');
+    }
+  };
   // The cart is restored from localStorage, which the prerendered HTML can't
   // know about, so its count only shows once hydration is done.
   const cartCount = useHydrated() ? totalCount : 0;
@@ -146,19 +158,23 @@ export function Nav() {
         {wide ? (
           <>
             <div className="flex items-center justify-self-center gap-[clamp(20px,3vw,40px)] text-sm text-[rgba(243,240,234,.68)]">
-              {NAV_LINKS.map((link) => (
-                <a key={link.href} href={resolveNavHref(link.href)} className="hover:text-accent">
-                  {link.label}
-                </a>
-              ))}
+              {NAV_LINKS.map((link) =>
+                link.href === '#products' ? (
+                  <CardsDropdown key={link.href} seeAllHref={resolveNavHref(link.href)} />
+                ) : (
+                  <a key={link.href} href={resolveNavHref(link.href)} className="hover:text-accent">
+                    {link.label}
+                  </a>
+                )
+              )}
             </div>
             <div className="flex items-center justify-self-end gap-3">
               <CartButton onClick={openCart} onPreload={preloadDrawer} count={cartCount} />
               <button
                 type="button"
-                onClick={() => openInquiryModal('individual')}
-                onMouseEnter={preloadInquiryModal}
-                onFocus={preloadInquiryModal}
+                onClick={orderNow}
+                onMouseEnter={onCardPage ? undefined : preloadInquiryModal}
+                onFocus={onCardPage ? undefined : preloadInquiryModal}
                 className="inline-flex items-center gap-2 rounded-full bg-ivory px-5 py-[11px] text-[13.5px] font-semibold tracking-[.01em] text-ink transition-transform duration-300 ease-lux hover:-translate-y-0.5 hover:bg-white"
               >
                 Order Your LuxeCard
@@ -205,8 +221,37 @@ export function Nav() {
                 transitionDelay: menuOpen ? '100ms' : '0ms',
               }}
             >
+              <a
+                href={resolveNavHref('#top')}
+                onClick={(e) => handleMobileNavClick(e, resolveNavHref('#top'))}
+                className="font-manrope text-[22px]"
+              >
+                Home
+              </a>
               {NAV_LINKS.map((link) => {
                 const resolvedHref = resolveNavHref(link.href);
+                if (link.href === '#products') {
+                  // The card pages, grouped, in place of "Products".
+                  return (
+                    <div key={link.href} className="flex flex-col gap-3">
+                      <span className="font-inter text-[11px] font-medium tracking-[.14em] text-grey-1">CARDS</span>
+                      <div className="flex flex-col gap-3 border-l border-[rgba(255,255,255,.1)] pl-4">
+                        {CARD_PAGES.map((card) => (
+                          <a key={card.path} href={card.path} className="font-manrope text-[19px]">
+                            {card.name}
+                          </a>
+                        ))}
+                        <a
+                          href={resolvedHref}
+                          onClick={(e) => handleMobileNavClick(e, resolvedHref)}
+                          className="font-manrope text-[19px] text-[rgba(243,240,234,.6)]"
+                        >
+                          See all cards
+                        </a>
+                      </div>
+                    </div>
+                  );
+                }
                 return (
                   <a
                     key={link.href}
@@ -236,10 +281,10 @@ export function Nav() {
                 onClick={() => {
                   returnFocusToToggle();
                   closeMenu();
-                  openInquiryModal('individual');
+                  orderNow();
                 }}
-                onMouseEnter={preloadInquiryModal}
-                onFocus={preloadInquiryModal}
+                onMouseEnter={onCardPage ? undefined : preloadInquiryModal}
+                onFocus={onCardPage ? undefined : preloadInquiryModal}
                 className="mt-1.5 rounded-full bg-ivory py-[15px] text-center font-semibold text-ink"
               >
                 Order Your LuxeCard
@@ -249,6 +294,98 @@ export function Nav() {
         </div>
       )}
     </nav>
+  );
+}
+
+// Desktop "Cards" menu (in place of "Products"): the card pages, then the
+// homepage's products section. Opens on hover or click; Escape, a click
+// elsewhere or tabbing away closes it.
+function CardsDropdown({ seeAllHref }: { seeAllHref: string }) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useInert(panelRef, open);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    };
+    const onPointer = (e: PointerEvent) => {
+      if (!wrapperRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', onPointer);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onPointer);
+    };
+  }, [open]);
+
+  return (
+    <div
+      ref={wrapperRef}
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onBlur={(e) => {
+        if (!wrapperRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
+      }}
+    >
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className={`flex items-center gap-1 hover:text-accent ${open ? 'text-accent' : ''}`}
+      >
+        Cards
+        <ChevronDown
+          size={14}
+          strokeWidth={1.8}
+          aria-hidden="true"
+          className="transition-transform duration-300"
+          style={{ transform: open ? 'rotate(180deg)' : 'none' }}
+        />
+      </button>
+      {/* The top padding keeps the hover area continuous from the button to the panel. */}
+      <div
+        ref={panelRef}
+        aria-hidden={!open}
+        className="absolute left-1/2 top-full z-[1] min-w-[200px] pt-3 transition-[opacity,transform] duration-300 ease-lux"
+        style={{
+          opacity: open ? 1 : 0,
+          transform: `translateX(-50%) translateY(${open ? 0 : -6}px)`,
+          pointerEvents: open ? 'auto' : 'none',
+        }}
+      >
+        <div
+          className="flex flex-col rounded-2xl border border-[rgba(255,255,255,.1)] p-2"
+          style={{ background: 'rgba(12,12,14,.97)', boxShadow: '0 30px 60px -25px rgba(0,0,0,.8)' }}
+        >
+          {CARD_PAGES.map((card) => (
+            <a
+              key={card.path}
+              href={card.path}
+              className="rounded-xl px-4 py-2.5 text-ivory hover:bg-[rgba(255,255,255,.04)] hover:text-accent"
+            >
+              {card.name}
+            </a>
+          ))}
+          <a
+            href={seeAllHref}
+            onClick={() => setOpen(false)}
+            className="mt-1 border-t border-[rgba(255,255,255,.08)] px-4 pb-2.5 pt-3 text-[rgba(243,240,234,.6)] hover:text-accent"
+          >
+            See all cards
+          </a>
+        </div>
+      </div>
+    </div>
   );
 }
 

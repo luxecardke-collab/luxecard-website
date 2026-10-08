@@ -2,18 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Minus, Plus, Trash2, X } from 'lucide-react';
 import { useCart, type CartItem } from '../context/cartContext';
 import { useInquiryModal } from '../context/inquiryModalContext';
-import { LINKS } from '../data/links';
-import { getReferralCode } from '../utils/referralCode';
-import { getMetaCheckoutTracking, trackMetaEventWithServer } from '../utils/metaPixel';
-import { getAttribution } from '../utils/attribution';
 import { HONEYPOT_NAME } from '../utils/honeypot';
-import { sendQuoteRequest } from '../utils/cartLead';
-import { BULK_DISCOUNT_THRESHOLD, FINISH_PRICES_BY_LABEL, offerUnitPrice, productId, type Offer } from '../../api/_lib/pricing';
+import { QUOTE_CONFIRMATION_MESSAGE, sendQuoteRequest } from '../utils/cartLead';
+import { startCheckout } from '../utils/checkout';
+import { BULK_DISCOUNT_THRESHOLD, FINISH_PRICES_BY_LABEL, offerUnitPrice, type Offer } from '../../api/_lib/pricing';
 import { offerHeadline, offerLastDay } from '../utils/offerText';
 import { syncServerClock } from '../utils/serverClock';
 import { OfferPrice } from './OfferPrice';
-
-const QUOTE_CONFIRMATION_MESSAGE = 'Request received. Your quotation will be in your inbox shortly.';
+import { PaymentLine } from './PaymentLine';
 
 function formatPrice(value: number) {
   return `KES ${value.toLocaleString()}`;
@@ -130,54 +126,21 @@ export function CartDrawer() {
       return;
     }
 
-    // Browser + Conversions API, same event ID; no-op without cookie consent.
-    trackMetaEventWithServer(
-      'InitiateCheckout',
-      {
-        value: totalPrice,
-        currency: 'KES',
-        num_items: totalCount,
-        content_type: 'product',
-        content_ids: [...new Set(items.map((i) => productId(i.name)))],
-        contents: items.map((i) => ({ id: productId(i.name), quantity: i.quantity, item_price: offerUnitPrice(unitPrice(i), rowOffer) })),
-      },
-      { email: customerInfo.email, phone: customerInfo.phone }
-    );
-
     setCheckingOut(true);
-    try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: items.map((i) => ({ name: i.name, subOption: i.subOption, quantity: i.quantity })),
-          customer: customerInfo,
-          referralCode: getReferralCode(),
-          // Only present when the visitor accepted cookies; without it the
-          // server never sends this purchase to Meta.
-          metaTracking: getMetaCheckoutTracking() ?? undefined,
-          // Checkout refuses to charge anything other than this.
-          expectedTotal: confirmedTotal.current ?? totalPrice,
-          // Which campaign/ad set/ad they came from, saved on the order.
-          attribution: getAttribution(),
-        }),
-      });
-      const data = await res.json();
-      if (res.status === 409 && data.code === 'PRICE_CHANGED') {
-        // e.g. the offer ended while the cart was open: show the new price
-        // rather than charging it unannounced.
-        confirmedTotal.current = typeof data.total === 'number' ? data.total : null;
-        void syncServerClock(true);
-        notify('Prices have changed', data.error);
-        setCheckingOut(false);
-        return;
-      }
-      if (!res.ok || !data.authorization_url) {
-        throw new Error(data.error ?? 'Could not start checkout.');
-      }
-      window.location.href = data.authorization_url;
-    } catch (err) {
-      notify('Checkout failed', err instanceof Error ? err.message : 'Please try again.');
+    const result = await startCheckout({
+      items: items.map((i) => ({ name: i.name, subOption: i.subOption, quantity: i.quantity })),
+      customer: customerInfo,
+      total: confirmedTotal.current ?? totalPrice,
+      itemOffer: rowOffer,
+    });
+    if (result.status === 'price-changed') {
+      // e.g. the offer ended while the cart was open: show the new price
+      // rather than charging it unannounced.
+      confirmedTotal.current = result.total;
+      notify('Prices have changed', result.message);
+      setCheckingOut(false);
+    } else if (result.status === 'error') {
+      notify('Checkout failed', result.message);
       setCheckingOut(false);
     }
   };
@@ -280,17 +243,7 @@ export function CartDrawer() {
         >
           {checkingOut ? 'Redirecting to payment…' : 'Proceed to Checkout'}
         </button>
-        {items.length > 0 && (
-          <p className="m-0 mt-3 text-center text-[11.5px] leading-[1.5] text-[rgba(243,240,234,.45)]">
-            Secure payment by Paystack · M-Pesa, Airtel Money or card ·{' '}
-            <a
-              href={LINKS.LEGAL.returns}
-              className="whitespace-nowrap underline decoration-[rgba(243,240,234,.3)] underline-offset-[3px] transition-colors hover:text-accent hover:decoration-accent"
-            >
-              Returns policy
-            </a>
-          </p>
-        )}
+        {items.length > 0 && <PaymentLine className="mt-3" />}
 
         {items.length > 0 && isBusinessOrder && (
           <>

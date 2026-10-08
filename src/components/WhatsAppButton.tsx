@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useCart } from '../context/cartContext';
 import { useNavMenu } from '../context/navMenuContext';
 import { usePagePath } from '../context/pagePathContext';
-import { WHATSAPP_SOURCES, whatsappLinkProps } from '../utils/whatsapp';
+import { cardPageFor } from '../data/cardPages';
+import { cardPageWhatsAppSource, WHATSAPP_SOURCES, whatsappLinkProps } from '../utils/whatsapp';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
 const TRANSITION_MS = 250;
@@ -43,6 +44,7 @@ export function WhatsAppButton() {
   const { isOpen: menuOpen } = useNavMenu();
   const reducedMotion = useReducedMotion();
   const pagePath = usePagePath();
+  const cardPage = cardPageFor(pagePath);
 
   useEffect(() => {
     let landmarks = findLandmarks();
@@ -126,13 +128,20 @@ export function WhatsAppButton() {
 
   return (
     <a
-      {...whatsappLinkProps(pagePath === '/affiliate' ? WHATSAPP_SOURCES.floatingAffiliate : WHATSAPP_SOURCES.floating)}
+      {...whatsappLinkProps(
+        cardPage
+          ? cardPageWhatsAppSource(cardPage, 'floating-button')
+          : pagePath === '/affiliate'
+            ? WHATSAPP_SOURCES.floatingAffiliate
+            : WHATSAPP_SOURCES.floating
+      )}
       aria-label="Chat with us on WhatsApp"
       aria-hidden={hidden}
       // inert takes it out of the tab order and pointer hit-testing while hidden.
       inert={hidden}
       tabIndex={hidden ? -1 : undefined}
-      className="fixed bottom-[calc(clamp(16px,4vw,28px)+var(--cookie-banner-h,0px))] right-[clamp(16px,4vw,28px)] z-[150] flex h-14 w-14 items-center justify-center rounded-full hover:-translate-y-0.5"
+      // Kept above the cookie banner and a card page's order bar (phones).
+      className="fixed bottom-[calc(clamp(16px,4vw,28px)+var(--cookie-banner-h,0px)+var(--order-bar-h,0px))] right-[clamp(16px,4vw,28px)] z-[150] flex h-14 w-14 items-center justify-center rounded-full hover:-translate-y-0.5"
       style={{
         background: '#25D366',
         boxShadow: '0 14px 32px -10px rgba(0,0,0,.55)',

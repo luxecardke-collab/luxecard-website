@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useInquiryModal } from '../context/inquiryModalContext';
 import { useReducedMotion } from '../hooks/useReducedMotion';
-import { WHATSAPP_SOURCES, whatsappLinkProps } from '../utils/whatsapp';
+import { WHATSAPP_SOURCES, whatsappLinkProps, type WhatsAppSource } from '../utils/whatsapp';
 
 // Unlike the site's other sections (useReveal), this entrance has to be
 // replayable every time the section comes back into view, not just once:
@@ -40,7 +40,20 @@ function useReplayableReveal<T extends HTMLElement>() {
 // `visible`, above), and back out the moment it leaves either edge of the
 // viewport. After that one-shot animation settles, nothing here keeps
 // re-rendering while the page scrolls past.
-export function FinalCta() {
+//
+// The card pages pass their own heading (with the glowing word, see
+// FinalCtaGlow), button and WhatsApp source; the homepage uses the defaults.
+export function FinalCta({
+  heading,
+  buttonLabel = 'Order Your LuxeCard',
+  onButtonClick,
+  whatsappSource = WHATSAPP_SOURCES.finalCta,
+}: {
+  heading?: ReactNode;
+  buttonLabel?: string;
+  onButtonClick?: () => void;
+  whatsappSource?: WhatsAppSource;
+} = {}) {
   const { open: openInquiryModal, preload: preloadInquiryModal } = useInquiryModal();
   const { ref, visible } = useReplayableReveal<HTMLElement>();
 
@@ -55,26 +68,26 @@ export function FinalCta() {
           id="final-cta-heading"
           className="m-0 font-manrope text-[clamp(30px,4.4vw,52px)] font-bold leading-[1.05] tracking-[-.032em] text-balance"
         >
-          READY TO{' '}
-          <span className="final-cta-glow relative inline-block" data-text="UPGRADE">
-            UPGRADE
-          </span>{' '}
-          YOUR BUSINESS CARD?
+          {heading ?? (
+            <>
+              READY TO <FinalCtaGlow text="UPGRADE" /> YOUR BUSINESS CARD?
+            </>
+          )}
         </h2>
 
         <div className="flex flex-col items-center gap-4 sm:flex-row">
           <button
             type="button"
-            onClick={() => openInquiryModal('individual')}
-            onMouseEnter={preloadInquiryModal}
-            onFocus={preloadInquiryModal}
+            onClick={onButtonClick ?? (() => openInquiryModal('individual'))}
+            onMouseEnter={onButtonClick ? undefined : preloadInquiryModal}
+            onFocus={onButtonClick ? undefined : preloadInquiryModal}
             className="inline-flex shrink-0 items-center gap-2.5 rounded-full bg-ivory px-[clamp(20px,5vw,34px)] py-[clamp(14px,3.5vw,18px)] text-[clamp(13.5px,3.2vw,16px)] font-semibold text-bg transition-[transform,box-shadow] duration-[.4s] ease-lux hover:-translate-y-[3px]"
             style={{ boxShadow: '0 18px 44px -22px rgba(243,240,234,.6)' }}
           >
-            Order Your LuxeCard
+            {buttonLabel}
           </button>
           <a
-            {...whatsappLinkProps(WHATSAPP_SOURCES.finalCta)}
+            {...whatsappLinkProps(whatsappSource)}
             className="inline-flex shrink-0 items-center gap-2 text-[14px] text-[rgba(243,240,234,.7)] underline decoration-[rgba(243,240,234,.3)] underline-offset-4 transition-colors duration-300 hover:text-accent hover:decoration-accent"
           >
             Talk to us on WhatsApp
@@ -253,5 +266,14 @@ export function FinalCta() {
         </defs>
       </svg>
     </section>
+  );
+}
+
+// The heading's glowing word (see .final-cta-glow in index.css).
+export function FinalCtaGlow({ text }: { text: string }) {
+  return (
+    <span className="final-cta-glow relative inline-block" data-text={text}>
+      {text}
+    </span>
   );
 }

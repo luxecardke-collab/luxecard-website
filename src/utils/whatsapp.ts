@@ -36,6 +36,21 @@ export const WHATSAPP_SOURCES = {
   faq: { button: 'contact-us', section: 'faq', message: "Hi LuxeCard, I have a question that isn't in your FAQ." },
 } satisfies Record<string, WhatsAppSource>;
 
+// The WhatsApp links on a card page (/wood, …), recorded under that page.
+export function cardPageWhatsAppSource(
+  card: { slug: string; name: string },
+  button: 'floating-button' | 'order-form' | 'talk-to-us'
+): WhatsAppSource {
+  return {
+    button,
+    section: `${card.slug}-page`,
+    message:
+      button === 'talk-to-us'
+        ? `Hi LuxeCard, I'm ready to order my ${card.name} LuxeCard. Can you help me get started?`
+        : `Hi LuxeCard, I have a question about the ${card.name} LuxeCard.`,
+  };
+}
+
 // The visitor's reference code, "LC-" + 6 characters from an alphabet with
 // no look-alikes (no 0/O, 1/I). Made on their first WhatsApp tap and reused
 // on every later one (it's kept in this browser), so one code ties all of a

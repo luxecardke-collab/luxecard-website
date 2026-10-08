@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { DEMO_PROFILE, STAGES, type Stage } from '../data/content';
 import { useHowItWorksStage } from '../hooks/useHowItWorksStage';
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -82,7 +82,19 @@ function DesktopSteps({ stage, select }: { stage: number; select: (i: number) =>
   );
 }
 
-export function HowItWorks() {
+// The card pages pass their own heading and a note under the steps; the
+// homepage uses the defaults.
+const DEFAULT_HEADING = 'HOW IT WORKS';
+
+export function HowItWorks({
+  heading = DEFAULT_HEADING,
+  intro = 'Four simple steps to a more powerful connection.',
+  note,
+}: {
+  heading?: ReactNode;
+  intro?: string;
+  note?: string;
+} = {}) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const isMobile = useMediaQuery('(max-width: 767px)');
   const { stage, select } = useHowItWorksStage(sectionRef, !isMobile);
@@ -99,13 +111,16 @@ export function HowItWorks() {
       <div className="mx-auto max-w-[1320px]">
         <div className="mb-[clamp(48px,7vh,88px)] flex flex-wrap items-end justify-between gap-6">
           <h2
-            className="m-0 shrink-0 font-manrope text-[clamp(38px,5.6vw,72px)] font-bold leading-none max-md:leading-[1.06] tracking-[-.032em] min-[900px]:whitespace-nowrap"
+            // A longer card-page heading may wrap on phones.
+            className={`m-0 shrink-0 font-manrope text-[clamp(38px,5.6vw,72px)] font-bold leading-none max-md:leading-[1.06] tracking-[-.032em] min-[900px]:whitespace-nowrap${
+              heading === DEFAULT_HEADING ? '' : ' max-w-full'
+            }`}
             style={{ wordSpacing: '.18em' }}
           >
-            HOW IT WORKS
+            {heading}
           </h2>
           <p className="m-0 max-w-[320px] text-[16.5px] leading-[1.6] text-[rgba(243,240,234,.52)]">
-            Four simple steps to a more powerful connection.
+            {intro}
           </p>
         </div>
 
@@ -267,6 +282,9 @@ export function HowItWorks() {
             </div>
           </div>
         </div>
+        {note && (
+          <p className="m-0 mt-[clamp(36px,5vh,56px)] text-[14.5px] leading-[1.6] text-[rgba(243,240,234,.5)]">{note}</p>
+        )}
       </div>
     </RevealSection>
   );

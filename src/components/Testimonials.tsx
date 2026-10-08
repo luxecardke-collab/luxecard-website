@@ -1,20 +1,25 @@
-import { TESTIMONIALS, type Testimonial } from '../data/content';
+import { CUSTOMER_COUNT, TESTIMONIALS, type Testimonial } from '../data/content';
 import { CountUp } from './CountUp';
 import { RevealSection } from './RevealSection';
 
 const ROW_ONE = TESTIMONIALS.slice(0, 3);
 const ROW_TWO = TESTIMONIALS.slice(3, 6);
 
-export function Testimonials() {
+// The card pages pass their chosen testimonials (one row); the homepage
+// shows all of them in two rows.
+export function Testimonials({ testimonials }: { testimonials?: Testimonial[] } = {}) {
   return (
     <RevealSection
+      // Can be on screen at load (the card pages on phones), so its entrance
+      // starts from the first paint; elsewhere it reveals on scroll as before.
+      revealOnFirstPaint
       id="testimonials"
       className="scroll-mt-[84px] overflow-hidden border-t border-[rgba(255,255,255,.06)] py-[clamp(90px,13vh,150px)] min-[900px]:scroll-mt-[80px]"
     >
       <h2 className="m-0 mb-[clamp(36px,5vh,56px)] px-[clamp(20px,4vw,48px)] text-center font-manrope text-[clamp(32px,4.4vw,58px)] font-bold leading-[.98] max-md:leading-[1.06] tracking-[-.032em] md:mb-[clamp(48px,7vh,80px)]">
         {/* Mobile: "LOVED BY 1000+ PROFESSIONALS." From md up the heading
             continues onto a second line: "ACROSS KENYA." */}
-        LOVED BY <CountUp from={100} to={1000} suffix="+" className="text-accent" /> PROFESSIONALS
+        LOVED BY <CountUp from={100} to={CUSTOMER_COUNT} suffix="+" className="text-accent" /> PROFESSIONALS
         <span className="hidden md:inline">
           <br />
           ACROSS KENYA
@@ -23,8 +28,14 @@ export function Testimonials() {
       </h2>
 
       <div className="flex flex-col gap-4 sm:gap-5">
-        <MarqueeRow testimonials={ROW_ONE} animationClassName="animate-marquee-left" />
-        <MarqueeRow testimonials={ROW_TWO} animationClassName="animate-marquee-right" />
+        {testimonials ? (
+          <MarqueeRow testimonials={testimonials} animationClassName="animate-marquee-left" />
+        ) : (
+          <>
+            <MarqueeRow testimonials={ROW_ONE} animationClassName="animate-marquee-left" />
+            <MarqueeRow testimonials={ROW_TWO} animationClassName="animate-marquee-right" />
+          </>
+        )}
       </div>
     </RevealSection>
   );
