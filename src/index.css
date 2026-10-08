@@ -23,7 +23,9 @@
   font-style: normal;
   font-display: swap;
   font-weight: 700;
-  src: url('@fontsource/manrope/files/manrope-latin-700-normal.woff2') format('woff2');
+  /* From public/fonts and preloaded, like 800 below: section headings
+     (e.g. the reviews', on screen at load on the card pages) use it. */
+  src: url('/fonts/manrope-700.woff2') format('woff2');
 }
 @font-face {
   font-family: 'Manrope';

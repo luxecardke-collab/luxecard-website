@@ -25,12 +25,15 @@
     <!-- Start the nav logo downloading with the HTML rather than after the JS
          bundle renders the nav, so it is ready when the nav fades in. -->
     <link rel="preload" as="image" href="/images/luxecard-logo.webp" fetchpriority="high" />
-    <!-- Only the two fonts the hero heading (Manrope 800) and its body text
-         (Inter 400, the default weight) actually use — every other weight
-         waits for the normal CSS discovery. These paths are the exact same
+    <!-- Only the fonts the first screen uses: the hero heading (Manrope
+         800), its body text (Inter 400, the default weight) and section
+         headings (Manrope 700; on the card pages the reviews heading is on
+         screen at load) — every other weight waits for the normal CSS
+         discovery. These paths are the exact same
          URLs the @font-face rules in index.css resolve to (see there), so
          the browser doesn't fetch the font twice. -->
     <link rel="preload" as="font" type="font/woff2" href="/fonts/manrope-800.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/manrope-700.woff2" crossorigin />
     <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-400.woff2" crossorigin />
   </head>
   <body>
