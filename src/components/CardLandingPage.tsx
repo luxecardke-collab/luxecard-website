@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { activeOffer, FINISH_PRICES_BY_LABEL, offerUnitPrice, productId } from '../../api/_lib/pricing';
+import { activeOffer, FINISH_PRICES_BY_LABEL, OFFERS, offerUnitPrice, productId } from '../../api/_lib/pricing';
 import { cardPageFaqs, HERO_IMAGE_SIZES, headlineParts, type CardFinishChoice, type CardPage } from '../data/cardPages';
 import { PHOTOS_BY_MATERIAL } from '../data/content';
 import { useOffer } from '../hooks/useOffer';
@@ -220,10 +220,19 @@ function FinishImage({
   );
 }
 
+// The offer badge only appears once the page knows the server's time, and
+// on phones it wraps under the price, which pushed everything below down
+// (the reviews are already on screen there). While an offer hasn't ended
+// (as of the build), phones keep room for it. Known at build time, so the
+// prerendered page and the browser agree.
+const OFFER_SPACE_RESERVED = OFFERS.some((o) => Date.parse(o.endsAt) > __BUILD_HOUR__);
+
 function CardPrice({ card, className = '' }: { card: CardPage; className?: string }) {
   const offer = useOffer();
   return (
-    <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 ${className}`}>
+    <div
+      className={`flex flex-wrap items-center gap-x-3 gap-y-2 ${OFFER_SPACE_RESERVED ? 'max-sm:min-h-[62px] max-sm:content-start' : ''} ${className}`}
+    >
       <span className="font-inter text-[clamp(18px,1.8vw,22px)] font-semibold tracking-[.01em] text-accent">
         <OfferPrice price={FINISH_PRICES_BY_LABEL[card.priceLabel]} offer={offer} />
       </span>

@@ -16,6 +16,10 @@ export default defineConfig(({ isSsrBuild }) => ({
   // The SSR build (src/entry-server.tsx) only produces a module for
   // scripts/prerender.mjs to run; it needs no copy of public/.
   build: { copyPublicDir: !isSsrBuild },
+  // When the site was built, to the hour, so the browser and SSR builds
+  // (run one after the other) agree; see OFFER_SPACE_RESERVED in
+  // src/components/CardLandingPage.tsx.
+  define: { __BUILD_HOUR__: JSON.stringify(Math.floor(Date.now() / 3_600_000) * 3_600_000) },
   plugins: [
     react(),
     // The dev server has no prerender step (scripts/prerender.mjs fills in
