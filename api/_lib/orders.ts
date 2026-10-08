@@ -97,6 +97,14 @@ export async function recordPaidOrder(
     return { ok: false, error: err instanceof Error ? err.message : 'Invalid order items.' };
   }
 
+  // orders.referral_code is a foreign key to affiliates, so only a code that
+  // belongs to an affiliate can be stored on the order: a mistyped or
+  // made-up ?ref= code would otherwise make saving this PAID order fail.
+  // Looked up first; an unknown code is still shown in the alert below.
+  const { data: affiliate } = metadata.referral_code
+    ? await supabase.from('affiliates').select('id, status').eq('referral_code', metadata.referral_code).maybeSingle()
+    : { data: null };
+
   // Upsert on the DB's own unique constraint (migration 0006) rather than a
   // separate check-then-insert: whichever caller (webhook, self-heal, or
   // cron) gets here first for a given reference wins the row; every other
@@ -117,7 +125,7 @@ export async function recordPaidOrder(
         total: totals.total,
         payment_status: 'paid',
         paystack_reference: reference,
-        referral_code: metadata.referral_code ?? null,
+        referral_code: affiliate ? (metadata.referral_code ?? null) : null,
         ...(etimsRequested ? { needs_etims: true, kra_pin: etimsPin, kra_business_name: etimsName } : {}),
       },
       { onConflict: 'paystack_reference', ignoreDuplicates: true }
@@ -139,12 +147,6 @@ export async function recordPaidOrder(
 
   let referralNote: string | null = null;
   if (metadata.referral_code) {
-    const { data: affiliate } = await supabase
-      .from('affiliates')
-      .select('id, status')
-      .eq('referral_code', metadata.referral_code)
-      .maybeSingle();
-
     // Pending affiliates' codes are stored on the order for the record, but
     // don't earn a commission until manually approved (status flipped to
     // 'active' in Supabase).
