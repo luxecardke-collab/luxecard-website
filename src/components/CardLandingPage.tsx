@@ -263,17 +263,19 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
       style={{ background: 'radial-gradient(120% 90% at 78% 10%, #16161A 0%, #0B0B0D 46%, #08080A 100%)' }}
     >
       <div
-        className="relative z-[1] mx-auto grid max-w-[1320px] items-center gap-[clamp(40px,6vw,80px)] min-[900px]:min-h-[clamp(480px,62vh,650px)]"
+        // From 1024px: begins where the homepage hero's text begins
+        // (card-hero-offset in index.css), with its height set by its text.
+        className="card-hero-offset relative z-[1] mx-auto grid max-w-[1320px] items-center gap-[clamp(40px,6vw,80px)] min-[900px]:min-h-[clamp(480px,62vh,650px)] min-[1024px]:min-h-0"
         style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))' }}
       >
         <div className="animate-hero-rise">
           <div className={EYEBROW}>{card.hero.eyebrow}</div>
           {/* From 900px: exactly the homepage hero heading's size (.hero-title)
               and line height. */}
-          <h1 className="m-0 mb-6 font-manrope text-[clamp(40px,6.2vw,84px)] font-extrabold leading-[.98] max-md:leading-[1.04] tracking-[-0.035em] text-balance min-[900px]:text-[length:min(78px,calc((100vw_-_2*clamp(20px,4vw,48px)_-_clamp(48px,6vw,80px))/16.2))] min-[900px]:leading-[.96]">
+          <h1 className="m-0 mb-6 min-[1024px]:mb-7 font-manrope text-[clamp(40px,6.2vw,84px)] font-extrabold leading-[.98] max-md:leading-[1.04] tracking-[-0.035em] text-balance min-[900px]:text-[length:min(78px,calc((100vw_-_2*clamp(20px,4vw,48px)_-_clamp(48px,6vw,80px))/16.2))] min-[900px]:leading-[.96]">
             <Headline text={card.hero.headline} />
           </h1>
-          <p className="m-0 mb-8 max-w-[480px] text-[clamp(16px,1.35vw,19px)] leading-[1.5] text-[rgba(243,240,234,.6)] text-pretty">
+          <p className="m-0 mb-8 max-w-[480px] text-[clamp(16px,1.35vw,19px)] leading-[1.5] text-[rgba(243,240,234,.6)] text-pretty min-[1024px]:mb-10 min-[1024px]:max-w-[460px] min-[1024px]:leading-[1.55]">
             {card.hero.subtext}
           </p>
           <FinishSwatches card={card} finish={finish} onFinish={onFinish} label="Choose your finish" />
@@ -294,7 +296,7 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
           />
           {/* It floats like the cards in the homepage's "Crafted to Impress"
               (no motion with reduced motion). */}
-          <div className="animate-lc-float relative mx-auto aspect-[960/550] w-full max-w-[460px]">
+          <div className="animate-lc-float relative mx-auto aspect-[960/550] w-full max-w-[460px] min-[1024px]:max-w-[380px]">
             {choices.map((choice, i) => (
               <FinishImage
                 key={choice.label}

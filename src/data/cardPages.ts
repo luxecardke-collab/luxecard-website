@@ -326,7 +326,7 @@ export const CARD_PAGES: CardPage[] = CARD_PAGE_SEO.map((seo) => {
 
 // How wide a card page's hero photo shows, for its srcset (desktop only;
 // phones don't show it).
-export const HERO_IMAGE_SIZES = '460px';
+export const HERO_IMAGE_SIZES = '(min-width: 1024px) 380px, 460px';
 
 // The image a card page shows first (for a high-priority preload).
 export function cardPageHeroImage(path: string): { image: string; srcSet?: string; sizes: string } | undefined {

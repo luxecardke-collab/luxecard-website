@@ -243,6 +243,22 @@ button {
   animation: finalCtaGlowIn 1.2s ease-out forwards;
 }
 
+/* A card page's hero from 1024px: its text starts exactly as far below the
+   nav as the homepage hero's does. The homepage centres its text (heading,
+   two-line subtext, buttons, trust row) against its 648px-tall phone video,
+   so its text begins (648px - its text's height) / 2 down; this is that
+   same sum, from the homepage hero heading's size (.hero-title) and
+   subtext size, so the two stay in step at every desktop width:
+     heading: 3 lines x .96 x font size; subtext: 2 lines x 1.55 x its size;
+     222px: the gaps (27 + 40 + 54), the buttons (57) and trust row (44). */
+@media (min-width: 1024px) {
+  .card-hero-offset {
+    --home-title: min(78px, calc((100vw - 2 * clamp(20px, 4vw, 48px) - clamp(48px, 6vw, 80px)) / 16.2));
+    --home-subtext: clamp(16px, 1.35vw, 19px);
+    margin-top: calc((648px - 2.88 * var(--home-title) - 222px - 3.1 * var(--home-subtext)) / 2);
+  }
+}
+
 /* A card page's hero on phones: room under the price for the offer badge,
    only while an offer is on by the visitor's clock (the offer-space class,
    set before the first paint by the head script in src/seo/offerSpace.ts). */
