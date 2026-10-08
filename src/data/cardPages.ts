@@ -1,5 +1,6 @@
 import metallicBlackPlaceholder from '../assets/portfolio/metallic-04.webp';
 import woodBlackPlaceholder from '../assets/portfolio/wood-14.webp';
+import chairmanBoxedPhoto from '../assets/landing/chairman/gold-boxed.webp';
 import metallicBlackPhoto from '../assets/landing/metal/metallic-black.webp';
 import woodBlackPhoto from '../assets/landing/wood/wood-black.webp';
 import woodNaturalPhoto from '../assets/landing/wood/wood-natural.webp';
@@ -37,7 +38,7 @@ export type CardPage = {
   // How customers see the card's name ("Metallic", not "metal").
   name: string;
   cta: string;
-  hero: { eyebrow: string; headline: string; subtext: string };
+  hero: { headline: string; subtext: string };
   // Swatches, or null for a card with no choice (see image, finishNote).
   finishes: CardFinishChoice[] | null;
   // The one picture for a card without swatches.
@@ -48,9 +49,11 @@ export type CardPage = {
   // products section's line for this card isn't right for its page.
   productDescription?: string;
   // The card(s), shown like the homepage's "Crafted to Impress".
-  showcase: { headline: string; label: string; items: CardFinish[] };
+  showcase: { headline: string; items: CardFinish[] };
   // That section's button ("Get your Wood LuxeCard").
   showcaseCta: string;
+  // An optional section after the card(s): how the card is presented.
+  presentation?: { headline: string; line: string; image: string; alt: string; width: number; height: number };
   // The light "What you get" section (the homepage's For Business layout).
   whatYouGet: { headline: string; points: { title: string; body: string }[] };
   // null: no gallery until there are photos. `exclude` leaves out portfolio
@@ -98,7 +101,6 @@ const PLASTIC: CardPage = {
   name: 'Plastic',
   cta: 'Get my Plastic LuxeCard',
   hero: {
-    eyebrow: 'LUXECARD PLASTIC · NFC BUSINESS CARD',
     headline: 'YOUR BRAND. [YOUR COLOURS.]',
     subtext: 'Any colour you like. One tap shares your contact, socials and more.',
   },
@@ -108,7 +110,6 @@ const PLASTIC: CardPage = {
   showcaseCta: 'Get your Plastic LuxeCard',
   showcase: {
     headline: 'BUILT FOR [EVERY DAY.]',
-    label: 'Any Colour. One Card.',
     items: [
       {
         name: 'Plastic',
@@ -141,7 +142,6 @@ const WOOD: CardPage = {
   name: 'Wood',
   cta: 'Get my Wood LuxeCard',
   hero: {
-    eyebrow: 'LUXECARD WOOD · NFC BUSINESS CARD',
     headline: 'A BUSINESS CARD PEOPLE [REMEMBER.]',
     subtext: 'Real wood. One tap shares your contact, socials and more.',
   },
@@ -157,7 +157,6 @@ const WOOD: CardPage = {
   showcaseCta: 'Get your Wood LuxeCard',
   showcase: {
     headline: 'STAND OUT BEFORE YOU [SAY A WORD.]',
-    label: 'Two Finishes. One Card.',
     items: [
       {
         name: 'Wood: Natural',
@@ -199,7 +198,6 @@ const METALLIC: CardPage = {
   name: 'Metallic',
   cta: 'Get my Metallic LuxeCard',
   hero: {
-    eyebrow: 'LUXECARD METALLIC · NFC BUSINESS CARD',
     headline: 'A CARD WITH [REAL WEIGHT.]',
     // "Solid metal weight": the products section's own words for this card.
     subtext: 'Solid metal weight. One tap shares your contact, socials and more.',
@@ -216,7 +214,6 @@ const METALLIC: CardPage = {
   showcaseCta: 'Get your Metallic LuxeCard',
   showcase: {
     headline: 'FELT BEFORE IT’S [READ.]',
-    label: 'Two Finishes. One Card.',
     items: [
       {
         name: 'Metallic: Silver',
@@ -231,11 +228,10 @@ const METALLIC: CardPage = {
         name: 'Metallic: Black',
         priceLabel: 'Metallic',
         blurb: 'Solid metal weight, in black.',
-        // Portfolio photo metallic-04, cropped to the card.
         image: metallicBlackPhoto,
-        alt: 'A black metallic LuxeCard, held up',
-        width: 720,
-        height: 536,
+        alt: 'LuxeCard in black metallic',
+        width: 800,
+        height: 499,
       },
     ],
   },
@@ -267,7 +263,6 @@ const CHAIRMAN: CardPage = {
   name: "Chairman's Card",
   cta: 'Get my Chairman’s Card',
   hero: {
-    eyebrow: 'LUXECARD CHAIRMAN’S CARD · NFC BUSINESS CARD',
     headline: 'RESERVED FOR THE [BOLDEST INTRODUCTIONS.]',
     subtext: 'A gold finish. One tap shares your contact, socials and more.',
   },
@@ -282,7 +277,6 @@ const CHAIRMAN: CardPage = {
   showcaseCta: 'Get your Chairman’s Card',
   showcase: {
     headline: 'THE CARD AT THE [HEAD OF THE TABLE.]',
-    label: 'Gold Finish. One Card.',
     items: [
       {
         name: 'Chairman’s Card',
@@ -294,6 +288,14 @@ const CHAIRMAN: CardPage = {
         height: 537,
       },
     ],
+  },
+  presentation: {
+    headline: 'IN A PREMIUM [BLACK BOX.]',
+    line: 'Your Chairman’s Card, in its gold finish, comes in a premium black box.',
+    image: chairmanBoxedPhoto,
+    alt: 'The LuxeCard Chairman’s Card in its premium black box',
+    width: 800,
+    height: 703,
   },
   whatYouGet: {
     headline: 'ONE CARD. [EVERYTHING] YOU NEED.',

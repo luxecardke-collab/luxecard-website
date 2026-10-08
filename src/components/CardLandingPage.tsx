@@ -18,6 +18,7 @@ import { ForBusiness } from './ForBusiness';
 import { HowItWorks } from './HowItWorks';
 import { OfferBadge, OfferPrice } from './OfferPrice';
 import { Professionals } from './Professionals';
+import { RevealSection } from './RevealSection';
 import { Testimonials } from './Testimonials';
 
 // A card's landing page (/wood, …), for ads. It's the homepage's own
@@ -27,8 +28,6 @@ import { Testimonials } from './Testimonials';
 // light section), then the page's own order form, the FAQ and the closing
 // call to action. Ordering happens on the page itself (#order), straight to
 // checkout without the cart.
-
-const EYEBROW = 'mb-4 font-inter text-[10.5px] font-medium tracking-[.15em] text-accent';
 
 function scrollToOrder() {
   const form = document.getElementById('order');
@@ -54,12 +53,13 @@ export function CardLandingPage({ card }: { card: CardPage }) {
       <Ecosystem
         id="card"
         heading={<Headline text={card.showcase.headline} />}
-        label={card.showcase.label}
+        label={null}
         items={card.showcase.items}
         onOrder={scrollToOrder}
         orderLabel={card.showcaseCta}
         trackViewContent={false}
       />
+      {card.presentation && <Presentation presentation={card.presentation} />}
       <HowItWorks
         heading={
           <>
@@ -83,7 +83,7 @@ export function CardLandingPage({ card }: { card: CardPage }) {
       )}
       <ForBusiness
         id="what-you-get"
-        eyebrow="WHAT YOU GET"
+        eyebrow={null}
         // Plain (no gold) on the light background, as on the homepage.
         heading={headlineParts(card.whatYouGet.headline).map((part) => part.text).join('')}
         intro={<PriceOnLight card={card} />}
@@ -101,6 +101,44 @@ export function CardLandingPage({ card }: { card: CardPage }) {
       />
       <StickyOrderBar card={card} />
     </main>
+  );
+}
+
+// A card's presentation (the Chairman's Card's box): heading and one line
+// beside the floating photo, in the homepage sections' style.
+function Presentation({ presentation }: { presentation: NonNullable<CardPage['presentation']> }) {
+  return (
+    <RevealSection
+      id="presentation"
+      className="scroll-mt-[84px] border-t border-[rgba(255,255,255,.06)] px-[clamp(20px,4vw,48px)] py-[clamp(90px,13vh,150px)] min-[900px]:scroll-mt-[80px]"
+    >
+      <div className="mx-auto grid max-w-[1320px] items-center gap-[clamp(44px,6vw,80px)] min-[900px]:grid-cols-2">
+        <div>
+          <h2 className="m-0 font-manrope text-[clamp(34px,5vw,68px)] font-bold leading-[.96] max-md:leading-[1.06] tracking-[-.032em]">
+            <Headline text={presentation.headline} />
+          </h2>
+          <p className="m-0 mt-6 max-w-[440px] text-[16.5px] leading-[1.6] text-[rgba(243,240,234,.52)]">{presentation.line}</p>
+        </div>
+        <div className="relative mx-auto w-full max-w-[460px]">
+          {/* The soft gold glow behind it, as in the hero. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[120%] w-[120%] -translate-x-1/2 -translate-y-1/2"
+            style={{ background: 'radial-gradient(closest-side, rgba(253,211,3,.12), rgba(253,211,3,.03) 60%, transparent)' }}
+          />
+          <img
+            src={presentation.image}
+            alt={presentation.alt}
+            width={presentation.width}
+            height={presentation.height}
+            loading="lazy"
+            decoding="async"
+            className="animate-lc-float relative h-auto w-full"
+            style={{ filter: 'drop-shadow(0 40px 50px rgba(0,0,0,.6))' }}
+          />
+        </div>
+      </div>
+    </RevealSection>
   );
 }
 
@@ -269,7 +307,6 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
         style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))' }}
       >
         <div className="animate-hero-rise">
-          <div className={EYEBROW}>{card.hero.eyebrow}</div>
           {/* From 900px: exactly the homepage hero heading's size (.hero-title)
               and line height. */}
           <h1 className="m-0 mb-6 min-[1024px]:mb-7 font-manrope text-[clamp(40px,6.2vw,84px)] font-extrabold leading-[.98] max-md:leading-[1.04] tracking-[-0.035em] text-balance min-[900px]:text-[length:min(78px,calc((100vw_-_2*clamp(20px,4vw,48px)_-_clamp(48px,6vw,80px))/16.2))] min-[900px]:leading-[.96]">
