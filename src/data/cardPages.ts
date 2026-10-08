@@ -56,10 +56,9 @@ export type CardPage = {
   presentation?: { headline: string; line: string; image: string; alt: string; width: number; height: number };
   // The light "What you get" section (the homepage's For Business layout).
   whatYouGet: { headline: string; points: { title: string; body: string }[] };
-  // null: no gallery until there are photos. By portfolio file name
-  // ("metallic-01"): `exclude` leaves out photos of another card, `only`
-  // keeps just these (the Chairman's Cards, which sit in the metallic folder).
-  gallery: { material: PhotoMaterial; exclude?: string[]; only?: string[] } | null;
+  // null: no gallery until there are photos. `exclude` leaves out photos by
+  // portfolio file name ("metallic-10").
+  gallery: { material: PhotoMaterial; exclude?: string[] } | null;
   // This card's own questions (shown first, under "About the … card"), then
   // the site's own answers by id.
   faqs: Faq[];
@@ -89,13 +88,6 @@ const cardPhoto = (name: string, width: number) => ({
 });
 
 // The site's answers every card page reuses, in the homepage FAQ's order.
-// The Chairman's Cards (gold) in the portfolio's metallic folder: on
-// /chairman's gallery, never /metal's.
-const CHAIRMAN_PHOTOS = [
-  'metallic-01', 'metallic-03', 'metallic-06', 'metallic-08', 'metallic-11', 'metallic-13',
-  'metallic-16', 'metallic-18', 'metallic-21', 'metallic-23', 'metallic-26', 'metallic-28',
-];
-
 const SHARED_FAQ_IDS = ['after-order', 'teams', 'etims', 'how-it-works', 'phones', 'update-profile', 'fees'];
 const NFC_POINT = { title: 'NFC + QR', body: 'Tap, or scan the QR code.' };
 const PROFILE_POINT = { title: 'Your digital profile', body: 'Update it any time.' };
@@ -251,8 +243,9 @@ const METALLIC: CardPage = {
   },
   gallery: {
     material: 'metallic',
-    // The Chairman's Cards, and two whose colour isn't clearly Silver or Black.
-    exclude: [...CHAIRMAN_PHOTOS, 'metallic-10', 'metallic-22'],
+    // Two whose colour isn't clearly Silver or Black. (The Chairman's Cards
+    // are already apart: CHAIRMAN_PORTFOLIO_FILES in content.ts.)
+    exclude: ['metallic-10', 'metallic-22'],
   },
   faqs: [
     { q: 'What finishes are available?', a: 'Silver and Black. You’ll see yours on your mockup before production.' },
@@ -313,7 +306,7 @@ const CHAIRMAN: CardPage = {
       DESIGN_POINT,
     ],
   },
-  gallery: { material: 'metallic', only: CHAIRMAN_PHOTOS },
+  gallery: { material: 'chairman' },
   faqs: [
     {
       q: 'What makes the Chairman’s Card different?',

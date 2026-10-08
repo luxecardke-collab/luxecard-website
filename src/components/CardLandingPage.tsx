@@ -43,9 +43,8 @@ export function CardLandingPage({ card }: { card: CardPage }) {
   const gallery = card.gallery;
   const photos = gallery
     ? PHOTOS_BY_MATERIAL[gallery.material]
-        .filter((p) => (gallery.only ? gallery.only.includes(photoFile(p.caption)) : !gallery.exclude?.includes(photoFile(p.caption))))
-        // Described as this page's card (the Chairman's Cards are in the
-        // portfolio's metallic folder).
+        .filter((p) => !gallery.exclude?.includes(photoFile(p.caption)))
+        // Described as this page's card.
         .map((p, i) => ({ ...p, alt: `LuxeCard ${card.name}, portfolio example ${i + 1}` }))
     : [];
 

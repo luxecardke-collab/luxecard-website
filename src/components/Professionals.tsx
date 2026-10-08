@@ -44,6 +44,7 @@ const MATERIAL_FILTERS: { value: PhotoMaterial; label: string }[] = [
   { value: 'plastic', label: 'Plastic' },
   { value: 'wood', label: 'Wood' },
   { value: 'metallic', label: 'Metallic' },
+  { value: 'chairman', label: "Chairman's Card" },
 ];
 
 // A card page passes its own heading and that card's photos (no finish
@@ -148,15 +149,35 @@ function FilterPills({
   active: PhotoMaterial | null;
   onChange: (value: PhotoMaterial | null) => void;
 }) {
-  const activeIndex = active ? MATERIAL_FILTERS.findIndex((f) => f.value === active) : -1;
+  // Each pill is as wide as its label (four don't fit as equal widths on a
+  // phone), so the white highlight takes the chosen pill's measured place
+  // and size. Until it's measured (the prerendered page), the chosen pill
+  // gets the white background itself, so there's no flash.
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState<{ left: number; width: number } | null>(null);
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    const measure = () => {
+      const btn = row.querySelector<HTMLButtonElement>('button[aria-pressed="true"]');
+      setBox(btn ? { left: btn.offsetLeft, width: btn.offsetWidth } : null);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(row);
+    return () => ro.disconnect();
+  }, [active]);
 
   return (
-    <div className="relative mt-8 grid max-w-[380px] grid-cols-3 rounded-full border border-[rgba(255,255,255,.12)] bg-[rgba(255,255,255,.03)] p-1">
-      {activeIndex >= 0 && (
+    <div
+      ref={rowRef}
+      className="relative mt-8 flex w-fit max-w-full rounded-full border border-[rgba(255,255,255,.12)] bg-[rgba(255,255,255,.03)] p-1"
+    >
+      {box && (
         <div
           aria-hidden="true"
-          className="absolute inset-y-1 left-1 rounded-full bg-[#F3F0EA] transition-transform duration-300 ease-lux"
-          style={{ width: 'calc((100% - 8px) / 3)', transform: `translateX(${activeIndex * 100}%)` }}
+          className="absolute inset-y-1 left-0 rounded-full bg-[#F3F0EA] transition-[transform,width] duration-300 ease-lux"
+          style={{ width: box.width, transform: `translateX(${box.left}px)` }}
         />
       )}
       {MATERIAL_FILTERS.map((f) => {
@@ -167,8 +188,11 @@ function FilterPills({
             type="button"
             aria-pressed={selected}
             onClick={() => onChange(selected ? null : f.value)}
-            className="relative z-10 flex items-center justify-center whitespace-nowrap rounded-full py-2.5 text-[13.5px] font-medium transition-colors duration-300"
-            style={{ color: selected ? '#0B0B0D' : 'rgba(243,240,234,.6)' }}
+            className="relative z-10 flex items-center justify-center whitespace-nowrap rounded-full px-[clamp(9px,3vw,14px)] py-2.5 text-[clamp(12.5px,3.5vw,13.5px)] font-medium transition-colors duration-300"
+            style={{
+              color: selected ? '#0B0B0D' : 'rgba(243,240,234,.6)',
+              background: selected && !box ? '#F3F0EA' : undefined,
+            }}
           >
             {f.label}
           </button>
