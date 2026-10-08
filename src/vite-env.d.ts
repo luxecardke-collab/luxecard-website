@@ -7,9 +7,6 @@ interface ImportMetaEnv {
   readonly VITE_META_PIXEL_ID?: string;
 }
 
-// When the site was built, to the hour (vite.config.ts).
-declare const __BUILD_HOUR__: number;
-
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }

@@ -243,6 +243,16 @@ button {
   animation: finalCtaGlowIn 1.2s ease-out forwards;
 }
 
+/* A card page's hero on phones: room under the price for the offer badge,
+   only while an offer is on by the visitor's clock (the offer-space class,
+   set before the first paint by the head script in src/seo/offerSpace.ts). */
+@media (max-width: 639px) {
+  .offer-space .offer-reserve {
+    min-height: 62px;
+    align-content: flex-start;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

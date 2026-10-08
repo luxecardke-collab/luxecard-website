@@ -11,7 +11,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
-const { PAGES, renderHeadTags, renderJsonLd, renderPage, routeKey, HYDRATABLE_MEDIA, cardPageHeroImage } = await import(
+const { PAGES, renderHeadTags, renderJsonLd, renderPage, routeKey, HYDRATABLE_MEDIA, cardPageHeroImage, renderOfferSpaceScript } = await import(
   pathToFileURL(path.join(root, 'dist-ssr', 'entry-server.js')).href
 );
 
@@ -54,7 +54,10 @@ for (const page of PAGES) {
       ? `<link rel="preload" as="image" imagesrcset="${heroImage.srcSet}" imagesizes="${heroImage.sizes}" media="(min-width: 900px)" fetchpriority="high" />`
       : `<link rel="preload" as="image" href="${heroImage.image}" media="(min-width: 900px)" fetchpriority="high" />`
     : '';
-  const head = [renderHeadTags(page), preload, page.prerender === false ? '' : HIDE_UNHYDRATED, renderJsonLd(page.path)]
+  // Card pages: room for the offer badge on phones while an offer is on,
+  // decided before the first paint (src/seo/offerSpace.ts).
+  const offerSpace = heroImage ? renderOfferSpaceScript() : '';
+  const head = [renderHeadTags(page), preload, offerSpace, page.prerender === false ? '' : HIDE_UNHYDRATED, renderJsonLd(page.path)]
     .filter(Boolean)
     .join('\n    ');
   // data-route tells main.tsx which page this markup was rendered for, so it
