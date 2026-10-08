@@ -25,6 +25,7 @@ export function Ecosystem({
   label = 'Four Finishes. One Card.',
   items = CARD_FINISHES,
   onOrder,
+  orderLabel,
   trackViewContent = true,
 }: {
   id?: string;
@@ -32,6 +33,9 @@ export function Ecosystem({
   label?: string;
   items?: CardFinish[];
   onOrder?: () => void;
+  // The Order button's text (a card page names its card); it may wrap on
+  // narrow phones, where a longer name doesn't fit beside the chevrons.
+  orderLabel?: string;
   trackViewContent?: boolean;
 } = {}) {
   const { open: openInquiryModal, preload: preloadInquiryModal } = useInquiryModal();
@@ -174,9 +178,13 @@ export function Ecosystem({
                 onClick={onOrder ?? (() => openInquiryModal('individual'))}
                 onMouseEnter={onOrder ? undefined : preloadInquiryModal}
                 onFocus={onOrder ? undefined : preloadInquiryModal}
-                className="inline-flex items-center gap-1.5 whitespace-nowrap text-[14px] text-ivory min-[390px]:gap-2.5 min-[390px]:text-[14.5px]"
+                className={
+                  orderLabel
+                    ? 'inline-flex items-center gap-1.5 text-left text-[14px] text-ivory min-[390px]:gap-2.5 min-[390px]:text-[14.5px]'
+                    : 'inline-flex items-center gap-1.5 whitespace-nowrap text-[14px] text-ivory min-[390px]:gap-2.5 min-[390px]:text-[14.5px]'
+                }
               >
-                Order Your LuxeCard <span className="font-inter">→</span>
+                {orderLabel ?? 'Order Your LuxeCard'} <span className="font-inter">→</span>
               </button>
               {/* With a single card there's nothing to switch to; the
                   buttons keep their space so the card's layout is the same. */}

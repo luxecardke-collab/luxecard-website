@@ -46,13 +46,13 @@ function withoutHoistedLinks(html, head) {
 const HIDE_UNHYDRATED = `<style>@media not all and ${HYDRATABLE_MEDIA} { #root[data-route] > * { display: none } }</style>`;
 
 for (const page of PAGES) {
-  // A card page's first photo, fetched at high priority (it's the page's
-  // largest paint).
+  // A card page's first photo, fetched at high priority on desktop (it's
+  // the page's largest paint there; phones don't show it).
   const heroImage = cardPageHeroImage(page.path);
   const preload = heroImage
     ? heroImage.srcSet
-      ? `<link rel="preload" as="image" imagesrcset="${heroImage.srcSet}" imagesizes="${heroImage.sizes}" fetchpriority="high" />`
-      : `<link rel="preload" as="image" href="${heroImage.image}" fetchpriority="high" />`
+      ? `<link rel="preload" as="image" imagesrcset="${heroImage.srcSet}" imagesizes="${heroImage.sizes}" media="(min-width: 900px)" fetchpriority="high" />`
+      : `<link rel="preload" as="image" href="${heroImage.image}" media="(min-width: 900px)" fetchpriority="high" />`
     : '';
   const head = [renderHeadTags(page), preload, page.prerender === false ? '' : HIDE_UNHYDRATED, renderJsonLd(page.path)]
     .filter(Boolean)

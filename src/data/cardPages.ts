@@ -49,14 +49,14 @@ export type CardPage = {
   productDescription?: string;
   // The card(s), shown like the homepage's "Crafted to Impress".
   showcase: { headline: string; label: string; items: CardFinish[] };
+  // That section's button ("Get your Wood LuxeCard").
+  showcaseCta: string;
   // The light "What you get" section (the homepage's For Business layout).
   whatYouGet: { headline: string; points: { title: string; body: string }[] };
   // null: no gallery until there are photos. `exclude` leaves out portfolio
   // photos of another card (e.g. gold cards from the metallic folder) by
   // file name ("metallic-01").
   gallery: { material: PhotoMaterial; exclude?: string[] } | null;
-  // Names of existing testimonials (content.ts).
-  testimonials: string[];
   // This card's own questions (shown first, under "About the … card"), then
   // the site's own answers by id.
   faqs: Faq[];
@@ -105,6 +105,7 @@ const PLASTIC: CardPage = {
   finishes: null,
   image: { label: 'Plastic', alt: 'LuxeCard in plastic', ...heroImage('plastic', 'hero', cardPhoto('card-plastic', 960)) },
   finishNote: 'Any colour you like. You choose it when we design your card.',
+  showcaseCta: 'Get your Plastic LuxeCard',
   showcase: {
     headline: 'BUILT FOR [EVERY DAY.]',
     label: 'Any Colour. One Card.',
@@ -125,7 +126,6 @@ const PLASTIC: CardPage = {
     points: [{ title: 'Any colour', body: 'Chosen when we design your card.' }, NFC_POINT, PROFILE_POINT, DESIGN_POINT],
   },
   gallery: { material: 'plastic' },
-  testimonials: ['Lyban Mbatha', 'K. Keli', 'Stanley Juma'],
   faqs: [
     { q: 'What colours are available?', a: 'Any colour you like. You’ll see it on your mockup before production.' },
     { q: 'Why choose plastic?', a: 'It’s lightweight, durable and built for everyday carry.' },
@@ -154,6 +154,7 @@ const WOOD: CardPage = {
       ...heroImage('wood', 'hero-black', { image: woodBlackPlaceholder, fit: 'cover', objectPosition: '50% 72%' }),
     },
   ],
+  showcaseCta: 'Get your Wood LuxeCard',
   showcase: {
     headline: 'STAND OUT BEFORE YOU [SAY A WORD.]',
     label: 'Two Finishes. One Card.',
@@ -163,18 +164,18 @@ const WOOD: CardPage = {
         priceLabel: 'Wood',
         blurb: 'Real wood with a warm, distinctive grain.',
         image: woodNaturalPhoto,
-        alt: 'A natural wood LuxeCard, held up',
-        width: 720,
-        height: 536,
+        alt: 'LuxeCard in natural wood',
+        width: 800,
+        height: 524,
       },
       {
         name: 'Wood: Black',
         priceLabel: 'Wood',
         blurb: 'Real wood, finished in black.',
         image: woodBlackPhoto,
-        alt: 'A black wood LuxeCard, held up',
-        width: 720,
-        height: 536,
+        alt: 'LuxeCard in black wood',
+        width: 800,
+        height: 511,
       },
     ],
   },
@@ -183,7 +184,6 @@ const WOOD: CardPage = {
     points: [{ title: 'Real wood', body: 'Natural or Black.' }, NFC_POINT, PROFILE_POINT, DESIGN_POINT],
   },
   gallery: { material: 'wood' },
-  testimonials: ['Lyban Mbatha', 'CR Advocates LLP', 'Stanley Juma'],
   faqs: [
     { q: 'Why choose wood?', a: 'It’s real wood: naturally lightweight, with a warm, distinctive grain.' },
     { q: 'What finishes are available?', a: 'Natural and Black. You’ll see yours on your mockup before production.' },
@@ -213,6 +213,7 @@ const METALLIC: CardPage = {
       ...heroImage('metal', 'hero-black', { image: metallicBlackPlaceholder, fit: 'cover', objectPosition: '50% 55%' }),
     },
   ],
+  showcaseCta: 'Get your Metallic LuxeCard',
   showcase: {
     headline: 'FELT BEFORE IT’S [READ.]',
     label: 'Two Finishes. One Card.',
@@ -251,7 +252,6 @@ const METALLIC: CardPage = {
       'metallic-18', 'metallic-21', 'metallic-23', 'metallic-26', 'metallic-28', 'metallic-10', 'metallic-22',
     ],
   },
-  testimonials: ['Chirag Solanki', 'K. Keli', 'CR Advocates LLP'],
   faqs: [
     { q: 'What finishes are available?', a: 'Silver and Black. You’ll see yours on your mockup before production.' },
     { q: 'Why choose metallic?', a: 'For solid metal weight: a tactile statement piece.' },
@@ -279,6 +279,7 @@ const CHAIRMAN: CardPage = {
   },
   finishNote: 'Gold finish.',
   productDescription: 'A gold finish, reserved for the boldest introductions.',
+  showcaseCta: 'Get your Chairman’s Card',
   showcase: {
     headline: 'THE CARD AT THE [HEAD OF THE TABLE.]',
     label: 'Gold Finish. One Card.',
@@ -305,7 +306,6 @@ const CHAIRMAN: CardPage = {
   },
   // Until there are Chairman's Card photos.
   gallery: null,
-  testimonials: ['Lyban Mbatha', 'K. Keli', 'CR Advocates LLP'],
   faqs: [
     {
       q: 'What makes the Chairman’s Card different?',
@@ -324,8 +324,9 @@ export const CARD_PAGES: CardPage[] = CARD_PAGE_SEO.map((seo) => {
   return page;
 });
 
-// How wide a card page's hero photo shows, for its srcset (smaller on phones).
-export const HERO_IMAGE_SIZES = '(min-width: 900px) 620px, (min-width: 640px) 420px, 260px';
+// How wide a card page's hero photo shows, for its srcset (desktop only;
+// phones don't show it).
+export const HERO_IMAGE_SIZES = '460px';
 
 // The image a card page shows first (for a high-priority preload).
 export function cardPageHeroImage(path: string): { image: string; srcSet?: string; sizes: string } | undefined {

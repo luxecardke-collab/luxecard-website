@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { activeOffer, FINISH_PRICES_BY_LABEL, offerUnitPrice, productId } from '../../api/_lib/pricing';
 import { cardPageFaqs, HERO_IMAGE_SIZES, headlineParts, type CardFinishChoice, type CardPage } from '../data/cardPages';
-import { CUSTOMER_COUNT, PHOTOS_BY_MATERIAL, TESTIMONIALS } from '../data/content';
+import { PHOTOS_BY_MATERIAL } from '../data/content';
 import { useMountReveal } from '../hooks/useMountReveal';
 import { useOffer } from '../hooks/useOffer';
 import { hasAdConsent, onConsentChange } from '../utils/consent';
@@ -42,9 +42,6 @@ const photoFile = (caption: string) => caption.toLowerCase().replace(' ', '-');
 export function CardLandingPage({ card }: { card: CardPage }) {
   const [finish, setFinish] = useRememberedFinish(card);
   useViewContent(card);
-  const testimonials = card.testimonials
-    .map((name) => TESTIMONIALS.find((t) => t.name === name))
-    .filter((t) => t !== undefined);
   const gallery = card.gallery;
   const photos = gallery
     ? PHOTOS_BY_MATERIAL[gallery.material].filter((p) => !gallery.exclude?.includes(photoFile(p.caption)))
@@ -53,16 +50,26 @@ export function CardLandingPage({ card }: { card: CardPage }) {
   return (
     <main className="pt-[var(--nav-h)]">
       <CardHero card={card} finish={finish} onFinish={setFinish} />
-      <Testimonials testimonials={testimonials} />
+      {/* The homepage's reviews, exactly as there. */}
+      <Testimonials />
       <Ecosystem
         id="card"
         heading={<Headline text={card.showcase.headline} />}
         label={card.showcase.label}
         items={card.showcase.items}
         onOrder={scrollToOrder}
+        orderLabel={card.showcaseCta}
         trackViewContent={false}
       />
-      <HowItWorks heading={<Headline text="TAP. [CONNECT.] DONE." />} />
+      <HowItWorks
+        heading={
+          <>
+            TAP. <span className="text-accent">CONNECT.</span>
+            <br />
+            DONE.
+          </>
+        }
+      />
       {photos.length > 0 && (
         <Professionals
           heading={
@@ -248,7 +255,8 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
   return (
     <section
       id="top"
-      className="relative overflow-hidden px-[clamp(20px,4vw,48px)] pb-[clamp(64px,9vh,120px)] pt-[clamp(28px,calc(12vh-60px),84px)]"
+      // From 900px: the homepage hero's own top spacing.
+      className="relative overflow-hidden px-[clamp(20px,4vw,48px)] pb-[clamp(64px,9vh,120px)] pt-[clamp(28px,calc(12vh-60px),84px)] min-[900px]:pt-[clamp(24px,calc(15vh-80px),84px)]"
       style={{ background: 'radial-gradient(120% 90% at 78% 10%, #16161A 0%, #0B0B0D 46%, #08080A 100%)' }}
     >
       <div
@@ -257,7 +265,9 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
       >
         <div style={textStyle}>
           <div className={EYEBROW}>{card.hero.eyebrow}</div>
-          <h1 className="m-0 mb-6 font-manrope text-[clamp(40px,6.2vw,84px)] font-extrabold leading-[.98] max-md:leading-[1.04] tracking-[-0.035em] text-balance">
+          {/* From 900px: exactly the homepage hero heading's size (.hero-title)
+              and line height. */}
+          <h1 className="m-0 mb-6 font-manrope text-[clamp(40px,6.2vw,84px)] font-extrabold leading-[.98] max-md:leading-[1.04] tracking-[-0.035em] text-balance min-[900px]:text-[length:min(78px,calc((100vw_-_2*clamp(20px,4vw,48px)_-_clamp(48px,6vw,80px))/16.2))] min-[900px]:leading-[.96]">
             <Headline text={card.hero.headline} />
           </h1>
           <p className="m-0 mb-8 max-w-[480px] text-[clamp(16px,1.35vw,19px)] leading-[1.5] text-[rgba(243,240,234,.6)] text-pretty">
@@ -268,28 +278,27 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
           <PrimaryButton onClick={scrollToOrder} className="mt-7">
             {card.cta} <span className="font-inter">→</span>
           </PrimaryButton>
-          <p className="m-0 mt-7 font-inter text-[11px] font-medium uppercase tracking-[.14em] text-grey-1">
-            Trusted by {CUSTOMER_COUNT}+ professionals across Kenya
-          </p>
         </div>
 
-        <div className="relative">
+        {/* Desktop only (phones go straight from the text to the reviews);
+            smaller, and centred beside the text. */}
+        <div className="relative hidden self-center min-[900px]:block">
           {/* A soft gold glow behind the card, like the homepage hero's. */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute left-1/2 top-1/2 h-[120%] w-[120%] -translate-x-1/2 -translate-y-1/2"
             style={{ background: 'radial-gradient(closest-side, rgba(253,211,3,.16), rgba(253,211,3,.04) 60%, transparent)' }}
           />
-          {/* Smaller on phones; it floats like the cards in the homepage's
-              "Crafted to Impress" (no motion with reduced motion). */}
-          <div className="animate-lc-float relative mx-auto aspect-[960/550] w-full max-w-[260px] sm:max-w-[420px] min-[900px]:max-w-[620px]">
+          {/* It floats like the cards in the homepage's "Crafted to Impress"
+              (no motion with reduced motion). */}
+          <div className="animate-lc-float relative mx-auto aspect-[960/550] w-full max-w-[460px]">
             {choices.map((choice, i) => (
               <FinishImage
                 key={choice.label}
                 choice={choice}
-                // The first finish is preloaded from <head>; the others are
-                // fetched lazily (they're on screen, so straight away).
-                eager={i === 0}
+                // Lazy, so phones (where it's hidden) never fetch it; on
+                // desktop the first finish is preloaded from <head>.
+                eager={false}
                 sizes={HERO_IMAGE_SIZES}
                 className={`transition-opacity duration-500 ${
                   (finish ? choice.label === finish : i === 0) ? 'opacity-100' : 'opacity-0'
