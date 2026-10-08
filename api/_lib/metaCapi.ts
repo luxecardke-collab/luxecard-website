@@ -31,6 +31,8 @@ export type MetaEvent = {
   eventSourceUrl?: string | null;
   user: MetaUser;
   customData?: Record<string, unknown>;
+  // Meta's action_source; 'website' unless stated.
+  actionSource?: 'website' | 'chat' | 'system_generated';
 };
 
 // What happened to one event: shown in team alerts, logged, and returned to
@@ -91,7 +93,7 @@ export async function sendMetaEvent(event: MetaEvent): Promise<MetaResult> {
         event_name: event.name,
         event_time: event.eventTime ?? Math.floor(Date.now() / 1000),
         event_id: event.eventId,
-        action_source: 'website',
+        action_source: event.actionSource ?? 'website',
         ...(event.eventSourceUrl ? { event_source_url: event.eventSourceUrl } : {}),
         user_data: userData(event.user),
         ...(event.customData ? { custom_data: event.customData } : {}),

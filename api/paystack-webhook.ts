@@ -52,7 +52,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   let event: {
     event: string;
-    data: { reference: string; metadata?: PaystackOrderMetadata; amount?: number; paid_at?: string | null; paidAt?: string | null };
+    data: {
+      reference: string;
+      metadata?: PaystackOrderMetadata;
+      amount?: number;
+      paid_at?: string | null;
+      paidAt?: string | null;
+      customer?: { email?: string | null; first_name?: string | null; last_name?: string | null; phone?: string | null } | null;
+    };
   };
   try {
     event = JSON.parse(rawBody);

@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { isTestEnvironment, readAttribution } from './_lib/attribution.js';
-import { metaTestMode, sendMetaEvent, type MetaResult } from './_lib/metaCapi.js';
+import { describeMetaResult, metaTestMode, sendMetaEvent, type MetaResult } from './_lib/metaCapi.js';
 import { EVENT_ID_PATTERN, sameSiteUrl, visitorMetaUser } from './_lib/metaRequest.js';
 import { getClientIp, isRateLimited } from './_lib/rateLimit.js';
 import { getSupabaseAdmin } from './_lib/supabaseAdmin.js';
@@ -69,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const supabase = getSupabaseAdmin();
     const { data: existing } = await supabase
       .from('whatsapp_refs')
-      .select('code, fbc, fbp, utm_source, fbclid')
+      .select('code, fbc, fbp, utm_source, fbclid, referral_code')
       .eq('code', code)
       .maybeSingle();
     if (!existing) {
@@ -83,6 +83,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         fbc: consent ? user.fbc : null,
         fbp: consent ? user.fbp : null,
         cookie_consent: consent,
+        // The affiliate code (?ref=) the visitor arrived with, if any.
+        referral_code: clip(body.referral_code, 64),
         is_test: isTest,
       });
       if (error) throw error;
@@ -98,14 +100,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ...(consent ? { cookie_consent: true } : {}),
           ...(!existing.utm_source && attribution.utm_source ? attribution : {}),
           ...(!existing.fbclid && attribution.fbclid ? { fbclid: attribution.fbclid } : {}),
+          ...(!existing.referral_code && clip(body.referral_code, 64) ? { referral_code: clip(body.referral_code, 64) } : {}),
         })
         .eq('code', code);
       if (error) throw error;
     }
-    const { error: clickError } = await supabase
-      .from('whatsapp_clicks')
-      .insert({ code, button, section, page, is_test: isTest });
-    if (clickError) throw clickError;
     saved = true;
   } catch (err) {
     console.error('WhatsApp click could not be saved:', err);
@@ -120,6 +119,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       user,
       customData: { content_name: button, content_category: section },
     });
+  }
+  // The tap itself, with what happened to its Contact event.
+  try {
+    const { error: clickError } = await getSupabaseAdmin()
+      .from('whatsapp_clicks')
+      .insert({ code, button, section, page, is_test: isTest, meta_status: describeMetaResult('Contact', meta) + (meta.status === 'sent' ? ` fbtrace_id ${meta.fbtraceId}` : '') });
+    if (clickError) throw clickError;
+  } catch (err) {
+    saved = false;
+    console.error('WhatsApp tap could not be saved:', err);
   }
   res.status(200).json(metaTestMode() ? { ok: true, saved, meta } : { ok: true });
 }

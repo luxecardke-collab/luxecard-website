@@ -2,6 +2,7 @@ import type { MouseEvent } from 'react';
 import { LINKS } from '../data/links';
 import { getAttribution } from './attribution';
 import { getMetaIds, metaTrackingAllowed, newMetaEventId, sendServerCopy, trackMetaEvent } from './metaPixel';
+import { getReferralCode } from './referralCode';
 
 // Every WhatsApp button: its pre-filled message, and the button/section
 // labels its taps are recorded under (Meta "Contact" event, and the
@@ -83,6 +84,8 @@ function recordTap(code: string, source: WhatsAppSource) {
     ...(consent ? getMetaIds() : {}),
     source_url: window.location.href,
     attribution: getAttribution(),
+    // An affiliate's code (?ref=), so a WhatsApp sale can still earn it.
+    referral_code: getReferralCode(),
   });
 }
 

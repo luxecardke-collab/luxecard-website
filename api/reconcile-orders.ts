@@ -21,6 +21,7 @@ type PaystackTransaction = {
   amount?: number;
   paid_at?: string | null;
   paidAt?: string | null;
+  customer?: { email?: string | null; first_name?: string | null; last_name?: string | null; phone?: string | null } | null;
 };
 
 // Last-resort safety net for H1 (a paid order that never got recorded,
@@ -75,7 +76,15 @@ export default async function handler(req: IncomingMessage, res: VercelResponse)
     .from('orders')
     .select('paystack_reference')
     .gte('created_at', from);
-  const existingRefs = new Set((existingOrders ?? []).map((o) => o.paystack_reference).filter(Boolean));
+  // Plus every payment recorded against an existing order (a WhatsApp
+  // sale's balance has no order of its own).
+  const { data: existingPayments } = await supabase
+    .from('order_payments')
+    .select('paystack_reference')
+    .gte('created_at', from);
+  const existingRefs = new Set(
+    [...(existingOrders ?? []), ...(existingPayments ?? [])].map((o) => o.paystack_reference).filter(Boolean)
+  );
 
   let checked = 0;
   let recovered = 0;

@@ -4,6 +4,7 @@ import { recordPaidOrder, type PaystackOrderMetadata } from './_lib/orders.js';
 import { getClientIp, isRateLimited } from './_lib/rateLimit.js';
 import { getSupabaseAdmin } from './_lib/supabaseAdmin.js';
 import { productId, type CheckoutItem } from './_lib/pricing.js';
+import { isPaymentLinkSale } from './_lib/paymentLinkSale.js';
 
 // Product IDs and quantities only (nothing about the customer), so the
 // confirmation page's browser Purchase carries the same products as the
@@ -49,14 +50,19 @@ export default async function handler(req: IncomingMessage, res: VercelResponse)
   const supabase = getSupabaseAdmin();
   const { data: order } = await supabase
     .from('orders')
-    .select('payment_status, total, items')
+    .select('payment_status, total, items, order_source')
     .eq('paystack_reference', reference)
     .maybeSingle();
 
   // `value` (the order total in KES, nothing else about the order) lets the
   // confirmation page report the Purchase to Meta with the right amount.
+  // A WhatsApp sale's Purchase is decided on the server (only a full or
+  // deposit payment, only with cookie consent): its confirmation page gets
+  // no value, so it never sends a browser Purchase of its own.
   if (order?.payment_status === 'paid') {
-    res.status(200).json({ paid: true, value: Number(order.total), contents: purchaseContents(order.items) });
+    res
+      .status(200)
+      .json(order.order_source === 'whatsapp' ? { paid: true } : { paid: true, value: Number(order.total), contents: purchaseContents(order.items) });
     return;
   }
 
@@ -76,7 +82,14 @@ export default async function handler(req: IncomingMessage, res: VercelResponse)
       PAYSTACK_TIMEOUT_MS
     );
     const verifyData = (await verifyRes.json()) as {
-      data?: { status?: string; amount?: number; paid_at?: string | null; paidAt?: string | null; metadata?: PaystackOrderMetadata };
+      data?: {
+        status?: string;
+        amount?: number;
+        paid_at?: string | null;
+        paidAt?: string | null;
+        metadata?: PaystackOrderMetadata;
+        customer?: { email?: string | null; first_name?: string | null; last_name?: string | null; phone?: string | null } | null;
+      };
     };
     const paid = verifyRes.ok && verifyData?.data?.status === 'success';
 
@@ -100,7 +113,7 @@ export default async function handler(req: IncomingMessage, res: VercelResponse)
     res
       .status(200)
       .json(
-        paid && typeof amount === 'number'
+        paid && typeof amount === 'number' && !isPaymentLinkSale(verifyData.data?.metadata)
           ? { paid, value: amount / 100, contents: purchaseContents(verifyData.data?.metadata?.items) }
           : { paid }
       );

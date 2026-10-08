@@ -35,6 +35,10 @@ export type Database = {
           utm_term: string | null;
           fbclid: string | null;
           is_test: boolean;
+          order_source: 'website' | 'whatsapp';
+          whatsapp_ref: string | null;
+          payment_type: 'full' | 'deposit' | 'balance' | null;
+          meta_status: string | null;
         };
         Insert: {
           id?: string;
@@ -60,6 +64,10 @@ export type Database = {
           utm_term?: string | null;
           fbclid?: string | null;
           is_test?: boolean;
+          order_source?: 'website' | 'whatsapp';
+          whatsapp_ref?: string | null;
+          payment_type?: 'full' | 'deposit' | 'balance' | null;
+          meta_status?: string | null;
         };
         Update: Partial<Database['public']['Tables']['orders']['Insert']>;
         Relationships: [
@@ -222,6 +230,7 @@ export type Database = {
           fbp: string | null;
           cookie_consent: boolean;
           is_test: boolean;
+          referral_code: string | null;
         };
         Insert: {
           code: string;
@@ -240,6 +249,7 @@ export type Database = {
           fbp?: string | null;
           cookie_consent?: boolean;
           is_test?: boolean;
+          referral_code?: string | null;
         };
         Update: Partial<Database['public']['Tables']['whatsapp_refs']['Insert']>;
         Relationships: [];
@@ -253,6 +263,7 @@ export type Database = {
           section: string;
           page: string | null;
           is_test: boolean;
+          meta_status: string | null;
         };
         Insert: {
           id?: number;
@@ -262,6 +273,7 @@ export type Database = {
           section: string;
           page?: string | null;
           is_test?: boolean;
+          meta_status?: string | null;
         };
         Update: Partial<Database['public']['Tables']['whatsapp_clicks']['Insert']>;
         Relationships: [
@@ -271,6 +283,39 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'whatsapp_refs';
             referencedColumns: ['code'];
+          },
+        ];
+      };
+      // migration 0009
+      order_payments: {
+        Row: {
+          id: number;
+          created_at: string;
+          order_id: string;
+          paystack_reference: string;
+          payment_type: 'full' | 'deposit' | 'balance';
+          amount: number;
+          paid_at: string | null;
+          is_test: boolean;
+        };
+        Insert: {
+          id?: number;
+          created_at?: string;
+          order_id: string;
+          paystack_reference: string;
+          payment_type: 'full' | 'deposit' | 'balance';
+          amount: number;
+          paid_at?: string | null;
+          is_test?: boolean;
+        };
+        Update: Partial<Database['public']['Tables']['order_payments']['Insert']>;
+        Relationships: [
+          {
+            foreignKeyName: 'order_payments_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: false;
+            referencedRelation: 'orders';
+            referencedColumns: ['id'];
           },
         ];
       };
