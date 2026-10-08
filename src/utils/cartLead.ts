@@ -1,3 +1,5 @@
+import { getAttribution } from './attribution';
+
 export type CartLeadPayload = {
   type: 'individual' | 'business';
   fullName: string;
@@ -23,7 +25,8 @@ export function sendCartLead(payload: CartLeadPayload) {
   fetch('/api/cart-leads', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    // Which campaign/ad set/ad the visitor came from, for the team's alert.
+    body: JSON.stringify({ ...payload, attribution: getAttribution() }),
     keepalive: true,
   })
     .then((res) => {
@@ -40,7 +43,7 @@ export async function sendQuoteRequest(payload: CartLeadPayload): Promise<boolea
     const res = await fetch('/api/cart-leads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, attribution: getAttribution() }),
     });
     if (!res.ok) console.error(`Quote request was not saved (server returned ${res.status}).`);
     return res.ok;

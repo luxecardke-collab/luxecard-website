@@ -28,6 +28,17 @@ export type Database = {
           needs_etims: boolean;
           kra_pin: string | null;
           kra_business_name: string | null;
+          utm_source: string | null;
+          utm_medium: string | null;
+          utm_campaign: string | null;
+          utm_content: string | null;
+          utm_term: string | null;
+          fbclid: string | null;
+          is_test: boolean;
+          order_source: 'website' | 'whatsapp';
+          whatsapp_ref: string | null;
+          payment_type: 'full' | 'deposit' | 'balance' | null;
+          meta_status: string | null;
         };
         Insert: {
           id?: string;
@@ -46,6 +57,17 @@ export type Database = {
           needs_etims?: boolean;
           kra_pin?: string | null;
           kra_business_name?: string | null;
+          utm_source?: string | null;
+          utm_medium?: string | null;
+          utm_campaign?: string | null;
+          utm_content?: string | null;
+          utm_term?: string | null;
+          fbclid?: string | null;
+          is_test?: boolean;
+          order_source?: 'website' | 'whatsapp';
+          whatsapp_ref?: string | null;
+          payment_type?: 'full' | 'deposit' | 'balance' | null;
+          meta_status?: string | null;
         };
         Update: Partial<Database['public']['Tables']['orders']['Insert']>;
         Relationships: [
@@ -102,6 +124,13 @@ export type Database = {
           kra_business_name: string | null;
           quote_requested: boolean;
           quote_requested_at: string | null;
+          utm_source: string | null;
+          utm_medium: string | null;
+          utm_campaign: string | null;
+          utm_content: string | null;
+          utm_term: string | null;
+          fbclid: string | null;
+          is_test: boolean;
         };
         Insert: {
           id?: string;
@@ -120,6 +149,13 @@ export type Database = {
           kra_business_name?: string | null;
           quote_requested?: boolean;
           quote_requested_at?: string | null;
+          utm_source?: string | null;
+          utm_medium?: string | null;
+          utm_campaign?: string | null;
+          utm_content?: string | null;
+          utm_term?: string | null;
+          fbclid?: string | null;
+          is_test?: boolean;
         };
         Update: Partial<Database['public']['Tables']['cart_leads']['Insert']>;
         Relationships: [];
@@ -174,6 +210,114 @@ export type Database = {
         };
         Update: Partial<Database['public']['Tables']['rate_limit_hits']['Insert']>;
         Relationships: [];
+      };
+      // migration 0008
+      whatsapp_refs: {
+        Row: {
+          code: string;
+          created_at: string;
+          last_clicked_at: string;
+          first_button: string;
+          first_section: string;
+          first_page: string | null;
+          utm_source: string | null;
+          utm_medium: string | null;
+          utm_campaign: string | null;
+          utm_content: string | null;
+          utm_term: string | null;
+          fbclid: string | null;
+          fbc: string | null;
+          fbp: string | null;
+          cookie_consent: boolean;
+          is_test: boolean;
+          referral_code: string | null;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          last_clicked_at?: string;
+          first_button: string;
+          first_section: string;
+          first_page?: string | null;
+          utm_source?: string | null;
+          utm_medium?: string | null;
+          utm_campaign?: string | null;
+          utm_content?: string | null;
+          utm_term?: string | null;
+          fbclid?: string | null;
+          fbc?: string | null;
+          fbp?: string | null;
+          cookie_consent?: boolean;
+          is_test?: boolean;
+          referral_code?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['whatsapp_refs']['Insert']>;
+        Relationships: [];
+      };
+      whatsapp_clicks: {
+        Row: {
+          id: number;
+          created_at: string;
+          code: string;
+          button: string;
+          section: string;
+          page: string | null;
+          is_test: boolean;
+          meta_status: string | null;
+        };
+        Insert: {
+          id?: number;
+          created_at?: string;
+          code: string;
+          button: string;
+          section: string;
+          page?: string | null;
+          is_test?: boolean;
+          meta_status?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['whatsapp_clicks']['Insert']>;
+        Relationships: [
+          {
+            foreignKeyName: 'whatsapp_clicks_code_fkey';
+            columns: ['code'];
+            isOneToOne: false;
+            referencedRelation: 'whatsapp_refs';
+            referencedColumns: ['code'];
+          },
+        ];
+      };
+      // migration 0009
+      order_payments: {
+        Row: {
+          id: number;
+          created_at: string;
+          order_id: string;
+          paystack_reference: string;
+          payment_type: 'full' | 'deposit' | 'balance';
+          amount: number;
+          paid_at: string | null;
+          is_test: boolean;
+        };
+        Insert: {
+          id?: number;
+          created_at?: string;
+          order_id: string;
+          paystack_reference: string;
+          payment_type: 'full' | 'deposit' | 'balance';
+          amount: number;
+          paid_at?: string | null;
+          is_test?: boolean;
+        };
+        Update: Partial<Database['public']['Tables']['order_payments']['Insert']>;
+        Relationships: [
+          {
+            foreignKeyName: 'order_payments_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: false;
+            referencedRelation: 'orders';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Views: Record<string, never>;

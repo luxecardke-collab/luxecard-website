@@ -57,6 +57,8 @@ function ReferenceChip({ reference }: { reference: string }) {
 export function OrderConfirmation() {
   const [reference] = useState(getReferenceFromUrl);
   const [state, setState] = useState<ConfirmationState>(reference ? 'checking' : 'unconfirmed');
+  // A sale paid through a WhatsApp payment page (not the website checkout).
+  const [whatsappSale, setWhatsappSale] = useState(false);
 
   useEffect(() => {
     if (!reference) return;
@@ -69,10 +71,15 @@ export function OrderConfirmation() {
           const data = await res.json();
           if (data?.paid) {
             if (!cancelled) {
-              clearCartItems();
+              if (data.source === 'whatsapp') {
+                // Their website cart (if any) wasn't part of this payment.
+                setWhatsappSale(true);
+              } else {
+                clearCartItems();
+              }
               setState('paid');
               // Only now that payment is confirmed. No-op without cookie consent.
-              if (typeof data.value === 'number') trackMetaPurchase(reference, data.value);
+              if (typeof data.value === 'number') trackMetaPurchase(reference, data.value, Array.isArray(data.contents) ? data.contents : []);
             }
             return;
           }
@@ -155,10 +162,12 @@ export function OrderConfirmation() {
         <CheckCircle2 size={28} strokeWidth={1.8} className="text-accent" aria-hidden="true" />
       </div>
       <h1 className="m-0 mt-8 font-manrope text-[clamp(30px,4.4vw,52px)] font-bold leading-[1.05] tracking-[-.03em]">
-        Thank you! Your order is confirmed.
+        {whatsappSale ? 'Payment received, thank you!' : 'Thank you! Your order is confirmed.'}
       </h1>
       <p className="m-0 mt-4 max-w-[440px] text-[15.5px] leading-[1.6] text-[rgba(243,240,234,.6)]">
-        We'll reach out within 24 hours to discuss your card design. {PRODUCTION_NOTE}
+        {whatsappSale
+          ? "We'll continue with you on WhatsApp."
+          : `We'll reach out within 24 hours to discuss your card design. ${PRODUCTION_NOTE}`}
       </p>
       <a
         href="/"

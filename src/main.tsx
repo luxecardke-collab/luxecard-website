@@ -5,12 +5,15 @@ import App from './App.tsx'
 import { normalizePath, routeKey } from './routes'
 import { HYDRATABLE_MEDIA } from './hooks/useMediaQuery'
 import { captureReferralCode } from './utils/referralCode'
+import { captureAttribution } from './utils/attribution'
 import { initMetaPixel } from './utils/metaPixel'
 import { initAnalytics } from './utils/analytics'
 import { afterPageLoad } from './utils/afterPageLoad'
 import { syncServerClock } from './utils/serverClock'
 
 captureReferralCode()
+// Landing page UTM parameters + fbclid, kept for the visit (see there).
+captureAttribution()
 // Loads the Meta Pixel only if a Pixel ID is configured and the visitor has
 // accepted cookies (now, or later via the cookie banner).
 initMetaPixel()

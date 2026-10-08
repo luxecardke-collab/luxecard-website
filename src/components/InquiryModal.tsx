@@ -251,7 +251,7 @@ export function InquiryModal({
         subOption: row.finish ? SUB_OPTIONS[row.finish]?.find((o) => o.value === row.subOption)?.label : undefined,
         price: FINISH_PRICES[row.finish as Exclude<Finish, ''>],
         quantity: row.quantity,
-      });
+      }, { email: individualForm.email, phone: individualForm.phone });
     });
 
     saveCustomerInfo({
@@ -302,7 +302,7 @@ export function InquiryModal({
         subOption: row.finish ? SUB_OPTIONS[row.finish]?.find((o) => o.value === row.subOption)?.label : undefined,
         price: FINISH_PRICES[row.finish as Exclude<Finish, ''>],
         quantity: row.quantity,
-      });
+      }, { email: businessForm.email, phone: businessForm.phone });
     });
 
     saveCustomerInfo({

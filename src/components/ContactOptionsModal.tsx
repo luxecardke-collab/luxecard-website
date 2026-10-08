@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { LINKS } from '../data/links';
 import { useDialogA11y } from '../hooks/useDialogA11y';
+import { WHATSAPP_SOURCES, whatsappLinkProps } from '../utils/whatsapp';
 
 export function ContactOptionsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const containerRef = useDialogA11y<HTMLDivElement>(isOpen, onClose);
@@ -59,6 +60,12 @@ export function ContactOptionsModal({ isOpen, onClose }: { isOpen: boolean; onCl
         <div className="mb-6 mt-2 font-inter text-[10.5px] font-medium tracking-[.14em] text-accent">CONTACT US</div>
 
         <div className="flex flex-col gap-3">
+          <a
+            {...whatsappLinkProps(WHATSAPP_SOURCES.contactPopup)}
+            className="rounded-xl border border-[rgba(255,255,255,.14)] bg-[rgba(255,255,255,.03)] px-4 py-3 text-[15px] text-ivory transition-colors duration-300 hover:border-accent hover:text-accent"
+          >
+            WhatsApp {LINKS.PHONE_DISPLAY}
+          </a>
           {options.map((option) => (
             <a
               key={option.label}

@@ -21,10 +21,37 @@ export function CookieBanner() {
   return META_PIXEL_ENABLED && hydrated ? <ConsentBar /> : null;
 }
 
+const REVEAL_DELAY_MS = 4000;
+const SCROLL_REVEAL_PX = 24;
+
 function ConsentBar() {
   const [choice, setChoice] = useState<ConsentChoice | null>(getConsent);
   const [open, setOpen] = useState(() => getConsent() === null);
+  // A first-time visitor sees the bar a few seconds in, or as soon as they
+  // scroll, tap or press a key — not on top of the page as it first loads.
+  // Opening it from the footer's "Cookie settings" shows it straight away.
+  const [revealed, setRevealed] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open || revealed) return;
+    const reveal = () => setRevealed(true);
+    // Page start-up can fire scroll events of its own (smooth scrolling
+    // settling at the top), so only a scroll that actually moved the page
+    // counts as the visitor scrolling.
+    const onScroll = () => {
+      if (window.scrollY > SCROLL_REVEAL_PX) reveal();
+    };
+    const timer = window.setTimeout(reveal, REVEAL_DELAY_MS);
+    const events = ['pointerdown', 'keydown'] as const;
+    events.forEach((e) => window.addEventListener(e, reveal, { once: true, passive: true }));
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.clearTimeout(timer);
+      events.forEach((e) => window.removeEventListener(e, reveal));
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, [open, revealed]);
   const firstButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(
@@ -32,6 +59,7 @@ function ConsentBar() {
       onOpenCookieSettings(() => {
         setChoice(getConsent());
         setOpen(true);
+        setRevealed(true);
         // Keyboard users who opened it from the footer land on the choice.
         requestAnimationFrame(() => firstButtonRef.current?.focus());
       }),
@@ -41,7 +69,7 @@ function ConsentBar() {
   useLayoutEffect(() => {
     const root = document.documentElement;
     const el = ref.current;
-    if (!open || !el) {
+    if (!open || !revealed || !el) {
       root.style.removeProperty('--cookie-banner-h');
       document.body.style.paddingBottom = '';
       return;
@@ -59,9 +87,9 @@ function ConsentBar() {
       root.style.removeProperty('--cookie-banner-h');
       document.body.style.paddingBottom = '';
     };
-  }, [open]);
+  }, [open, revealed]);
 
-  if (!open) return null;
+  if (!open || !revealed) return null;
 
   const choose = (next: ConsentChoice) => {
     setConsent(next);
@@ -86,7 +114,8 @@ function ConsentBar() {
     >
       <div className="mx-auto flex max-w-[1320px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
         <p className="m-0 text-[13px] leading-[1.5] text-[rgba(243,240,234,.68)]">
-          We use cookies to measure how our ads perform. You can change your choice any time under Cookie settings.{' '}
+          Can we use cookies to measure our Meta ads? It helps us show LuxeCard to the right people. Nothing is shared
+          until you choose, and you can change your choice any time under Cookie settings.{' '}
           <a
             href={LINKS.LEGAL.privacy}
             className="whitespace-nowrap text-accent underline decoration-accent/40 underline-offset-[3px] hover:decoration-accent"

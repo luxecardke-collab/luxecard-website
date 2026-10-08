@@ -1,11 +1,11 @@
 import { Fragment, useState } from 'react';
 import { FINISH_PRICES_BY_LABEL } from '../../api/_lib/pricing';
 import { FINISH_LABELS_IN_ORDER } from '../data/content';
-import { LINKS } from '../data/links';
 import { useOffer } from '../hooks/useOffer';
 import { offerHeadline, offerLastDay } from '../utils/offerText';
 import { OfferPrice } from './OfferPrice';
 import { useReveal } from '../hooks/useReveal';
+import { WHATSAPP_SOURCES, whatsappLinkProps } from '../utils/whatsapp';
 
 // `group` (optional) prints a small heading above the first question of each
 // group. Answers can hold placeholders: see TOKEN_PATTERN below.
@@ -52,9 +52,7 @@ function FaqAnswer({ text }: { text: string }) {
           return (
             <a
               key={i}
-              href={LINKS.CONTACT}
-              target="_blank"
-              rel="noopener noreferrer"
+              {...whatsappLinkProps(WHATSAPP_SOURCES.faq)}
               className="text-accent underline underline-offset-[3px] transition-opacity duration-300 hover:opacity-80"
             >
               Contact us

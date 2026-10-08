@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useCart } from '../context/cartContext';
 import { useNavMenu } from '../context/navMenuContext';
-import { LINKS } from '../data/links';
+import { usePagePath } from '../context/pagePathContext';
+import { WHATSAPP_SOURCES, whatsappLinkProps } from '../utils/whatsapp';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
 const TRANSITION_MS = 250;
@@ -41,6 +42,7 @@ export function WhatsAppButton() {
   const { isOpen: cartOpen } = useCart();
   const { isOpen: menuOpen } = useNavMenu();
   const reducedMotion = useReducedMotion();
+  const pagePath = usePagePath();
 
   useEffect(() => {
     let landmarks = findLandmarks();
@@ -124,9 +126,7 @@ export function WhatsAppButton() {
 
   return (
     <a
-      href={LINKS.CONTACT}
-      target="_blank"
-      rel="noopener noreferrer"
+      {...whatsappLinkProps(pagePath === '/affiliate' ? WHATSAPP_SOURCES.floatingAffiliate : WHATSAPP_SOURCES.floating)}
       aria-label="Chat with us on WhatsApp"
       aria-hidden={hidden}
       // inert takes it out of the tab order and pointer hit-testing while hidden.

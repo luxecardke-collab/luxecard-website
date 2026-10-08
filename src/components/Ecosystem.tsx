@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { FINISH_PRICES_BY_LABEL } from '../../api/_lib/pricing';
+import { activeOffer, FINISH_PRICES_BY_LABEL, offerUnitPrice, productId } from '../../api/_lib/pricing';
+import { serverNow } from '../utils/serverClock';
 import { CARD_FINISHES } from '../data/content';
-import { trackMetaEvent } from '../utils/metaPixel';
+import { trackMetaEventWithServer } from '../utils/metaPixel';
 import { useInquiryModal } from '../context/inquiryModalContext';
 import { useAutoCycle } from '../hooks/useAutoCycle';
 import { useOffer } from '../hooks/useOffer';
@@ -45,12 +46,19 @@ export function Ecosystem() {
       ([entry]) => {
         if (!entry.isIntersecting) return;
         observer.disconnect();
+        // Browser + Conversions API, same event ID. Prices after any offer
+        // on right now (by the server's clock).
         const materials = Object.keys(FINISH_PRICES_BY_LABEL);
-        trackMetaEvent('ViewContent', {
+        const offerNow = activeOffer(serverNow());
+        trackMetaEventWithServer('ViewContent', {
           content_type: 'product',
           content_name: 'LuxeCard finishes',
-          content_ids: materials,
-          contents: materials.map((id) => ({ id, quantity: 1, item_price: FINISH_PRICES_BY_LABEL[id] })),
+          content_ids: materials.map(productId),
+          contents: materials.map((label) => ({
+            id: productId(label),
+            quantity: 1,
+            item_price: offerUnitPrice(FINISH_PRICES_BY_LABEL[label], offerNow),
+          })),
           currency: 'KES',
         });
       },

@@ -1,7 +1,7 @@
 import { FOR_BUSINESS_BENEFITS } from '../data/content';
-import { LINKS } from '../data/links';
 import { useInquiryModal } from '../context/inquiryModalContext';
 import { RevealSection } from './RevealSection';
+import { WHATSAPP_SOURCES, whatsappLinkProps } from '../utils/whatsapp';
 
 export function ForBusiness() {
   const { open: openInquiryModal, preload: preloadInquiryModal } = useInquiryModal();
@@ -38,7 +38,7 @@ export function ForBusiness() {
               Equip Your Team <span className="font-inter">→</span>
             </button>
             <a
-              href={LINKS.CONTACT}
+              {...whatsappLinkProps(WHATSAPP_SOURCES.forBusiness, { newTab: false })}
               className="border-b border-[rgba(11,11,13,.2)] pb-[3px] text-[15.5px] text-[rgba(11,11,13,.7)] transition-colors hover:border-ink hover:text-ink"
             >
               Talk to LuxeCard

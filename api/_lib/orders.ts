@@ -11,7 +11,10 @@
 // records any commission.
 import { describeDiscount, describeItems, formatEat, formatKes, sendTeamEmail } from './email.js';
 import { readEtims } from './kra.js';
-import { sendMetaPurchase } from './metaCapi.js';
+import { findAffiliate, recordCommission } from './affiliateCommission.js';
+import { attributionRows, isTestEnvironment, readAttribution } from './attribution.js';
+import { isPaymentLinkSale, recordPaymentLinkSale } from './paymentLinkSale.js';
+import { describeMetaResult, sendMetaPurchase, type MetaResult } from './metaCapi.js';
 import { getSupabaseAdmin } from './supabaseAdmin.js';
 import { computeAuthoritativeTotals, type CheckoutItem } from './pricing.js';
 
@@ -25,6 +28,14 @@ export type PaystackOrderMetadata = {
   needs_etims?: boolean;
   kra_pin?: string | null;
   kra_business_name?: string | null;
+  // Where the customer came from (landing page UTM parameters + fbclid),
+  // added by api/checkout.ts.
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_content?: string | null;
+  utm_term?: string | null;
+  fbclid?: string | null;
   // Server time checkout priced the order at (api/checkout.ts); decides
   // which offer, if any, applied. Absent on orders from before offers.
   priced_at?: string | null;
@@ -44,17 +55,42 @@ export type PaystackOrderMetadata = {
 // the team knows to double check it.
 export type OrderSource = 'webhook' | 'order-status' | 'cron';
 
+// The parts of Paystack's own transaction record used here: what was
+// actually collected (in KES cents) and when.
+export type PaystackPayment = {
+  amount?: number | null;
+  paid_at?: string | null;
+  paidAt?: string | null;
+  customer?: { email?: string | null; first_name?: string | null; last_name?: string | null; phone?: string | null } | null;
+};
+
 export type RecordOrderResult =
   | { ok: true; created: boolean; orderId: string | null }
   | { ok: false; error: string };
 
-const COMMISSION_RATE = 0.1;
 
 export async function recordPaidOrder(
   reference: string,
-  metadata: PaystackOrderMetadata,
-  source: OrderSource
+  rawMetadata: PaystackOrderMetadata | string,
+  source: OrderSource,
+  payment: PaystackPayment = {}
 ): Promise<RecordOrderResult> {
+  // Paystack sometimes reports metadata as a JSON string rather than an object.
+  let metadata: PaystackOrderMetadata = {};
+  if (typeof rawMetadata === 'string') {
+    try {
+      metadata = rawMetadata ? JSON.parse(rawMetadata) : {};
+    } catch {
+      metadata = {};
+    }
+  } else if (rawMetadata && typeof rawMetadata === 'object') {
+    metadata = rawMetadata;
+  }
+  // A WhatsApp sale paid through a Paystack payment link: no cart, just the
+  // link's custom fields (see paymentLinkSale.ts).
+  if (!Array.isArray(metadata?.items) && isPaymentLinkSale(metadata)) {
+    return recordPaymentLinkSale(reference, metadata, source, payment);
+  }
   if (!metadata?.items || !metadata.customer_email || !metadata.customer_name || !metadata.customer_phone) {
     return { ok: false, error: 'Missing order metadata.' };
   }
@@ -97,13 +133,12 @@ export async function recordPaidOrder(
     return { ok: false, error: err instanceof Error ? err.message : 'Invalid order items.' };
   }
 
-  // orders.referral_code is a foreign key to affiliates, so only a code that
-  // belongs to an affiliate can be stored on the order: a mistyped or
-  // made-up ?ref= code would otherwise make saving this PAID order fail.
-  // Looked up first; an unknown code is still shown in the alert below.
-  const { data: affiliate } = metadata.referral_code
-    ? await supabase.from('affiliates').select('id, status').eq('referral_code', metadata.referral_code).maybeSingle()
-    : { data: null };
+  const attribution = readAttribution(metadata);
+  const isTest = isTestEnvironment();
+  // Only a code that belongs to an affiliate can be stored on the order
+  // (orders.referral_code is a foreign key): an unknown one used to make
+  // saving this paid order fail. It's still shown in the alert.
+  const affiliate = await findAffiliate(supabase, metadata.referral_code);
 
   // Upsert on the DB's own unique constraint (migration 0006) rather than a
   // separate check-then-insert: whichever caller (webhook, self-heal, or
@@ -126,6 +161,8 @@ export async function recordPaidOrder(
         payment_status: 'paid',
         paystack_reference: reference,
         referral_code: affiliate ? (metadata.referral_code ?? null) : null,
+        ...attribution,
+        ...(isTest ? { is_test: true } : {}),
         ...(etimsRequested ? { needs_etims: true, kra_pin: etimsPin, kra_business_name: etimsName } : {}),
       },
       { onConflict: 'paystack_reference', ignoreDuplicates: true }
@@ -145,41 +182,23 @@ export async function recordPaidOrder(
     return { ok: true, created: false, orderId: null };
   }
 
-  let referralNote: string | null = null;
-  if (metadata.referral_code) {
-    // Pending affiliates' codes are stored on the order for the record, but
-    // don't earn a commission until manually approved (status flipped to
-    // 'active' in Supabase).
-    if (affiliate && affiliate.status === 'active') {
-      const { error: commissionError } = await supabase.from('referral_commissions').insert({
-        affiliate_id: affiliate.id,
-        order_id: order.id,
-        commission_amount: totals.total * COMMISSION_RATE,
-        payout_status: 'unpaid',
-      });
-      if (commissionError) {
-        console.error('Failed to insert referral commission:', commissionError);
-        referralNote = `${metadata.referral_code} (commission could not be recorded, check the logs)`;
-      } else {
-        referralNote = `${metadata.referral_code} (active affiliate, commission recorded)`;
-      }
-    } else if (affiliate) {
-      referralNote = `${metadata.referral_code} (affiliate is still pending approval, no commission)`;
-    } else {
-      referralNote = `${metadata.referral_code} (no affiliate has this code, no commission)`;
-    }
-  }
+  const referralNote = await recordCommission(supabase, metadata.referral_code, affiliate, order.id, totals.total);
 
   // The order is saved. Everything below is best-effort and never affects
   // the caller's response: sendTeamEmail and sendMetaPurchase both log
   // their own failures instead of throwing, and both have their own
   // timeout. The Meta Purchase goes only to customers who accepted
-  // cookies, and carries no KRA, name or company details.
-  const metaPurchase =
+  // cookies, and carries no KRA, name or company details. It's sent first
+  // so the team's alert can say what happened to it.
+  const paidValue = typeof payment.amount === 'number' && payment.amount > 0 ? payment.amount / 100 : totals.total;
+  const paidAtRaw = payment.paid_at ?? payment.paidAt;
+  const paidAtMs = paidAtRaw ? Date.parse(paidAtRaw) : NaN;
+  const metaResult: MetaResult =
     metadata.meta_consent === true
-      ? sendMetaPurchase({
+      ? await sendMetaPurchase({
           reference,
-          value: totals.total,
+          value: paidValue,
+          eventTime: Number.isNaN(paidAtMs) ? undefined : Math.floor(paidAtMs / 1000),
           email: customer_email,
           phone: customer_phone,
           items: metadata.items.map((i) => ({ name: i.name, quantity: i.quantity })),
@@ -189,11 +208,19 @@ export async function recordPaidOrder(
           fbp: metadata.meta_fbp,
           fbc: metadata.meta_fbc,
         })
-      : Promise.resolve();
+      : { status: 'skipped', reason: "the buyer didn't accept cookies, so nothing may be sent" };
+
+  // What Meta was told, kept on the order (and in the alert below).
+  const metaLine = describeMetaResult('Purchase', metaResult);
+  const { error: metaStatusError } = await supabase
+    .from('orders')
+    .update({ meta_status: metaResult.status === 'sent' ? `${metaLine} fbtrace_id ${metaResult.fbtraceId}` : metaLine })
+    .eq('id', order.id);
+  if (metaStatusError) console.error('Failed to save the Meta outcome on the order:', metaStatusError);
 
   const recovered = source === 'cron';
   const teamEmail = sendTeamEmail({
-    subject: `${recovered ? 'Recovered order' : 'New paid order'}${etimsRequested ? ' (eTIMS invoice needed)' : ''}: ${customer_name} (${formatKes(totals.total)})`,
+    subject: `${isTest ? '[TEST] ' : ''}${recovered ? 'Recovered order' : 'New paid order'}${etimsRequested ? ' (eTIMS invoice needed)' : ''}: ${customer_name} (${formatKes(totals.total)})`,
     heading: recovered ? 'Recovered order (missed by the webhook)' : 'New paid order',
     rows: [
       ['Customer', customer_name],
@@ -208,6 +235,8 @@ export async function recordPaidOrder(
       ['Priced at', totals.offer && pricedAt ? formatEat(pricedAt) : null],
       ['Payment reference', reference],
       ['Referral code', referralNote],
+      ...attributionRows(attribution),
+      ['Meta', metaLine],
       ...(etimsRequested
         ? ([
             ['eTIMS invoice', 'REQUESTED'],
@@ -232,7 +261,7 @@ export async function recordPaidOrder(
     replyTo: customer_email,
   });
 
-  await Promise.allSettled([teamEmail, metaPurchase]);
+  await teamEmail;
 
   return { ok: true, created: true, orderId: order.id };
 }

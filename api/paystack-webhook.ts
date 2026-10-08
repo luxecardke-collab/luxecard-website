@@ -50,7 +50,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  let event: { event: string; data: { reference: string; metadata?: PaystackOrderMetadata } };
+  let event: {
+    event: string;
+    data: {
+      reference: string;
+      metadata?: PaystackOrderMetadata;
+      amount?: number;
+      paid_at?: string | null;
+      paidAt?: string | null;
+      customer?: { email?: string | null; first_name?: string | null; last_name?: string | null; phone?: string | null } | null;
+    };
+  };
   try {
     event = JSON.parse(rawBody);
   } catch {
@@ -66,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { reference, metadata } = event.data;
-  const result = await recordPaidOrder(reference, metadata ?? {}, 'webhook');
+  const result = await recordPaidOrder(reference, metadata ?? {}, 'webhook', event.data);
 
   if (!result.ok) {
     res.status(400).json({ error: result.error });

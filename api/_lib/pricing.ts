@@ -15,6 +15,20 @@ export const FINISH_PRICES_BY_LABEL: Record<string, number> = {
   "Chairman's Card": 19000,
 };
 
+// Stable product IDs, one per finish, for ad platforms (Meta content_ids).
+// The labels above are display names and can change; these must not, or
+// Meta stops matching new events to past ones.
+export const PRODUCT_IDS_BY_LABEL: Record<string, string> = {
+  Plastic: 'plastic',
+  Wood: 'wood',
+  Metallic: 'metal',
+  "Chairman's Card": 'chairman',
+};
+
+export function productId(label: string): string {
+  return PRODUCT_IDS_BY_LABEL[label] ?? label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+}
+
 // 10% off once an order has more than 3 cards.
 export const BULK_DISCOUNT_THRESHOLD = 3;
 export const BULK_DISCOUNT_RATE = 0.1;
