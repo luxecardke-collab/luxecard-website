@@ -53,7 +53,7 @@ export function CardLandingPage({ card }: { card: CardPage }) {
       <Ecosystem
         id="card"
         heading={<Headline text={card.showcase.headline} />}
-        label={null}
+        label={card.showcase.label}
         items={card.showcase.items}
         onOrder={scrollToOrder}
         orderLabel={card.showcaseCta}
@@ -83,7 +83,7 @@ export function CardLandingPage({ card }: { card: CardPage }) {
       )}
       <ForBusiness
         id="what-you-get"
-        eyebrow={null}
+        eyebrow="WHAT YOU GET"
         // Plain (no gold) on the light background, as on the homepage.
         heading={headlineParts(card.whatYouGet.headline).map((part) => part.text).join('')}
         intro={<PriceOnLight card={card} />}

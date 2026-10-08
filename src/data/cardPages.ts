@@ -49,7 +49,7 @@ export type CardPage = {
   // products section's line for this card isn't right for its page.
   productDescription?: string;
   // The card(s), shown like the homepage's "Crafted to Impress".
-  showcase: { headline: string; items: CardFinish[] };
+  showcase: { headline: string; label: string; items: CardFinish[] };
   // That section's button ("Get your Wood LuxeCard").
   showcaseCta: string;
   // An optional section after the card(s): how the card is presented.
@@ -110,6 +110,7 @@ const PLASTIC: CardPage = {
   showcaseCta: 'Get your Plastic LuxeCard',
   showcase: {
     headline: 'BUILT FOR [EVERY DAY.]',
+    label: 'Any Colour. One Card.',
     items: [
       {
         name: 'Plastic',
@@ -157,6 +158,7 @@ const WOOD: CardPage = {
   showcaseCta: 'Get your Wood LuxeCard',
   showcase: {
     headline: 'STAND OUT BEFORE YOU [SAY A WORD.]',
+    label: 'Two Finishes. One Card.',
     items: [
       {
         name: 'Wood: Natural',
@@ -214,6 +216,7 @@ const METALLIC: CardPage = {
   showcaseCta: 'Get your Metallic LuxeCard',
   showcase: {
     headline: 'FELT BEFORE IT’S [READ.]',
+    label: 'Two Finishes. One Card.',
     items: [
       {
         name: 'Metallic: Silver',
@@ -277,6 +280,7 @@ const CHAIRMAN: CardPage = {
   showcaseCta: 'Get your Chairman’s Card',
   showcase: {
     headline: 'THE CARD AT THE [HEAD OF THE TABLE.]',
+    label: 'Gold Finish. One Card.',
     items: [
       {
         name: 'Chairman’s Card',

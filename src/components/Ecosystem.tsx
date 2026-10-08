@@ -30,8 +30,7 @@ export function Ecosystem({
 }: {
   id?: string;
   heading?: ReactNode;
-  // null: no label above the card's name (the card pages).
-  label?: string | null;
+  label?: string;
   items?: CardFinish[];
   onOrder?: () => void;
   // The Order button's text from 640px (a card page names its card); on
@@ -126,13 +125,11 @@ export function Ecosystem({
           >
             <div className="flex items-start justify-between">
               <div>
-                {label && (
-                  <div className="font-inter text-[10px] font-medium tracking-[.15em] text-accent">
-                    {label}
-                  </div>
-                )}
+                <div className="font-inter text-[10px] font-medium tracking-[.15em] text-accent">
+                  {label}
+                </div>
                 <h3
-                  className={`${label ? 'mt-3 ' : ''}flex min-h-[2.3em] items-end font-manrope text-[clamp(24px,2.6vw,32px)] font-semibold leading-[.96] tracking-[-.03em]`}
+                  className="mt-3 flex min-h-[2.3em] items-end font-manrope text-[clamp(24px,2.6vw,32px)] font-semibold leading-[.96] tracking-[-.03em]"
                   style={cardStyle}
                 >
                   {finish.name}
