@@ -22,6 +22,7 @@ export function CookieBanner() {
 }
 
 const REVEAL_DELAY_MS = 4000;
+const SCROLL_REVEAL_PX = 24;
 
 function ConsentBar() {
   const [choice, setChoice] = useState<ConsentChoice | null>(getConsent);
@@ -35,12 +36,20 @@ function ConsentBar() {
   useEffect(() => {
     if (!open || revealed) return;
     const reveal = () => setRevealed(true);
+    // Page start-up can fire scroll events of its own (smooth scrolling
+    // settling at the top), so only a scroll that actually moved the page
+    // counts as the visitor scrolling.
+    const onScroll = () => {
+      if (window.scrollY > SCROLL_REVEAL_PX) reveal();
+    };
     const timer = window.setTimeout(reveal, REVEAL_DELAY_MS);
-    const events = ['scroll', 'pointerdown', 'keydown'] as const;
+    const events = ['pointerdown', 'keydown'] as const;
     events.forEach((e) => window.addEventListener(e, reveal, { once: true, passive: true }));
+    window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       window.clearTimeout(timer);
       events.forEach((e) => window.removeEventListener(e, reveal));
+      window.removeEventListener('scroll', onScroll);
     };
   }, [open, revealed]);
   const firstButtonRef = useRef<HTMLButtonElement>(null);
