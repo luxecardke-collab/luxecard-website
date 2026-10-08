@@ -210,8 +210,10 @@ export const FOR_BUSINESS_BENEFITS = [
 // FaqAccordion): "{contact}" becomes a "Contact us" link to the site's
 // WhatsApp contact; "{prices}" the card price list, with any offer applied;
 // "{offer}" a sentence about the offer, only while one is on.
-// `id` lets other pages (the card pages) reuse an answer without copying it.
-export type Faq = { q: string; a: string; group?: string; id?: string };
+// `id` lets other pages (the card pages) reuse an answer without copying it;
+// `cardPageA` is the answer's wording there, where it differs (the card
+// pages order through their own form, not the cart).
+export type Faq = { q: string; a: string; group?: string; id?: string; cardPageA?: string };
 
 const GROUP_ORDERING = 'Ordering and pricing';
 const GROUP_BUSINESSES = 'For businesses';
@@ -262,12 +264,14 @@ export const FAQS: Faq[] = [
     id: 'teams',
     q: 'Can businesses get LuxeCards for their teams?',
     a: `Yes. Choose “For teams” when ordering to add cards for your whole team in one order, with ${BULK_DISCOUNT} when you order more than ${BULK_DISCOUNT_THRESHOLD} cards.`,
+    cardPageA: `Yes. Tick “Ordering for a business?” in the order form and choose how many cards your team needs, with ${BULK_DISCOUNT} when you order more than ${BULK_DISCOUNT_THRESHOLD} cards.`,
   },
   {
     group: GROUP_BUSINESSES,
     id: 'etims',
     q: 'Do you provide eTIMS tax invoices?',
     a: `Yes. On a “For teams” order, tick “I need an eTIMS tax invoice” and enter your KRA PIN and registered business name. Your eTIMS invoice will be emailed within ${ETIMS_INVOICE_TIMEFRAME} of payment. Need a quotation first? Request one from your cart. Quotation orders need a 50% deposit to begin, with the balance due when your cards are ready.`,
+    cardPageA: `Yes. In the order form, tick “Ordering for a business?”, then “I need an eTIMS tax invoice”, and enter your KRA PIN and registered business name. Your eTIMS invoice will be emailed within ${ETIMS_INVOICE_TIMEFRAME} of payment. Need a quotation first? Request a quote from the order form. Quotation orders need a 50% deposit to begin, with the balance due when your cards are ready.`,
   },
   {
     group: GROUP_USING,
@@ -324,7 +328,11 @@ export const TESTIMONIALS: Testimonial[] = [
 ];
 
 export const FOOTER_LINKS = {
-  columnOne: { title: 'Explore', links: NAV_LINKS },
+  // "Cards" to match the nav, where the card pages replaced "Products".
+  columnOne: {
+    title: 'Explore',
+    links: NAV_LINKS.map((link) => (link.href === '#products' ? { ...link, label: 'Cards' } : link)),
+  },
   columnTwo: {
     title: 'Connect',
     links: [

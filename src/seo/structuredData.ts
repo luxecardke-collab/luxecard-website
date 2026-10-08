@@ -82,7 +82,7 @@ function cardPageGraph(card: CardPage) {
     {
       '@type': 'Product',
       name: `LuxeCard ${finish.name}`,
-      description: finish.blurb,
+      description: card.productDescription ?? finish.blurb,
       image: `${SITE_URL}${finish.image}`,
       brand: { '@type': 'Brand', name: 'LuxeCard' },
       offers: {

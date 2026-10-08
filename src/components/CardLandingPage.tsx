@@ -36,7 +36,7 @@ function scrollToOrder() {
 }
 
 export function CardLandingPage({ card }: { card: CardPage }) {
-  const [finish, setFinish] = useState(card.finishes?.[0]?.label ?? null);
+  const [finish, setFinish] = useRememberedFinish(card);
   useViewContent(card);
 
   return (
@@ -80,6 +80,32 @@ function FinalHeading({ text }: { text: string }) {
       {headlineParts(text).map((part, i) => (part.gold ? <FinalCtaGlow key={i} text={part.text} /> : part.text))}
     </>
   );
+}
+
+// The finish picked on this page, kept for the visit (sessionStorage), so a
+// visitor coming back from a cancelled checkout still has it selected. The
+// prerendered page starts on the first finish; a remembered one is applied
+// once the page is running.
+function useRememberedFinish(card: CardPage) {
+  const key = `luxecard_card_finish_${card.slug}`;
+  const [finish, setFinishState] = useState(card.finishes?.[0]?.label ?? null);
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(key);
+      if (saved && card.finishes?.some((f) => f.label === saved)) setFinishState(saved);
+    } catch {
+      // storage unavailable: keep the default
+    }
+  }, [card, key]);
+  const setFinish = (next: string) => {
+    setFinishState(next);
+    try {
+      sessionStorage.setItem(key, next);
+    } catch {
+      // storage unavailable: the choice still applies on this page
+    }
+  };
+  return [finish, setFinish] as const;
 }
 
 // Meta ViewContent for this card, once per page view: on load, or when the
@@ -256,9 +282,10 @@ function WhySection({ card }: { card: CardPage }) {
             ))}
           </ul>
         </div>
-        {card.finishes && (
-          <div className="grid grid-cols-2 gap-[clamp(14px,2vw,24px)]">
-            {card.finishes.map((choice) => (
+        {/* The finishes side by side, or the card's one photo. */}
+        {(card.finishes ?? (card.image ? [card.image] : [])).length > 0 && (
+          <div className={`grid gap-[clamp(14px,2vw,24px)] ${card.finishes ? 'grid-cols-2' : 'mx-auto w-full max-w-[460px] grid-cols-1'}`}>
+            {(card.finishes ?? (card.image ? [card.image] : [])).map((choice) => (
               <figure key={choice.label} className="m-0">
                 <div
                   className="relative aspect-[960/550] rounded-2xl border border-[rgba(255,255,255,.06)] p-[8%]"
@@ -330,8 +357,16 @@ function OfferBulkNote() {
 
 const GALLERY_PREVIEW = 8;
 
+// A portfolio photo's file name ("wood-03") from its caption ("WOOD 03").
+const photoFile = (caption: string) => caption.toLowerCase().replace(' ', '-');
+
+// Real cards from the portfolio, then testimonials; a card without photos
+// yet shows the testimonials alone, under the site's own heading for them.
 function Gallery({ card }: { card: CardPage }) {
-  const photos = PHOTOS_BY_MATERIAL[card.gallery.material];
+  const gallery = card.gallery;
+  const photos = gallery
+    ? PHOTOS_BY_MATERIAL[gallery.material].filter((p) => !gallery.exclude?.includes(photoFile(p.caption)))
+    : [];
   const [showAll, setShowAll] = useState(false);
   const shown = showAll ? photos : photos.slice(0, GALLERY_PREVIEW);
   const testimonials = card.testimonials
@@ -341,34 +376,41 @@ function Gallery({ card }: { card: CardPage }) {
   return (
     <RevealSection id="gallery" className={SECTION}>
       <div className="mx-auto max-w-[1320px]">
-        <div className={EYEBROW}>REAL CARDS, REAL CLIENTS</div>
+        <div className={EYEBROW}>{gallery ? 'REAL CARDS, REAL CLIENTS' : 'REAL CLIENTS'}</div>
         <h2 className={H2}>
-          <Headline text={card.gallery.headline} />
+          {gallery ? (
+            <Headline text={gallery.headline} />
+          ) : (
+            <>
+              LOVED BY <span className="text-accent">{CUSTOMER_COUNT}+</span> PROFESSIONALS ACROSS KENYA.
+            </>
+          )}
         </h2>
-        <div className="mt-[clamp(36px,5vh,56px)] grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-          {shown.map((photo) => {
-            // Keyed by the photo's file name, e.g. "wood-03".
-            const label = card.gallery.labels?.[photo.caption.toLowerCase().replace(' ', '-')];
-            return (
-              <figure key={photo.image} className="relative m-0 overflow-hidden rounded-2xl border border-[rgba(255,255,255,.06)]">
-                <img
-                  src={photo.image}
-                  alt={photo.alt}
-                  width={800}
-                  height={800}
-                  loading="lazy"
-                  decoding="async"
-                  className="aspect-square h-auto w-full object-cover"
-                />
-                {label && (
-                  <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(0,0,0,.75)] to-transparent px-3 pb-3 pt-8 text-[12.5px] text-ivory">
-                    {label}
-                  </figcaption>
-                )}
-              </figure>
-            );
-          })}
-        </div>
+        {photos.length > 0 && (
+          <div className="mt-[clamp(36px,5vh,56px)] grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+            {shown.map((photo) => {
+              const label = gallery?.labels?.[photoFile(photo.caption)];
+              return (
+                <figure key={photo.image} className="relative m-0 overflow-hidden rounded-2xl border border-[rgba(255,255,255,.06)]">
+                  <img
+                    src={photo.image}
+                    alt={photo.alt}
+                    width={800}
+                    height={800}
+                    loading="lazy"
+                    decoding="async"
+                    className="aspect-square h-auto w-full object-cover"
+                  />
+                  {label && (
+                    <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(0,0,0,.75)] to-transparent px-3 pb-3 pt-8 text-[12.5px] text-ivory">
+                      {label}
+                    </figcaption>
+                  )}
+                </figure>
+              );
+            })}
+          </div>
+        )}
         {!showAll && photos.length > GALLERY_PREVIEW && (
           <button
             type="button"
