@@ -7,20 +7,22 @@ import { RevealSection } from './RevealSection';
 // front, all gently floating. Phones: one at a time, swipeable, with dots.
 //
 // Samples go in src/assets/landing/vcard/ as vcard-1.webp, vcard-2.webp, …
-// and are picked up automatically; until then the frames are empty.
+// and are picked up automatically. With none there, the section isn't
+// shown at all (no empty frames); adding the images switches it on.
 const SAMPLE_URLS = import.meta.glob<string>('/src/assets/landing/vcard/vcard-*.webp', {
   eager: true,
   query: '?url',
   import: 'default',
 });
 
-const SAMPLES: (string | null)[] = (() => {
-  const found = Object.entries(SAMPLE_URLS)
-    .map(([path, url]) => ({ n: Number(/vcard-(\d+)\.webp$/.exec(path)?.[1] ?? 0), url }))
-    .sort((a, b) => a.n - b.n)
-    .map((x) => x.url);
-  return found.length >= 3 ? found : [...found, ...Array<null>(3 - found.length).fill(null)];
-})();
+const FOUND = Object.entries(SAMPLE_URLS)
+  .map(([path, url]) => ({ n: Number(/vcard-(\d+)\.webp$/.exec(path)?.[1] ?? 0), url }))
+  .sort((a, b) => a.n - b.n)
+  .map((x) => x.url);
+// Shown only once there's at least one sample.
+export const HAS_VCARD_SAMPLES = FOUND.length > 0;
+const SAMPLES: (string | null)[] =
+  FOUND.length >= 3 ? FOUND : [...FOUND, ...Array<null>(3 - FOUND.length).fill(null)];
 
 // The desktop row: the middle three samples (or all of them, if three).
 const DESKTOP = SAMPLES.length > 3 ? SAMPLES.slice(0, 3) : SAMPLES;

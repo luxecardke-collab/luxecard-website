@@ -20,7 +20,7 @@ import { OfferBadge, OfferPrice } from './OfferPrice';
 import { Professionals } from './Professionals';
 import { RevealSection } from './RevealSection';
 import { Testimonials } from './Testimonials';
-import { VCardShowcase } from './VCardShowcase';
+import { HAS_VCARD_SAMPLES, VCardShowcase } from './VCardShowcase';
 
 // A card's landing page (/wood, …), for ads. It's the homepage's own
 // sections in the homepage's order, with this card's content (from
@@ -73,7 +73,7 @@ export function CardLandingPage({ card }: { card: CardPage }) {
           </>
         }
       />
-      <VCardShowcase />
+      {HAS_VCARD_SAMPLES && <VCardShowcase />}
       {photos.length > 0 && (
         <Professionals
           heading={
