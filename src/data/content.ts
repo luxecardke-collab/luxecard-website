@@ -137,7 +137,7 @@ export const PROFESSIONAL_CHIPS = [
   'EXECUTIVES & C-SUITE',
 ];
 
-export type PhotoMaterial = 'plastic' | 'wood' | 'metallic';
+export type PhotoMaterial = 'plastic' | 'wood' | 'metallic' | 'chairman';
 
 export type ProfessionalPhoto = { caption: string; image?: string; alt?: string; material: PhotoMaterial };
 
@@ -150,11 +150,21 @@ const PORTFOLIO_IMAGE_URLS = import.meta.glob<string>('/src/assets/portfolio/*.w
   import: 'default',
 });
 
-const MATERIAL_ORDER: PhotoMaterial[] = ['plastic', 'wood', 'metallic'];
+// The file name prefixes (folders, in effect), in the desktop grid's order.
+type PhotoFolder = 'plastic' | 'wood' | 'metallic';
+const FOLDER_ORDER: PhotoFolder[] = ['plastic', 'wood', 'metallic'];
 const PORTFOLIO_FILENAME_PATTERN = /^(plastic|wood|metallic)-(\d+)\.webp$/;
 
-function discoverPortfolioPhotos(): Record<PhotoMaterial, ProfessionalPhoto[]> {
-  const byMaterial: Record<PhotoMaterial, { n: number; photo: ProfessionalPhoto }[]> = {
+// The Chairman's Cards (gold finish) among the metallic-NN photos: shown as
+// "Chairman's Card", never "Metallic", but kept in their place in the
+// desktop grid's order.
+export const CHAIRMAN_PORTFOLIO_FILES = [
+  'metallic-01', 'metallic-03', 'metallic-06', 'metallic-08', 'metallic-11', 'metallic-13',
+  'metallic-16', 'metallic-18', 'metallic-21', 'metallic-23', 'metallic-26', 'metallic-28',
+];
+
+function discoverPortfolioPhotos(): Record<PhotoFolder, ProfessionalPhoto[]> {
+  const byMaterial: Record<PhotoFolder, { n: number; photo: ProfessionalPhoto }[]> = {
     plastic: [],
     wood: [],
     metallic: [],
@@ -169,34 +179,46 @@ function discoverPortfolioPhotos(): Record<PhotoMaterial, ProfessionalPhoto[]> {
       console.warn(`Portfolio photo "${filename}" doesn't match <material>-NN.webp, skipping it.`);
       continue;
     }
-    const [, material, digits] = match;
+    const [, folder, digits] = match;
     const n = Number(digits);
-    byMaterial[material as PhotoMaterial].push({
+    const chairman = CHAIRMAN_PORTFOLIO_FILES.includes(`${folder}-${digits}`);
+    byMaterial[folder as PhotoFolder].push({
       n,
       photo: {
-        caption: `${material.toUpperCase()} ${digits}`,
+        caption: `${folder.toUpperCase()} ${digits}`,
         image: url,
-        alt: `LuxeCard ${material}-finish business card, portfolio example ${n}`,
-        material: material as PhotoMaterial,
+        alt: chairman
+          ? `LuxeCard Chairman's Card, portfolio example ${n}`
+          : `LuxeCard ${folder}-finish business card, portfolio example ${n}`,
+        material: chairman ? 'chairman' : (folder as PhotoFolder),
       },
     });
   }
 
   for (const list of Object.values(byMaterial)) list.sort((a, b) => a.n - b.n);
   return Object.fromEntries(Object.entries(byMaterial).map(([m, list]) => [m, list.map((x) => x.photo)])) as Record<
-    PhotoMaterial,
+    PhotoFolder,
     ProfessionalPhoto[]
   >;
 }
 
-export const PHOTOS_BY_MATERIAL = discoverPortfolioPhotos();
+const PHOTOS_BY_FOLDER = discoverPortfolioPhotos();
 
-// Interleaved (plastic, wood, metallic, plastic, ...) so every row of the
-// desktop grid mixes finishes; the mobile filter pills pick out one material.
+// Interleaved by file name (plastic, wood, metallic, plastic, ...) so every
+// row of the desktop grid mixes finishes; the mobile filter pills pick out
+// one card type.
 export const PROFESSIONAL_PHOTOS: ProfessionalPhoto[] = Array.from(
-  { length: Math.max(...MATERIAL_ORDER.map((m) => PHOTOS_BY_MATERIAL[m].length)) },
-  (_, i) => MATERIAL_ORDER.filter((m) => i < PHOTOS_BY_MATERIAL[m].length).map((m) => PHOTOS_BY_MATERIAL[m][i])
+  { length: Math.max(...FOLDER_ORDER.map((f) => PHOTOS_BY_FOLDER[f].length)) },
+  (_, i) => FOLDER_ORDER.filter((f) => i < PHOTOS_BY_FOLDER[f].length).map((f) => PHOTOS_BY_FOLDER[f][i])
 ).flat();
+
+// Each card type's photos (the Chairman's Cards apart from Metallic).
+export const PHOTOS_BY_MATERIAL: Record<PhotoMaterial, ProfessionalPhoto[]> = {
+  plastic: PHOTOS_BY_FOLDER.plastic,
+  wood: PHOTOS_BY_FOLDER.wood,
+  metallic: PHOTOS_BY_FOLDER.metallic.filter((p) => p.material === 'metallic'),
+  chairman: PHOTOS_BY_FOLDER.metallic.filter((p) => p.material === 'chairman'),
+};
 
 export const FOR_BUSINESS_BENEFITS = [
   { title: 'Consistent branding', body: 'Every profile on brand, every time.' },
