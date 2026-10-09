@@ -20,7 +20,7 @@ import { OfferBadge, OfferPrice } from './OfferPrice';
 import { Professionals } from './Professionals';
 import { RevealSection } from './RevealSection';
 import { Testimonials } from './Testimonials';
-import { HAS_VCARD_SAMPLES, VCardShowcase } from './VCardShowcase';
+import { VCardShowcase } from './VCardShowcase';
 
 // A card's landing page (/wood, …), for ads. It's the homepage's own
 // sections in the homepage's order, with this card's content (from
@@ -73,7 +73,7 @@ export function CardLandingPage({ card }: { card: CardPage }) {
           </>
         }
       />
-      {HAS_VCARD_SAMPLES && <VCardShowcase />}
+      <VCardShowcase />
       {photos.length > 0 && (
         <Professionals
           heading={
@@ -124,7 +124,7 @@ function Presentation({ presentation }: { presentation: NonNullable<CardPage['pr
           </h2>
           <p className="m-0 mt-6 max-w-[440px] text-[16.5px] leading-[1.6] text-[rgba(243,240,234,.52)]">{presentation.line}</p>
         </div>
-        <div className="relative mx-auto w-full max-w-[385px]">
+        <div className="relative mx-auto w-full max-w-[440px]">
           {/* The soft gold glow behind it, as in the hero. */}
           <div
             aria-hidden="true"

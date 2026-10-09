@@ -234,7 +234,8 @@ function Page({ path }: { path: string }) {
                   <Footer />
                 </Suspense>
               </BlurredContent>
-              <WhatsAppButton />
+              {/* Not on the card pages: they have their own WhatsApp links. */}
+              {route.kind !== 'card' && <WhatsAppButton />}
               <CookieBanner />
               <LazyCartDrawer />
             </ContactModalProvider>

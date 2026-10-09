@@ -1,6 +1,5 @@
 import { LINKS } from '../data/links';
 import { useReveal } from '../hooks/useReveal';
-import { WHATSAPP_SOURCES, whatsappLinkProps } from '../utils/whatsapp';
 
 export function ContactVisit() {
   const { ref, style } = useReveal<HTMLDivElement>();
@@ -29,13 +28,6 @@ export function ContactVisit() {
               124 Manyani East Road, Lavington
             </p>
 
-            <a
-              {...whatsappLinkProps(WHATSAPP_SOURCES.contactSection)}
-              className="-mt-4 mb-8 inline-flex items-center gap-2 text-[16.5px] text-accent transition-opacity duration-300 hover:opacity-80 md:hidden"
-            >
-              Chat with us on WhatsApp <span className="font-inter">→</span>
-            </a>
-
             <div className="hidden flex-col gap-7 md:flex">
               <div>
                 <div className="font-inter text-[10px] font-medium tracking-[.15em] text-accent">ADDRESS</div>
@@ -56,15 +48,6 @@ export function ContactVisit() {
                   className="mt-1 block text-[16.5px] text-[rgba(243,240,234,.7)] transition-colors duration-300 hover:text-accent"
                 >
                   {LINKS.PHONE2_DISPLAY}
-                </a>
-              </div>
-              <div>
-                <div className="font-inter text-[10px] font-medium tracking-[.15em] text-accent">WHATSAPP</div>
-                <a
-                  {...whatsappLinkProps(WHATSAPP_SOURCES.contactSection)}
-                  className="mt-2 block text-[16.5px] text-[rgba(243,240,234,.7)] transition-colors duration-300 hover:text-accent"
-                >
-                  Chat with us on WhatsApp
                 </a>
               </div>
               <div>
