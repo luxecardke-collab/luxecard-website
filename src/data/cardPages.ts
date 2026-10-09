@@ -53,6 +53,9 @@ export type CardPage = {
   showcaseCta: string;
   // An optional section after the card(s): how the card is presented.
   presentation?: { headline: string; line: string; image: string; alt: string; width: number; height: number };
+  // Free express delivery within Nairobi (Metallic, Chairman's Card): said
+  // in "What you get". Not a checkout option; arranged on WhatsApp.
+  expressDelivery?: boolean;
   // The light "What you get" section (the homepage's For Business layout).
   whatYouGet: { headline: string; points: { title: string; body: string }[] };
   // null: no gallery until there are photos. `exclude` leaves out photos by
@@ -100,7 +103,7 @@ const PLASTIC: CardPage = {
   cta: 'Get my Plastic LuxeCard',
   hero: {
     headline: 'YOUR BRAND. [YOUR COLOURS.]',
-    subtext: 'Any colour you like. One tap shares your contact, socials and more.',
+    subtext: 'Light, durable and branded in your colours. Made for NFC tap-to-share.',
   },
   finishes: null,
   image: { label: 'Plastic', alt: 'LuxeCard in plastic', ...heroImage('plastic', 'hero', cardPhoto('card-plastic', 960)) },
@@ -142,7 +145,7 @@ const WOOD: CardPage = {
   cta: 'Get my Wood LuxeCard',
   hero: {
     headline: 'A BUSINESS CARD PEOPLE [REMEMBER.]',
-    subtext: 'Real wood. One tap shares your contact, socials and more.',
+    subtext: 'Light, unique and taps better with NFC. Can also be printed in your brand colours.',
   },
   finishes: [
     { label: 'Natural', alt: 'LuxeCard in natural wood', ...heroImage('wood', 'hero-natural', cardPhoto('card-wood', 960)) },
@@ -193,6 +196,7 @@ const WOOD: CardPage = {
 
 const METALLIC: CardPage = {
   slug: 'metal',
+  expressDelivery: true,
   path: '/metal',
   priceLabel: 'Metallic',
   name: 'Metallic',
@@ -200,7 +204,7 @@ const METALLIC: CardPage = {
   hero: {
     headline: 'A CARD WITH [REAL WEIGHT.]',
     // "Solid metal weight": the products section's own words for this card.
-    subtext: 'Solid metal weight. One tap shares your contact, socials and more.',
+    subtext: 'Premium, heavier and the most durable. Laser-engraved to precision.',
   },
   finishes: [
     { label: 'Silver', alt: 'LuxeCard in silver metallic', ...heroImage('metal', 'hero-silver', cardPhoto('card-metallic', 960)) },
@@ -256,6 +260,7 @@ const METALLIC: CardPage = {
 
 const CHAIRMAN: CardPage = {
   slug: 'chairman',
+  expressDelivery: true,
   path: '/chairman',
   priceLabel: "Chairman's Card",
   name: "Chairman's Card",

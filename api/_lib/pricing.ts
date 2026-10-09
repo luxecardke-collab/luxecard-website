@@ -11,7 +11,7 @@
 export const FINISH_PRICES_BY_LABEL: Record<string, number> = {
   Plastic: 7000,
   Wood: 9000,
-  Metallic: 12000,
+  Metallic: 14000,
   "Chairman's Card": 19000,
 };
 

@@ -164,6 +164,11 @@ function PriceOnLight({ card }: { card: CardPage }) {
       )}
       <span className="whitespace-nowrap font-semibold text-ink">{formatKes(offerUnitPrice(price, offer))}</span>
       {offer && ` during ${offer.name}`}. A one-off payment, with no monthly or yearly fees.
+      {card.expressDelivery && (
+        <span className="mt-3 block font-semibold text-ink">
+          Free express delivery in Nairobi: your card within 3 hours of approving your design.
+        </span>
+      )}
     </>
   );
 }
