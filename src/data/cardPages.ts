@@ -1,4 +1,3 @@
-import metallicBlackPlaceholder from '../assets/portfolio/metallic-04.webp';
 import woodBlackPlaceholder from '../assets/portfolio/wood-14.webp';
 import chairmanBoxedPhoto from '../assets/landing/chairman/gold-boxed.webp';
 import metallicBlackPhoto from '../assets/landing/metal/metallic-black.webp';
@@ -208,8 +207,8 @@ const METALLIC: CardPage = {
     {
       label: 'Black',
       alt: 'LuxeCard in black metallic',
-      // Until hero-black.webp is added: a black metallic card from the portfolio.
-      ...heroImage('metal', 'hero-black', { image: metallicBlackPlaceholder, fit: 'cover', objectPosition: '50% 55%' }),
+      // The cut-out black metallic card (also in the card section).
+      ...heroImage('metal', 'hero-black', { image: metallicBlackPhoto, fit: 'contain' }),
     },
   ],
   showcaseCta: 'Get your Metallic LuxeCard',

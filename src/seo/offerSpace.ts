@@ -15,13 +15,22 @@ import { OFFERS } from '../../api/_lib/pricing';
 // themselves keep following the server's (utils/serverClock).
 export const OFFER_SPACE_CLASS = 'offer-space';
 
+// It also names the offer (data-offer on <html>), so the hero shows that
+// offer's price and badge from the first paint (CardLandingPage's CardPrice
+// renders each offer's version until the server's time is known; the style
+// below shows the right one, or the regular price).
 export function renderOfferSpaceScript(): string {
-  const windows = OFFERS.map((o) => [Date.parse(o.startsAt), Date.parse(o.endsAt)]);
+  const offers = OFFERS.filter((o) => /^[a-z0-9-]+$/.test(o.id));
+  const windows = offers.map((o) => [Date.parse(o.startsAt), Date.parse(o.endsAt), o.id]);
+  const show = offers.map((o) => `html[data-offer="${o.id}"] .offer-price-variant[data-offer="${o.id}"]`).join(',');
   return (
+    '<style>.offer-price-variant{display:none!important}html[data-offer] .offer-price-regular{display:none}' +
+    (show ? `${show}{display:contents!important}` : '') +
+    '</style>' +
     '<script>(function(){try{' +
-    `var o=${JSON.stringify(windows)},t=Date.now();` +
+    `var o=${JSON.stringify(windows)},t=Date.now(),h=document.documentElement;` +
     'for(var i=0;i<o.length;i++){if(t>=o[i][0]&&t<o[i][1]){' +
-    `document.documentElement.classList.add('${OFFER_SPACE_CLASS}');return}}` +
+    `h.classList.add('${OFFER_SPACE_CLASS}');h.setAttribute('data-offer',o[i][2]);return}}` +
     '}catch(e){}})();</script>'
   );
 }
