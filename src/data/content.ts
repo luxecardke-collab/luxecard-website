@@ -102,7 +102,7 @@ export const CARD_FINISHES: CardFinish[] = [
   {
     name: 'Plastic',
     priceLabel: 'Plastic',
-    blurb: 'Lightweight, durable and built for everyday carry, in any colour you like.',
+    blurb: 'Light, durable and branded in your colours. Made for NFC tap-to-share.',
     image: '/images/card-plastic.webp',
     alt: 'LuxeCard in plastic finish',
     width: 960,
@@ -111,7 +111,7 @@ export const CARD_FINISHES: CardFinish[] = [
   {
     name: 'Wood: Natural & Black',
     priceLabel: 'Wood',
-    blurb: 'Real wood, naturally lightweight, with a warm, distinctive grain.',
+    blurb: 'Light, unique and taps better with NFC. Can also be printed in your brand colours.',
     image: '/images/card-wood.webp',
     alt: 'LuxeCard in real wood',
     width: 960,
@@ -120,7 +120,7 @@ export const CARD_FINISHES: CardFinish[] = [
   {
     name: 'Metallic: Silver & Black',
     priceLabel: 'Metallic',
-    blurb: 'Solid metal weight. A tactile statement piece.',
+    blurb: 'Premium, heavier and the most durable. Laser-engraved to precision.',
     image: '/images/card-metallic.webp',
     alt: 'LuxeCard in metallic finish',
     width: 960,
@@ -274,7 +274,7 @@ export const FAQS: Faq[] = [
     group: GROUP_ORDERING,
     id: 'after-order',
     q: 'What happens after I order, and how long does it take?',
-    a: `Our team will reach out within 24 hours to collect your details and brand assets. We’ll then design your card and share mockups for your review. Once you approve, production takes anywhere from a few hours to ${PRODUCTION_TIMEFRAME}, depending on your design. For large corporate orders, we’ll confirm the timeline with you. Delivery fees vary by location and are paid by you upon arrival, except for the Chairman’s Card, where LuxeCard covers all transport costs.`,
+    a: `Our team will reach out within 24 hours to collect your details and brand assets. We’ll then design your card and share mockups for your review. Once you approve, production takes anywhere from a few hours to ${PRODUCTION_TIMEFRAME}, depending on your design. For large corporate orders, we’ll confirm the timeline with you. Delivery within Nairobi is free. Elsewhere, delivery fees vary by location and are paid by you upon arrival, except for the Chairman’s Card, where LuxeCard covers all transport costs. Metallic and Chairman’s Cards also come with free express delivery within Nairobi: your card arrives within 3 hours of you approving your design, at a location you arrange with our team on WhatsApp.`,
   },
   {
     group: GROUP_ORDERING,

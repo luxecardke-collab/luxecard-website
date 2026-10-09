@@ -259,6 +259,18 @@ button {
   }
 }
 
+/* The floating hero card from 1024px: as far below the heading's top as
+   /plastic's (centred with its two-line heading, two-line subtext, price
+   (33px) and button), on every card page, whatever its text below:
+     (1.92 x heading size + 3.1 x subtext size + 28 + 40 + 33 + 28 + 57
+      - the card's 218px) / 2 */
+@media (min-width: 1024px) {
+  .card-hero-visual {
+    align-self: start;
+    margin-top: calc((1.92 * var(--home-title) + 3.1 * var(--home-subtext) - 32px) / 2);
+  }
+}
+
 /* A card page's hero on phones: room under the price for the offer badge,
    only while an offer is on by the visitor's clock (the offer-space class,
    set before the first paint by the head script in src/seo/offerSpace.ts). */

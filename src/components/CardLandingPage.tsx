@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { activeOffer, FINISH_PRICES_BY_LABEL, offerUnitPrice, productId } from '../../api/_lib/pricing';
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { activeOffer, FINISH_PRICES_BY_LABEL, OFFERS, offerUnitPrice, productId } from '../../api/_lib/pricing';
 import { cardPageFaqs, HERO_IMAGE_SIZES, headlineParts, type CardFinishChoice, type CardPage } from '../data/cardPages';
 import { PHOTOS_BY_MATERIAL } from '../data/content';
 import { useOffer } from '../hooks/useOffer';
@@ -7,7 +7,7 @@ import { hasAdConsent, onConsentChange } from '../utils/consent';
 import { formatKes } from '../utils/formatPrice';
 import { trackMetaEventWithServer } from '../utils/metaPixel';
 import { scrollToSection } from '../utils/scrollToSection';
-import { serverNow } from '../utils/serverClock';
+import { serverNow, subscribeServerClock } from '../utils/serverClock';
 import { cardPageWhatsAppSource } from '../utils/whatsapp';
 import { CardOrderForm } from './CardOrderForm';
 import { FinishSwatches, Headline } from './CardPageParts';
@@ -20,6 +20,7 @@ import { OfferBadge, OfferPrice } from './OfferPrice';
 import { Professionals } from './Professionals';
 import { RevealSection } from './RevealSection';
 import { Testimonials } from './Testimonials';
+import { HAS_VCARD_SAMPLES, VCardShowcase } from './VCardShowcase';
 
 // A card's landing page (/wood, …), for ads. It's the homepage's own
 // sections in the homepage's order, with this card's content (from
@@ -72,6 +73,7 @@ export function CardLandingPage({ card }: { card: CardPage }) {
           </>
         }
       />
+      {HAS_VCARD_SAMPLES && <VCardShowcase />}
       {photos.length > 0 && (
         <Professionals
           heading={
@@ -122,7 +124,7 @@ function Presentation({ presentation }: { presentation: NonNullable<CardPage['pr
           </h2>
           <p className="m-0 mt-6 max-w-[440px] text-[16.5px] leading-[1.6] text-[rgba(243,240,234,.52)]">{presentation.line}</p>
         </div>
-        <div className="relative mx-auto w-full max-w-[460px]">
+        <div className="relative mx-auto w-full max-w-[385px]">
           {/* The soft gold glow behind it, as in the hero. */}
           <div
             aria-hidden="true"
@@ -162,6 +164,11 @@ function PriceOnLight({ card }: { card: CardPage }) {
       )}
       <span className="whitespace-nowrap font-semibold text-ink">{formatKes(offerUnitPrice(price, offer))}</span>
       {offer && ` during ${offer.name}`}. A one-off payment, with no monthly or yearly fees.
+      {card.expressDelivery && (
+        <span className="mt-3 block font-semibold text-ink">
+          Free express delivery in Nairobi: your card within 3 hours of approving your design.
+        </span>
+      )}
     </>
   );
 }
@@ -261,18 +268,49 @@ function FinishImage({
   );
 }
 
+// Whether the server's time is known yet (false in the prerendered page and
+// while hydrating it).
+function useServerClockKnown(): boolean {
+  return useSyncExternalStore(subscribeServerClock, () => serverNow() !== null, () => false);
+}
+
 function CardPrice({ card, className = '' }: { card: CardPage; className?: string }) {
   const offer = useOffer();
+  const clockKnown = useServerClockKnown();
+  const price = FINISH_PRICES_BY_LABEL[card.priceLabel];
+  const priceClass = 'font-inter text-[clamp(18px,1.8vw,22px)] font-semibold tracking-[.01em] text-accent';
   return (
     <div
       // offer-reserve: on phones, room for the offer badge while an offer
       // is on (see src/seo/offerSpace.ts and index.css).
       className={`offer-reserve flex flex-wrap items-center gap-x-3 gap-y-2 ${className}`}
     >
-      <span className="font-inter text-[clamp(18px,1.8vw,22px)] font-semibold tracking-[.01em] text-accent">
-        <OfferPrice price={FINISH_PRICES_BY_LABEL[card.priceLabel]} offer={offer} />
-      </span>
-      {offer && <OfferBadge offer={offer} showEnd />}
+      {clockKnown ? (
+        <>
+          <span className={priceClass}>
+            <OfferPrice price={price} offer={offer} />
+          </span>
+          {offer && <OfferBadge offer={offer} showEnd />}
+        </>
+      ) : (
+        // Until the server's time is known: the regular price and each
+        // offer's version are all in the page, and the head script (by the
+        // visitor's clock) shows the one that applies from the first paint.
+        // The server's clock then confirms it, or corrects it.
+        <>
+          <span className={`offer-price-regular ${priceClass}`}>
+            <OfferPrice price={price} offer={null} />
+          </span>
+          {OFFERS.map((o) => (
+            <span key={o.id} className="offer-price-variant contents" data-offer={o.id}>
+              <span className={priceClass}>
+                <OfferPrice price={price} offer={o} />
+              </span>
+              <OfferBadge offer={o} showEnd />
+            </span>
+          ))}
+        </>
+      )}
     </div>
   );
 }
@@ -327,7 +365,7 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
 
         {/* Desktop only (phones go straight from the text to the reviews);
             smaller, and centred beside the text. */}
-        <div className="relative hidden self-center min-[900px]:block">
+        <div className="card-hero-visual relative hidden self-center min-[900px]:block">
           {/* A soft gold glow behind the card, like the homepage hero's. */}
           <div
             aria-hidden="true"
