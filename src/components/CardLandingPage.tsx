@@ -124,7 +124,7 @@ function Presentation({ presentation }: { presentation: NonNullable<CardPage['pr
           </h2>
           <p className="m-0 mt-6 max-w-[440px] text-[16.5px] leading-[1.6] text-[rgba(243,240,234,.52)]">{presentation.line}</p>
         </div>
-        <div className="relative mx-auto w-full max-w-[385px]">
+        <div className="relative mx-auto w-full max-w-[440px]">
           {/* The soft gold glow behind it, as in the hero. */}
           <div
             aria-hidden="true"

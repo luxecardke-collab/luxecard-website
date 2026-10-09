@@ -266,8 +266,8 @@ const CHAIRMAN: CardPage = {
   name: "Chairman's Card",
   cta: 'Get my Chairman’s Card',
   hero: {
-    headline: 'RESERVED FOR THE [BOLDEST INTRODUCTIONS.]',
-    subtext: 'A gold finish. One tap shares your contact, socials and more.',
+    headline: 'RESERVED FOR THE [BOLDEST] INTRODUCTIONS.',
+    subtext: 'Premium, heavier and the most durable. Laser-engraved to precision.',
   },
   finishes: null,
   image: {
