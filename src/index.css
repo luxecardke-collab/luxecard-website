@@ -271,17 +271,25 @@ button {
   }
 }
 
-/* The sample profile has no links of its own. On iPhones (Safari, and
-   Chrome, which uses the same engine) the browser turns an email address or
-   phone number into a link of its own, underlined, and on the profile it
-   took the "EMAIL" label in with the address. Any such link anywhere in the
-   profile is shown as the plain text it is. */
+/* The sample profile's contact values, drawn from data-text so there's no
+   address or number in the page's text for a phone's browser to find. */
+.sample-profile-value::before {
+  content: attr(data-text);
+}
+
+/* The sample profile has no links of its own. On iPhones, Safari turns an
+   email address or phone number it finds into a link of its own, and Chrome
+   wraps it in an element of its own (chrome_annotation) with an underline.
+   Should either find anything in the profile, it stays plain text. Only in
+   the profile: real contact links elsewhere are untouched. */
 .sample-profile-plain a,
-.sample-profile-plain a[x-apple-data-detectors] {
+.sample-profile-plain a[x-apple-data-detectors],
+.sample-profile-plain chrome_annotation {
   color: inherit !important;
+  background: none !important;
   text-decoration: none !important;
   -webkit-text-decoration: none !important;
-  border-bottom: 0 !important;
+  border: 0 !important;
   pointer-events: none;
 }
 
