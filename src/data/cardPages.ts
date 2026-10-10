@@ -217,7 +217,7 @@ const METALLIC: CardPage = {
   ],
   showcaseCta: 'Get your Metallic LuxeCard',
   showcase: {
-    headline: 'FELT BEFORE IT’S [READ.]',
+    headline: 'FELT BEFORE\nIT’S [READ.]',
     label: 'Two Finishes. One Card.',
     items: [
       {

@@ -12,11 +12,6 @@ export const NAV_LINKS = [
   { label: 'Become an Affiliate', href: '/affiliate' },
 ] as const;
 
-export const DEMO_PROFILE = {
-  name: 'Wanjiru Kamau',
-  title: 'Brand Strategist, Meridian',
-} as const;
-
 export const HERO_TRUST = ['NFC + QR', 'NO APP TO VIEW', 'UPDATE ANYTIME'] as const;
 
 export type Stage = {

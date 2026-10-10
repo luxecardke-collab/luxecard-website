@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { headlineParts, type CardPage } from '../data/cardPages';
 
 // Pieces shared by a card page's sections and its order form.
@@ -11,18 +12,24 @@ const SWATCH_COLOURS: Record<string, string> = {
 };
 
 // A headline from cardPages.ts, its [bracketed] part in gold.
+// A line break ("\n") in the text starts a new line.
 export function Headline({ text }: { text: string }) {
   return (
     <>
-      {headlineParts(text).map((part, i) =>
-        part.gold ? (
-          <span key={i} className="text-accent">
-            {part.text}
-          </span>
-        ) : (
-          part.text
-        )
-      )}
+      {text.split('\n').map((line, l) => (
+        <Fragment key={l}>
+          {l > 0 && <br />}
+          {headlineParts(line).map((part, i) =>
+            part.gold ? (
+              <span key={i} className="text-accent">
+                {part.text}
+              </span>
+            ) : (
+              part.text
+            )
+          )}
+        </Fragment>
+      ))}
     </>
   );
 }
