@@ -262,7 +262,8 @@ export function VCardShowcase() {
           /* Phones and tablets: the phone, then a two-column grid. */
           <div>
             <div className="flex justify-center">
-              <div className="animate-lc-float">
+              {/* No float on phones. */}
+              <div>
                 <PhoneMock profile={profile} active={outline} screenRef={screenRef} onInteract={onInteract} onScroll={onScroll} />
               </div>
             </div>

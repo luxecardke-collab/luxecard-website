@@ -271,6 +271,17 @@ button {
   }
 }
 
+/* The sample profile's contact details: iOS Safari turns an email address
+   or phone number into a link of its own (underlined, in blue); keep them
+   as the plain text they are. */
+.sample-profile-plain a[x-apple-data-detectors],
+.sample-profile-plain a[href^='mailto:'],
+.sample-profile-plain a[href^='tel:'] {
+  color: inherit !important;
+  text-decoration: none !important;
+  pointer-events: none;
+}
+
 /* A card page's hero on phones: room under the price for the offer badge,
    only while an offer is on by the visitor's clock (the offer-space class,
    set before the first paint by the head script in src/seo/offerSpace.ts). */

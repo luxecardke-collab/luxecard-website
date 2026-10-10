@@ -91,8 +91,11 @@ const ForBusiness = lazy(() => import('./components/ForBusiness').then((m) => ({
 const ContactVisit = lazy(() => import('./components/ContactVisit').then((m) => ({ default: m.ContactVisit })));
 const Footer = lazy(() => import('./components/Footer').then((m) => ({ default: m.Footer })));
 
+// "What they see when you tap" (also on the card pages).
+const VCardShowcase = lazy(() => import('./components/VCardShowcase').then((m) => ({ default: m.VCardShowcase })));
+
 const loadBelowFold = () =>
-  Promise.all([import('./components/Faq'), import('./components/ForBusiness'), import('./components/ContactVisit'), import('./components/Footer')]);
+  Promise.all([import('./components/VCardShowcase'), import('./components/Faq'), import('./components/ForBusiness'), import('./components/ContactVisit'), import('./components/Footer')]);
 
 // Fetches all four below-the-fold chunks once the page has had a moment to
 // settle after the hero's first paint, so a normal scroll down the page
@@ -205,6 +208,9 @@ function Page({ path }: { path: string }) {
                     <Testimonials />
                     <Ecosystem />
                     <HowItWorks />
+                    <Suspense fallback={<SectionPlaceholder mobilePx={1711} desktopPx={1037} />}>
+                      <VCardShowcase />
+                    </Suspense>
                     {/* On phones "Trusted Across Industries" comes before
                         "Digitizing Networking Across Africa"; on larger
                         screens the order is the other way round. Done in CSS

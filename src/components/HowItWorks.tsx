@@ -178,12 +178,16 @@ export function HowItWorks({
                 {/* Open and Connect: the top of the sample profile, still. */}
                 {(stage === 1 || stage === 2) && (
                   <div className="absolute inset-0 overflow-hidden">
-                    {profile && (
-                      <>
-                        <profile.SampleProfile />
-                        <profile.ProfileOverlays />
-                      </>
-                    )}
+                    {/* Scrolls by hand only (Lenis leaves it alone); the page
+                        scrolls as usual outside the phone. No QR Code part,
+                        so nothing sits behind "Add to contact". */}
+                    <div
+                      data-lenis-prevent
+                      className="absolute inset-0 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    >
+                      {profile && <profile.SampleProfile hideQr />}
+                    </div>
+                    {profile && <profile.ProfileOverlays />}
                   </div>
                 )}
 
