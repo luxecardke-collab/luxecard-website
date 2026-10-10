@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { Truck } from 'lucide-react';
 import { activeOffer, FINISH_PRICES_BY_LABEL, OFFERS, offerUnitPrice, productId } from '../../api/_lib/pricing';
 import { cardPageFaqs, HERO_IMAGE_SIZES, headlineParts, type CardFinishChoice, type CardPage } from '../data/cardPages';
 import { PHOTOS_BY_MATERIAL } from '../data/content';
@@ -124,7 +125,7 @@ function Presentation({ presentation }: { presentation: NonNullable<CardPage['pr
           </h2>
           <p className="m-0 mt-6 max-w-[440px] text-[16.5px] leading-[1.6] text-[rgba(243,240,234,.52)]">{presentation.line}</p>
         </div>
-        <div className="relative mx-auto w-full max-w-[440px]">
+        <div className="relative mx-auto w-full max-w-[350px] pt-[clamp(16px,4vw,48px)]">
           {/* The soft gold glow behind it, as in the hero. */}
           <div
             aria-hidden="true"
@@ -147,6 +148,14 @@ function Presentation({ presentation }: { presentation: NonNullable<CardPage['pr
   );
 }
 
+// Free delivery within Nairobi; Metallic and Chairman's Card also say
+// their express delivery.
+function deliveryLine(card: CardPage): string {
+  return card.expressDelivery
+    ? 'Free delivery in Nairobi · Express: your card within 3 hours of approving your design.'
+    : 'Free delivery in Nairobi.';
+}
+
 // "One card, KES 9,000. A one-off payment …" for the light section, with the
 // offer price (struck-through regular price in a dark grey that reads on it).
 function PriceOnLight({ card }: { card: CardPage }) {
@@ -164,11 +173,7 @@ function PriceOnLight({ card }: { card: CardPage }) {
       )}
       <span className="whitespace-nowrap font-semibold text-ink">{formatKes(offerUnitPrice(price, offer))}</span>
       {offer && ` during ${offer.name}`}. A one-off payment, with no monthly or yearly fees.
-      {card.expressDelivery && (
-        <span className="mt-3 block font-semibold text-ink">
-          Free express delivery in Nairobi: your card within 3 hours of approving your design.
-        </span>
-      )}
+      <span className="mt-3 block font-semibold text-ink">{deliveryLine(card)}</span>
     </>
   );
 }
@@ -358,7 +363,11 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
           </p>
           <FinishSwatches card={card} finish={finish} onFinish={onFinish} label="Choose your finish" />
           <CardPrice card={card} className="mt-7" />
-          <PrimaryButton onClick={scrollToOrder} className="mt-7">
+          <p className="m-0 mt-4 flex max-w-[460px] items-start gap-2 text-[13.5px] leading-[1.5] text-[rgba(243,240,234,.75)]">
+            <Truck size={16} strokeWidth={1.8} className="mt-[2px] shrink-0 text-accent" aria-hidden="true" />
+            <span>{deliveryLine(card)}</span>
+          </p>
+          <PrimaryButton onClick={scrollToOrder} className="mt-6">
             {card.cta} <span className="font-inter">→</span>
           </PrimaryButton>
         </div>

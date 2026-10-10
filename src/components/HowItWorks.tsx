@@ -1,10 +1,11 @@
 import { useRef, type ReactNode } from 'react';
-import { DEMO_PROFILE, STAGES, type Stage } from '../data/content';
+import { STAGES, type Stage } from '../data/content';
 import { useHowItWorksStage } from '../hooks/useHowItWorksStage';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useReveal } from '../hooks/useReveal';
 import { stackScale, useScrollSpread } from '../hooks/useScrollSpread';
 import { RevealSection } from './RevealSection';
+import { ProfileOverlays, SampleProfile } from './SampleProfile';
 
 function StepButton({
   s,
@@ -99,8 +100,6 @@ export function HowItWorks({
   const isMobile = useMediaQuery('(max-width: 767px)');
   const { stage, select } = useHowItWorksStage(sectionRef, !isMobile);
 
-  const actionsOpacity = stage >= 2 ? 1 : 0.15;
-  const actionsTransform = stage >= 2 ? 'translateY(0)' : 'translateY(10px)';
 
   return (
     <RevealSection
@@ -174,68 +173,11 @@ export function HowItWorks({
                   </div>
                 )}
 
+                {/* Open and Connect: the top of the sample profile, still. */}
                 {(stage === 1 || stage === 2) && (
-                  <div className="flex h-full flex-col gap-[14px] px-5 pb-5 pt-12">
-                    <div
-                      className="h-[104px] rounded-2xl border border-[rgba(255,255,255,.06)]"
-                      style={{ background: 'linear-gradient(115deg, #202026, #14141A)' }}
-                    />
-                    <div className="-mt-[54px] flex justify-center">
-                      <div
-                        className="flex h-[80px] w-[80px] flex-none items-center justify-center rounded-full border-2 border-[#0C0C0F] font-inter text-[7px] text-grey-1"
-                        style={{ background: 'repeating-linear-gradient(45deg, #22222A 0 6px, #1A1A20 6px 12px)' }}
-                      >
-                        PHOTO
-                      </div>
-                    </div>
-                    <div className="mt-3 px-1">
-                      <div className="font-manrope text-[17px] font-semibold tracking-[-.02em]">
-                        {DEMO_PROFILE.name}
-                      </div>
-                      <div className="text-[11px] text-[rgba(243,240,234,.5)]">{DEMO_PROFILE.title}</div>
-                    </div>
-                    <p className="m-0 mt-0.5 text-[11.5px] leading-[1.55] text-[rgba(243,240,234,.55)]">
-                      Brand strategy and market entry for consumer businesses across East Africa.
-                    </p>
-                    <div
-                      className="flex gap-[9px]"
-                      style={{
-                        opacity: actionsOpacity,
-                        transform: actionsTransform,
-                        transition: 'opacity .7s ease, transform .8s cubic-bezier(.16,1,.3,1)',
-                      }}
-                    >
-                      <div className="flex-1 rounded-xl bg-ivory py-3 text-center text-xs font-semibold text-bg">
-                        Save Contact
-                      </div>
-                      <div className="flex-1 rounded-xl border border-[rgba(255,255,255,.14)] py-3 text-center text-xs text-[rgba(243,240,234,.8)]">
-                        WhatsApp
-                      </div>
-                    </div>
-                    <div
-                      className="flex gap-[7px] font-inter text-[8.5px] tracking-[.1em] text-[rgba(243,240,234,.55)]"
-                      style={{ opacity: actionsOpacity, transition: 'opacity .7s ease .1s' }}
-                    >
-                      {['IG', 'IN', 'X', 'WEB'].map((s) => (
-                        <span key={s} className="flex-1 rounded-[9px] bg-[rgba(255,255,255,.05)] py-2.5 text-center">
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                    <div
-                      className="flex flex-col gap-[7px]"
-                      style={{ opacity: actionsOpacity, transition: 'opacity .7s ease .18s' }}
-                    >
-                      {['Portfolio', 'Company site'].map((label) => (
-                        <div
-                          key={label}
-                          className="flex justify-between rounded-[11px] bg-[rgba(255,255,255,.035)] px-[13px] py-3 text-[11.5px] text-[rgba(243,240,234,.78)]"
-                        >
-                          {label}
-                          <span className="text-[#55534F]">→</span>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="absolute inset-0 overflow-hidden">
+                    <SampleProfile />
+                    <ProfileOverlays />
                   </div>
                 )}
 
@@ -250,7 +192,7 @@ export function HowItWorks({
                         style={{ background: 'repeating-linear-gradient(45deg, #22222A 0 6px, #1A1A20 6px 12px)' }}
                       />
                       <div>
-                        <div className="text-[12.5px]">{DEMO_PROFILE.name}</div>
+                        <div className="text-[12.5px]">Amara Wanjiru</div>
                         <div className="text-[10px] text-[rgba(243,240,234,.45)]">Saved to contacts</div>
                       </div>
                     </div>
