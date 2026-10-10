@@ -5,7 +5,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useReveal } from '../hooks/useReveal';
 import { stackScale, useScrollSpread } from '../hooks/useScrollSpread';
 import { RevealSection } from './RevealSection';
-import { ProfileOverlays, SampleProfile } from './SampleProfile';
+import { useSampleProfile } from '../hooks/useSampleProfile';
 
 function StepButton({
   s,
@@ -99,6 +99,8 @@ export function HowItWorks({
   const sectionRef = useRef<HTMLElement | null>(null);
   const isMobile = useMediaQuery('(max-width: 767px)');
   const { stage, select } = useHowItWorksStage(sectionRef, !isMobile);
+  // The sample profile's code, fetched as the section nears the screen.
+  const profile = useSampleProfile(sectionRef);
 
 
   return (
@@ -176,8 +178,12 @@ export function HowItWorks({
                 {/* Open and Connect: the top of the sample profile, still. */}
                 {(stage === 1 || stage === 2) && (
                   <div className="absolute inset-0 overflow-hidden">
-                    <SampleProfile />
-                    <ProfileOverlays />
+                    {profile && (
+                      <>
+                        <profile.SampleProfile />
+                        <profile.ProfileOverlays />
+                      </>
+                    )}
                   </div>
                 )}
 
