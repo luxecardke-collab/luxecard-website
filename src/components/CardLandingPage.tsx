@@ -152,7 +152,7 @@ function Presentation({ presentation }: { presentation: NonNullable<CardPage['pr
 // their express delivery.
 function deliveryLine(card: CardPage): string {
   return card.expressDelivery
-    ? 'Free delivery in Nairobi · Express: your card within 3 hours of approving your design.'
+    ? 'Free delivery in Nairobi · Express: Get your card within 3 hours of approving your design.'
     : 'Free delivery in Nairobi.';
 }
 

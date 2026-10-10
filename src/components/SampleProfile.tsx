@@ -59,7 +59,12 @@ function Avatar({ size }: { size: number }) {
 }
 
 function SectionTitle({ children }: { children: string }) {
-  return <div className="mb-3 mt-7 text-[13px] font-semibold" style={{ color: IVORY }}>{children}</div>;
+  return (
+    <div className="mb-3 mt-7 flex items-center gap-2 text-[13px] font-semibold" style={{ color: IVORY }}>
+      {children}
+      <span className="h-px flex-1" style={{ background: 'rgba(253,211,3,.4)' }} />
+    </div>
+  );
 }
 
 function ContactRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
@@ -70,7 +75,7 @@ function ContactRow({ icon, label, value }: { icon: ReactNode; label: string; va
       </span>
       <span className="min-w-0">
         <span className="block text-[9.5px] uppercase tracking-[.08em] text-[rgba(243,240,234,.5)]">{label}</span>
-        <span className="block truncate text-[11.5px]" style={{ color: IVORY }}>
+        <span className="sample-profile-plain block truncate text-[11.5px] no-underline" style={{ color: IVORY }}>
           {value}
         </span>
       </span>
@@ -94,7 +99,7 @@ function partClass(active: ProfilePart | null, part: ProfilePart) {
   return `rounded-xl transition-shadow duration-500 ${active === part ? 'shadow-[0_0_0_2px_#FDD303]' : 'shadow-none'}`;
 }
 
-export function SampleProfile({ active = null }: { active?: ProfilePart | null }) {
+export function SampleProfile({ active = null, hideQr = false }: { active?: ProfilePart | null; hideQr?: boolean }) {
   return (
     <div className="pb-20 text-left font-inter" style={{ background: BG, color: IVORY }}>
       <div data-part="brand">
@@ -145,7 +150,7 @@ export function SampleProfile({ active = null }: { active?: ProfilePart | null }
         <ContactRow icon={<Smartphone size={14} strokeWidth={2} aria-hidden="true" />} label="Mobile" value="+254 7XX XXX XXX" />
       </div>
 
-      <div data-part="qr" className={`mx-3 px-2 pb-2 ${partClass(active, 'qr')}`}>
+      <div data-part="qr" className={`mx-3 px-2 pb-2 ${partClass(active, 'qr')}${hideQr ? ' hidden' : ''}`}>
         <SectionTitle>QR Code</SectionTitle>
         <div className="flex items-center justify-center gap-4">
           <Avatar size={82} />
@@ -189,7 +194,7 @@ export function ProfileOverlays({ active = null, menuTop = 132 }: { active?: Pro
         className={`absolute inset-x-4 bottom-4 z-[2] flex h-10 items-center justify-center gap-2 rounded-full border text-[12px] font-semibold transition-shadow duration-500 ${
           active === 'add' ? 'shadow-[0_0_0_2px_#FDD303]' : ''
         }`}
-        style={{ borderColor: ACCENT, color: ACCENT, background: 'rgba(12,12,14,.9)' }}
+        style={{ borderColor: ACCENT, color: INK, background: ACCENT }}
       >
         <UserPlus size={14} strokeWidth={2} /> Add to contact
       </span>

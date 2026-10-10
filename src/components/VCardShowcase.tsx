@@ -4,7 +4,11 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useReveal } from '../hooks/useReveal';
 import { RevealSection } from './RevealSection';
-import { PROFILE_BG, ProfileOverlays, SampleProfile, type ProfilePart } from './SampleProfile';
+import { useSampleProfile } from '../hooks/useSampleProfile';
+import type { ProfilePart } from './SampleProfile';
+
+// The profile's background (SampleProfile's), so the empty screen matches.
+const PROFILE_BG = '#0C0C0E';
 
 // "What they see when you tap": the sample profile (SampleProfile) on a phone,
 // with what's on it around it. Desktop: four features either side of the
@@ -33,8 +37,8 @@ const PAUSE_MS = 2200;
 const RESUME_AFTER_MS = 6000;
 const STAGGER_MS = 110;
 
-function PhoneMock({ near, active, screenRef, onInteract, onScroll }: {
-  near: boolean;
+function PhoneMock({ profile, active, screenRef, onInteract, onScroll }: {
+  profile: ReturnType<typeof useSampleProfile>;
   active: ProfilePart | null;
   screenRef: React.RefObject<HTMLDivElement | null>;
   onInteract: () => void;
@@ -58,9 +62,9 @@ function PhoneMock({ near, active, screenRef, onInteract, onScroll }: {
           onScroll={onScroll}
           className="absolute inset-0 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {near && <SampleProfile active={active} />}
+          {profile && <profile.SampleProfile active={active} />}
         </div>
-        {near && <ProfileOverlays active={active} />}
+        {profile && <profile.ProfileOverlays active={active} />}
       </div>
     </div>
   );
@@ -103,7 +107,8 @@ export function VCardShowcase() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const screenRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
-  const [near, setNear] = useState(false);
+  // The sample profile's code, fetched as the section nears the screen.
+  const profile = useSampleProfile(sectionRef);
   const [inView, setInView] = useState(false);
   const [listIn, setListIn] = useState(reduced);
   const [outline, setOutline] = useState<ProfilePart | null>(null);
@@ -120,14 +125,11 @@ export function VCardShowcase() {
     const el = sectionRef.current;
     const list = listRef.current;
     if (!el || !list) return;
-    const nearIo = new IntersectionObserver(([e]) => e.isIntersecting && setNear(true), { rootMargin: '100% 0px' });
     const viewIo = new IntersectionObserver(([e]) => setInView(e.isIntersecting));
     const listIo = new IntersectionObserver(([e]) => e.isIntersecting && setListIn(true), { rootMargin: '0px 0px -12% 0px' });
-    nearIo.observe(el);
     viewIo.observe(el);
     listIo.observe(list);
     return () => {
-      nearIo.disconnect();
       viewIo.disconnect();
       listIo.disconnect();
     };
@@ -151,7 +153,7 @@ export function VCardShowcase() {
 
   // Slowly down to the bottom, pause, back to the top, pause, again.
   useEffect(() => {
-    if (reduced || !near || !inView) return;
+    if (reduced || !profile || !inView) return;
     const screen = screenRef.current;
     if (!screen) return;
     let raf = 0;
@@ -183,7 +185,7 @@ export function VCardShowcase() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [reduced, near, inView]);
+  }, [reduced, profile, inView]);
 
   const pick = (i: number) => {
     const { part } = FEATURES[i];
@@ -247,7 +249,7 @@ export function VCardShowcase() {
               ))}
             </div>
             <div className="animate-lc-float">
-              <PhoneMock near={near} active={outline} screenRef={screenRef} onInteract={onInteract} onScroll={onScroll} />
+              <PhoneMock profile={profile} active={outline} screenRef={screenRef} onInteract={onInteract} onScroll={onScroll} />
             </div>
             <div className="flex flex-col gap-3">
               {FEATURES.slice(4).map((f, j) => (
@@ -260,8 +262,9 @@ export function VCardShowcase() {
           /* Phones and tablets: the phone, then a two-column grid. */
           <div>
             <div className="flex justify-center">
-              <div className="animate-lc-float">
-                <PhoneMock near={near} active={outline} screenRef={screenRef} onInteract={onInteract} onScroll={onScroll} />
+              {/* No float on phones. */}
+              <div>
+                <PhoneMock profile={profile} active={outline} screenRef={screenRef} onInteract={onInteract} onScroll={onScroll} />
               </div>
             </div>
             <div className="mt-10 grid grid-cols-2 gap-2.5">
