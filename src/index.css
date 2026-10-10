@@ -271,14 +271,17 @@ button {
   }
 }
 
-/* The sample profile's contact details: iOS Safari turns an email address
-   or phone number into a link of its own (underlined, in blue); keep them
-   as the plain text they are. */
-.sample-profile-plain a[x-apple-data-detectors],
-.sample-profile-plain a[href^='mailto:'],
-.sample-profile-plain a[href^='tel:'] {
+/* The sample profile has no links of its own. On iPhones (Safari, and
+   Chrome, which uses the same engine) the browser turns an email address or
+   phone number into a link of its own, underlined, and on the profile it
+   took the "EMAIL" label in with the address. Any such link anywhere in the
+   profile is shown as the plain text it is. */
+.sample-profile-plain a,
+.sample-profile-plain a[x-apple-data-detectors] {
   color: inherit !important;
   text-decoration: none !important;
+  -webkit-text-decoration: none !important;
+  border-bottom: 0 !important;
   pointer-events: none;
 }
 

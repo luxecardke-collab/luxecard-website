@@ -75,7 +75,7 @@ function ContactRow({ icon, label, value }: { icon: ReactNode; label: string; va
       </span>
       <span className="min-w-0">
         <span className="block text-[9.5px] uppercase tracking-[.08em] text-[rgba(243,240,234,.5)]">{label}</span>
-        <span className="sample-profile-plain block truncate text-[11.5px] no-underline" style={{ color: IVORY }}>
+        <span className="block truncate text-[11.5px]" style={{ color: IVORY }}>
           {value}
         </span>
       </span>
@@ -101,7 +101,8 @@ function partClass(active: ProfilePart | null, part: ProfilePart) {
 
 export function SampleProfile({ active = null, hideQr = false }: { active?: ProfilePart | null; hideQr?: boolean }) {
   return (
-    <div className="pb-20 text-left font-inter" style={{ background: BG, color: IVORY }}>
+    // sample-profile-plain: see index.css (no automatic email/phone links).
+    <div className="sample-profile-plain pb-20 text-left font-inter" style={{ background: BG, color: IVORY }}>
       <div data-part="brand">
         {/* Banner with the logo and the language button */}
         <div className="relative flex h-[118px] items-center justify-center" style={{ background: IVORY }}>
@@ -145,7 +146,10 @@ export function SampleProfile({ active = null, hideQr = false }: { active?: Prof
 
       <div data-part="contact" className={`mx-3 px-2 pb-1 ${partClass(active, 'contact')}`}>
         <SectionTitle>Contact</SectionTitle>
-        <ContactRow icon={<Mail size={14} strokeWidth={2} aria-hidden="true" />} label="Email" value="amara@yourcompany.co.ke" />
+        {/* A zero-width space after the "@" stops iPhone browsers spotting an
+            email address here (they'd underline it and the label); nothing
+            visible changes. */}
+        <ContactRow icon={<Mail size={14} strokeWidth={2} aria-hidden="true" />} label="Email" value={'amara@\u200Byourcompany.co.ke'} />
         <ContactRow icon={<Phone size={14} strokeWidth={2} aria-hidden="true" />} label="Phone" value="+254 7XX XXX XXX" />
         <ContactRow icon={<Smartphone size={14} strokeWidth={2} aria-hidden="true" />} label="Mobile" value="+254 7XX XXX XXX" />
       </div>
