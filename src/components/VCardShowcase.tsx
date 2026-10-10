@@ -8,13 +8,14 @@ import { useSampleProfile } from '../hooks/useSampleProfile';
 import type { ProfilePart } from './SampleProfile';
 
 // The profile's background (SampleProfile's), so the empty screen matches.
-const PROFILE_BG = '#0C0C0E';
+const PROFILE_BG = '#FAF8F5';
 
 // "What they see when you tap": the sample profile (SampleProfile) on a phone,
 // with what's on it around it. Desktop: four features either side of the
 // phone, sliding in from their side; the one for the part on screen lights up
 // as the phone scrolls itself, and clicking one scrolls the phone to it.
 // Phones: the phone, then a two-column grid of compact tiles fading in.
+// The phone itself doesn't float.
 // The profile scrolls itself slowly (not with reduced motion) and stops while
 // the visitor scrolls it. Its contents are only built once the section is
 // near the screen, so they never weigh on the first screen.
@@ -248,7 +249,7 @@ export function VCardShowcase() {
                 <FeatureItem key={f.title} f={f} on={current === i} onPick={() => pick(i)} style={itemStyle(i, 'left')} />
               ))}
             </div>
-            <div className="animate-lc-float">
+            <div>
               <PhoneMock profile={profile} active={outline} screenRef={screenRef} onInteract={onInteract} onScroll={onScroll} />
             </div>
             <div className="flex flex-col gap-3">
