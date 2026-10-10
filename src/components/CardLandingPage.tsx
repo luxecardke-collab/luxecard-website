@@ -93,7 +93,7 @@ export function CardLandingPage({ card }: { card: CardPage }) {
         // Plain (no gold) on the light background, as on the homepage.
         heading={headlineParts(card.whatYouGet.headline).map((part) => part.text).join('')}
         intro={<PriceOnLight card={card} />}
-        button={{ label: card.cta, onClick: scrollToOrder }}
+        button={{ label: card.cta, onClick: scrollToOrder, gold: true }}
         showWhatsApp={false}
         benefits={card.whatYouGet.points}
       />
@@ -171,7 +171,12 @@ function PriceOnLight({ card }: { card: CardPage }) {
           <span className="sr-only">, now</span>{' '}
         </>
       )}
-      <span className="whitespace-nowrap font-semibold text-ink">{formatKes(offerUnitPrice(price, offer))}</span>
+      {/* The price (the offer's, or the regular one) in gold: a gold mark
+          behind dark text, as gold text alone is too faint on the light
+          background to read. */}
+      <span className="whitespace-nowrap rounded-[6px] bg-accent px-1.5 py-0.5 font-semibold text-ink [box-decoration-break:clone]">
+        {formatKes(offerUnitPrice(price, offer))}
+      </span>
       {offer && ` during ${offer.name}`}. A one-off payment, with no monthly or yearly fees.
       <span className="mt-3 block font-semibold text-ink">{deliveryLine(card)}</span>
     </>

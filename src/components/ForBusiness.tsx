@@ -5,7 +5,8 @@ import { RevealSection } from './RevealSection';
 import { WHATSAPP_SOURCES, whatsappLinkProps } from '../utils/whatsapp';
 
 // The homepage's light section. A card page reuses it for "What you get":
-// its own eyebrow, heading, line, button and points, and no WhatsApp link.
+// its own eyebrow, heading, line, button (gold there) and points, and no
+// WhatsApp link.
 export function ForBusiness({
   id = 'business',
   eyebrow = 'FOR BUSINESS',
@@ -19,7 +20,7 @@ export function ForBusiness({
   eyebrow?: string;
   heading?: ReactNode;
   intro?: ReactNode;
-  button?: { label: string; onClick: () => void };
+  button?: { label: string; onClick: () => void; gold?: boolean };
   showWhatsApp?: boolean;
   benefits?: { title: string; body: string }[];
 } = {}) {
@@ -56,7 +57,10 @@ export function ForBusiness({
               onClick={button?.onClick ?? (() => openInquiryModal('business'))}
               onMouseEnter={button ? undefined : preloadInquiryModal}
               onFocus={button ? undefined : preloadInquiryModal}
-              className="inline-flex items-center gap-2.5 rounded-full border-0 bg-ink px-[30px] py-[17px] text-[15.5px] font-semibold text-ivory transition-transform duration-[.4s] ease-lux hover:-translate-y-[3px]"
+              className={`inline-flex items-center gap-2.5 rounded-full border-0 px-[30px] py-[17px] text-[15.5px] font-semibold transition-transform duration-[.4s] ease-lux hover:-translate-y-[3px] ${
+                button?.gold ? 'bg-accent text-ink' : 'bg-ink text-ivory'
+              }`}
+              style={button?.gold ? { boxShadow: '0 18px 40px -20px rgba(201,164,0,.75)' } : undefined}
             >
               {button?.label ?? 'Equip Your Team'} <span className="font-inter">→</span>
             </button>

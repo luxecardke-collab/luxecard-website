@@ -80,9 +80,12 @@ function ContactRow({ icon, label, value }: { icon: ReactNode; label: string; va
         <span className="block text-[9.5px] uppercase tracking-[.08em]" style={{ color: MUTED }}>
           {label}
         </span>
-        <span className="block truncate text-[11.5px]" style={{ color: INK }}>
-          {value}
-        </span>
+        {/* The value is drawn by CSS (sample-profile-value, from data-text),
+            not written in the page: iPhones' browsers look for email
+            addresses and phone numbers in a page's text and underline them,
+            and read with its label the address became "Emailamara@…" (both
+            underlined). With no text to find, every row stays plain. */}
+        <span className="sample-profile-value block truncate text-[11.5px]" style={{ color: INK }} data-text={value} />
       </span>
     </div>
   );
@@ -158,7 +161,7 @@ export function SampleProfile({ active = null, hideQr = false }: { active?: Prof
         {/* A zero-width space after the "@" stops iPhone browsers spotting an
             email address here (they'd underline it and the label); nothing
             visible changes. */}
-        <ContactRow icon={<Mail size={14} strokeWidth={2} aria-hidden="true" />} label="Email" value={'amara@\u200Byourcompany.co.ke'} />
+        <ContactRow icon={<Mail size={14} strokeWidth={2} aria-hidden="true" />} label="Email" value="amara@yourcompany.co.ke" />
         <ContactRow icon={<Phone size={14} strokeWidth={2} aria-hidden="true" />} label="Phone" value="+254 7XX XXX XXX" />
         <ContactRow icon={<Smartphone size={14} strokeWidth={2} aria-hidden="true" />} label="Mobile" value="+254 7XX XXX XXX" />
       </div>
