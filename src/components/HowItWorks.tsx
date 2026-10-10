@@ -144,7 +144,12 @@ export function HowItWorks({
               }}
             >
               <div className="relative aspect-[9/19.2] overflow-hidden rounded-[39px] bg-[#0C0C0F]">
-                <div className="absolute inset-x-0 top-[15px] z-[5] flex justify-between px-[22px] font-inter text-[10px] text-[rgba(243,240,234,.5)]">
+                {/* Charcoal over the light sample profile (Open, Connect). */}
+                <div
+                  className={`absolute inset-x-0 top-[15px] z-[5] flex justify-between px-[22px] font-inter text-[10px] ${
+                    stage === 1 || stage === 2 ? 'text-[rgba(31,31,31,.6)]' : 'text-[rgba(243,240,234,.5)]'
+                  }`}
+                >
                   <span>9:41</span>
                   <span>LTE</span>
                 </div>
