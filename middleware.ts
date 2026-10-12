@@ -15,18 +15,26 @@ export const config = {
 };
 
 export default function middleware(request: Request): Response {
-  const url = new URL(request.url);
-  const offer = activeOffer(new Date());
+  try {
+    const url = new URL(request.url);
+    const offer = activeOffer(new Date());
 
-  // An offer's version at its own address: only while that offer is on;
-  // otherwise (e.g. an old link, or after it ends) the page itself.
-  const version = /^\/_offer\/([a-z0-9-]+)(\/[a-z-]+)$/.exec(url.pathname);
-  if (version) {
-    if (offer?.id === version[1]) return next();
-    return Response.redirect(new URL(version[2] + url.search, url), 307);
+    // An offer's version at its own address: only while that offer is on;
+    // otherwise (e.g. an old link, or after it ends) the page itself.
+    const version = /^\/_offer\/([a-z0-9-]+)(\/[a-z-]+)$/.exec(url.pathname);
+    if (version) {
+      if (offer?.id === version[1]) return next();
+      return Response.redirect(new URL(version[2] + url.search, url), 307);
+    }
+
+    if (!offer) return next();
+    url.pathname = `/_offer/${offer.id}${url.pathname}`;
+    return rewrite(url);
+  } catch (err) {
+    // Never fail a page over this: serve it as requested (the regular page
+    // at its own address), which the browser then prices by the server's
+    // clock as usual.
+    console.error('Offer middleware failed; serving the page as requested:', err);
+    return next();
   }
-
-  if (!offer) return next();
-  url.pathname = `/_offer/${offer.id}${url.pathname}`;
-  return rewrite(url);
 }
