@@ -4,18 +4,26 @@
 // place of index.html's <!--app-head--> placeholder and, for every page
 // except browser-only ones, the page itself already rendered into #root for
 // main.tsx to hydrate. vercel.json's cleanUrls
-// serves dist/affiliate.html at /affiliate, etc.
+// serves dist/affiliate.html at /affiliate, etc. Each card page is also
+// written once per offer that hadn't ended (src/seo/offerPages.ts), as it is
+// while that offer is on, for middleware.ts to serve then.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
-const { PAGES, renderHeadTags, renderJsonLd, renderPage, routeKey, HYDRATABLE_MEDIA, cardPageHeroImage, renderOfferSpaceScript } = await import(
+const { PAGES, renderHeadTags, renderJsonLd, renderPage, routeKey, HYDRATABLE_MEDIA, cardPageHeroImage, OFFER_PAGE_OFFERS, offerPageFile } = await import(
   pathToFileURL(path.join(root, 'dist-ssr', 'entry-server.js')).href
 );
 
 const template = await fs.readFile(path.join(dist, 'index.html'), 'utf8');
+const HTML_TAG = '<html lang="en-KE">';
+if (!template.includes(HTML_TAG)) throw new Error(`dist/index.html has no ${HTML_TAG}`);
+
+// The card pages middleware.ts serves offer versions of (its matcher).
+const middleware = await fs.readFile(path.join(root, 'middleware.ts'), 'utf8');
+const OFFER_PAGE_PATHS = [...(middleware.match(/matcher:\s*\[([^\]]*)\]/)?.[1] ?? '').matchAll(/'(\/[a-z-]+)'/g)].map((m) => m[1]);
 const ROOT = '<div id="root"></div>';
 if (!template.includes('<!--app-head-->') || !template.includes(ROOT)) {
   throw new Error('dist/index.html is missing <!--app-head--> or an empty #root; was it already prerendered?');
@@ -54,19 +62,33 @@ for (const page of PAGES) {
       ? `<link rel="preload" as="image" imagesrcset="${heroImage.srcSet}" imagesizes="${heroImage.sizes}" media="(min-width: 900px)" fetchpriority="high" />`
       : `<link rel="preload" as="image" href="${heroImage.image}" media="(min-width: 900px)" fetchpriority="high" />`
     : '';
-  // Card pages: room for the offer badge on phones while an offer is on,
-  // decided before the first paint (src/seo/offerSpace.ts).
-  const offerSpace = heroImage ? renderOfferSpaceScript() : '';
-  const head = [renderHeadTags(page), preload, offerSpace, page.prerender === false ? '' : HIDE_UNHYDRATED, renderJsonLd(page.path)]
+  const head = [renderHeadTags(page), preload, page.prerender === false ? '' : HIDE_UNHYDRATED, renderJsonLd(page.path)]
     .filter(Boolean)
     .join('\n    ');
   // data-route tells main.tsx which page this markup was rendered for, so it
   // only hydrates markup that matches the page it's on.
-  const body =
+  const render = async (offerId) =>
     page.prerender === false
       ? ROOT
-      : `<div id="root" data-route="${routeKey(page.path)}">${withoutHoistedLinks(await renderPage(page.path), head)}</div>`;
-  const html = template.replace('<!--app-head-->', head).replace(ROOT, body);
-  await fs.writeFile(path.join(dist, page.file), html);
+      : `<div id="root" data-route="${routeKey(page.path)}">${withoutHoistedLinks(await renderPage(page.path, offerId), head)}</div>`;
+  await fs.writeFile(path.join(dist, page.file), template.replace('<!--app-head-->', head).replace(ROOT, await render(null)));
   console.log(`prerendered ${page.path} -> dist/${page.file}`);
+
+  // A card page's version for each offer: the offer's prices and badge in
+  // the HTML, and data-offer on <html> so the page keeps them while
+  // hydrating (src/utils/firstPaintOffer.ts).
+  if (!heroImage) continue;
+  if (!OFFER_PAGE_PATHS.includes(page.path)) {
+    throw new Error(`${page.path} is a card page but middleware.ts doesn't serve its offer versions; add it to its matcher`);
+  }
+  for (const offer of OFFER_PAGE_OFFERS) {
+    const file = offerPageFile(offer.id, page.file);
+    const html = template
+      .replace(HTML_TAG, `<html lang="en-KE" data-offer="${offer.id}">`)
+      .replace('<!--app-head-->', head)
+      .replace(ROOT, await render(offer.id));
+    await fs.mkdir(path.dirname(path.join(dist, file)), { recursive: true });
+    await fs.writeFile(path.join(dist, file), html);
+    console.log(`prerendered ${page.path} with ${offer.id} -> dist/${file}`);
+  }
 }
