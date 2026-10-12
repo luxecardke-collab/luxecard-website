@@ -48,6 +48,8 @@ function MarqueeRow({
   testimonials: Testimonial[];
   animationClassName: string;
 }) {
+  // Twice over, so the loop is seamless; screen readers get the first copy
+  // only (the second is aria-hidden).
   const items = [...testimonials, ...testimonials];
 
   return (
@@ -57,16 +59,18 @@ function MarqueeRow({
     >
       <div className={`flex w-max gap-4 sm:gap-5 ${animationClassName} hover:[animation-play-state:paused]`}>
         {items.map((testimonial, i) => (
-          <TestimonialCard key={`${testimonial.name}-${i}`} testimonial={testimonial} />
+          <TestimonialCard key={`${testimonial.name}-${i}`} testimonial={testimonial} repeat={i >= testimonials.length} />
         ))}
       </div>
     </div>
   );
 }
 
-function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
+function TestimonialCard({ testimonial, repeat = false }: { testimonial: Testimonial; repeat?: boolean }) {
   return (
-    <div className="w-[260px] shrink-0 rounded-2xl border border-[rgba(255,255,255,.08)] bg-surface p-5 transition-colors duration-300 hover:border-[rgba(253,211,3,.32)] sm:w-[340px] sm:p-6">
+    <div
+      aria-hidden={repeat || undefined}
+      className="w-[260px] shrink-0 rounded-2xl border border-[rgba(255,255,255,.08)] bg-surface p-5 transition-colors duration-300 hover:border-[rgba(253,211,3,.32)] sm:w-[340px] sm:p-6">
       <div className="mb-4 flex items-center gap-1.5 text-accent">
         {Array.from({ length: 5 }, (_, i) => (
           <StarIcon key={i} />

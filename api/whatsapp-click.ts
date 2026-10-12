@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { isTestEnvironment, readAttribution } from './_lib/attribution.js';
 import { describeMetaResult, metaTestMode, sendMetaEvent, type MetaResult } from './_lib/metaCapi.js';
-import { EVENT_ID_PATTERN, sameSiteUrl, visitorMetaUser } from './_lib/metaRequest.js';
+import { EVENT_ID_PATTERN, sameSiteUrl, siteHost, visitorMetaUser } from './_lib/metaRequest.js';
 import { getClientIp, isRateLimited } from './_lib/rateLimit.js';
 import { getSupabaseAdmin } from './_lib/supabaseAdmin.js';
 
@@ -116,6 +116,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       name: 'Contact',
       eventId: body.event_id,
       eventSourceUrl: sameSiteUrl(req, body.source_url),
+      siteHost: siteHost(req),
       user,
       customData: { content_name: button, content_category: section },
     });

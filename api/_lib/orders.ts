@@ -56,8 +56,10 @@ export type PaystackOrderMetadata = {
 export type OrderSource = 'webhook' | 'order-status' | 'cron';
 
 // The parts of Paystack's own transaction record used here: what was
-// actually collected (in KES cents) and when.
+// actually collected (in KES cents) and when, and whether it was a
+// test-mode payment (domain "test").
 export type PaystackPayment = {
+  domain?: string | null;
   amount?: number | null;
   paid_at?: string | null;
   paidAt?: string | null;
@@ -207,6 +209,7 @@ export async function recordPaidOrder(
           clientIpAddress: metadata.meta_client_ip,
           fbp: metadata.meta_fbp,
           fbc: metadata.meta_fbc,
+          testPayment: payment.domain === 'test',
         })
       : { status: 'skipped', reason: "the buyer didn't accept cookies, so nothing may be sent" };
 
