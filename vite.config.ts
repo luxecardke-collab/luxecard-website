@@ -16,6 +16,9 @@ export default defineConfig(({ isSsrBuild }) => ({
   // The SSR build (src/entry-server.tsx) only produces a module for
   // scripts/prerender.mjs to run; it needs no copy of public/.
   build: { copyPublicDir: !isSsrBuild },
+  // When the site was built (see src/seo/offerSpace.ts: an offer that had
+  // ended by then is left out of the pages).
+  define: { __BUILD_TIME__: JSON.stringify(Date.now()) },
   plugins: [
     react(),
     // The dev server has no prerender step (scripts/prerender.mjs fills in

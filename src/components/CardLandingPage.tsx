@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Truck } from 'lucide-react';
-import { activeOffer, FINISH_PRICES_BY_LABEL, OFFERS, offerUnitPrice, productId } from '../../api/_lib/pricing';
+import { activeOffer, FINISH_PRICES_BY_LABEL, offerUnitPrice, productId } from '../../api/_lib/pricing';
 import { cardPageFaqs, HERO_IMAGE_SIZES, headlineParts, type CardFinishChoice, type CardPage } from '../data/cardPages';
 import { PHOTOS_BY_MATERIAL } from '../data/content';
 import { useOffer } from '../hooks/useOffer';
 import { hasAdConsent, onConsentChange } from '../utils/consent';
 import { formatKes } from '../utils/formatPrice';
 import { trackMetaEventWithServer } from '../utils/metaPixel';
+import { FIRST_PAINT_OFFERS } from '../seo/offerSpace';
 import { scrollToSection } from '../utils/scrollToSection';
 import { serverNow, subscribeServerClock } from '../utils/serverClock';
 import { cardPageWhatsAppSource } from '../utils/whatsapp';
@@ -311,7 +312,7 @@ function CardPrice({ card, className = '' }: { card: CardPage; className?: strin
           <span className={`offer-price-regular ${priceClass}`}>
             <OfferPrice price={price} offer={null} />
           </span>
-          {OFFERS.map((o) => (
+          {FIRST_PAINT_OFFERS.map((o) => (
             <span key={o.id} className="offer-price-variant contents" data-offer={o.id}>
               <span className={priceClass}>
                 <OfferPrice price={price} offer={o} />

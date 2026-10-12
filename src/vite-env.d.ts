@@ -7,6 +7,9 @@ interface ImportMetaEnv {
   readonly VITE_META_PIXEL_ID?: string;
 }
 
+// When the site was built (ms since 1970), from vite.config.ts.
+declare const __BUILD_TIME__: number;
+
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }

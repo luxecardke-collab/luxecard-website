@@ -15,12 +15,18 @@ import { OFFERS } from '../../api/_lib/pricing';
 // themselves keep following the server's (utils/serverClock).
 export const OFFER_SPACE_CLASS = 'offer-space';
 
+// The offers that hadn't ended when the site was built: only these get a
+// first-paint version in the pages. An ended offer's price and badge would
+// otherwise stay in the page's HTML (hidden, but read by anything that reads
+// the HTML: search engines, link previews, audit tools).
+export const FIRST_PAINT_OFFERS = OFFERS.filter((o) => Date.parse(o.endsAt) > __BUILD_TIME__);
+
 // It also names the offer (data-offer on <html>), so the hero shows that
 // offer's price and badge from the first paint (CardLandingPage's CardPrice
 // renders each offer's version until the server's time is known; the style
 // below shows the right one, or the regular price).
 export function renderOfferSpaceScript(): string {
-  const offers = OFFERS.filter((o) => /^[a-z0-9-]+$/.test(o.id));
+  const offers = FIRST_PAINT_OFFERS.filter((o) => /^[a-z0-9-]+$/.test(o.id));
   const windows = offers.map((o) => [Date.parse(o.startsAt), Date.parse(o.endsAt), o.id]);
   const show = offers.map((o) => `html[data-offer="${o.id}"] .offer-price-variant[data-offer="${o.id}"]`).join(',');
   return (
