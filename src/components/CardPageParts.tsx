@@ -12,24 +12,47 @@ const SWATCH_COLOURS: Record<string, string> = {
 };
 
 // A headline from cardPages.ts, its [bracketed] part in gold.
-// A line break ("\n") in the text starts a new line.
+// A line break ("\n") in the text starts a new line; a "|" starts one from
+// 1024px only (a space below that).
 export function Headline({ text }: { text: string }) {
   return (
     <>
       {text.split('\n').map((line, l) => (
         <Fragment key={l}>
           {l > 0 && <br />}
-          {headlineParts(line).map((part, i) =>
-            part.gold ? (
-              <span key={i} className="text-accent">
-                {part.text}
-              </span>
-            ) : (
-              part.text
-            )
-          )}
+          {/* "|": a space on phones and tablets, a line break from 1024px,
+              where each of its lines also stays whole (at 1024px the column
+              is a few pixels short of "EVERY DAY."). */}
+          {line.includes('|')
+            ? line.split('|').map((segment, s, segments) => (
+                <Fragment key={s}>
+                  {s > 0 && <br className="max-[1023px]:hidden" />}
+                  <span className="min-[1024px]:whitespace-nowrap">
+                    {/* The space stays in the text before the break, so
+                        phones lay it out exactly as a plain space. */}
+                    <HeadlineParts text={s < segments.length - 1 ? `${segment} ` : segment} />
+                  </span>
+                </Fragment>
+              ))
+            : <HeadlineParts text={line} />}
         </Fragment>
       ))}
+    </>
+  );
+}
+
+function HeadlineParts({ text }: { text: string }) {
+  return (
+    <>
+      {headlineParts(text).map((part, i) =>
+        part.gold ? (
+          <span key={i} className="text-accent">
+            {part.text}
+          </span>
+        ) : (
+          part.text
+        )
+      )}
     </>
   );
 }

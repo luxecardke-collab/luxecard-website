@@ -110,7 +110,7 @@ const PLASTIC: CardPage = {
   finishNote: 'Any colour you like. You choose it when we design your card.',
   showcaseCta: 'Get your Plastic LuxeCard',
   showcase: {
-    headline: 'BUILT FOR\n[EVERY DAY.]',
+    headline: 'BUILT FOR|[EVERY DAY.]',
     label: 'Any Colour. One Card.',
     items: [
       {
