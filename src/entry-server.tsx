@@ -7,23 +7,30 @@ import { prerender } from 'react-dom/static';
 import App from './App';
 import { HYDRATABLE_MEDIA } from './hooks/useMediaQuery';
 import { routeKey } from './routes';
+import { setPrerenderOffer } from './utils/firstPaintOffer';
 
 export { PAGES, renderHeadTags } from './seo/pages';
 export { renderJsonLd } from './seo/structuredData';
 export { cardPageHeroImage } from './data/cardPages';
-export { renderOfferSpaceScript } from './seo/offerSpace';
+export { OFFER_PAGE_OFFERS, offerPageFile } from './seo/offerPages';
 export { HYDRATABLE_MEDIA, routeKey };
 
-// The page's HTML, ready to be hydrated by main.tsx. prerender() waits for
+// The page's HTML, ready to be hydrated by main.tsx; with `offerId`, as it
+// is while that offer is on (see utils/firstPaintOffer). prerender() waits for
 // every React.lazy section to load; the huge progressiveChunkSize keeps each
 // one inline where it belongs, instead of React moving large sections to
 // hidden <div>s at the end that inline scripts swap into place.
-export async function renderPage(path: string): Promise<string> {
-  const { prelude } = await prerender(
-    <StrictMode>
-      <App path={path} />
-    </StrictMode>,
-    { progressiveChunkSize: Number.MAX_SAFE_INTEGER }
-  );
-  return new Response(prelude).text();
+export async function renderPage(path: string, offerId: string | null = null): Promise<string> {
+  setPrerenderOffer(offerId);
+  try {
+    const { prelude } = await prerender(
+      <StrictMode>
+        <App path={path} />
+      </StrictMode>,
+      { progressiveChunkSize: Number.MAX_SAFE_INTEGER }
+    );
+    return await new Response(prelude).text();
+  } finally {
+    setPrerenderOffer(null);
+  }
 }

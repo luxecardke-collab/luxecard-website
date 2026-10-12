@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Truck } from 'lucide-react';
 import { activeOffer, FINISH_PRICES_BY_LABEL, offerUnitPrice, productId } from '../../api/_lib/pricing';
 import { cardPageFaqs, HERO_IMAGE_SIZES, headlineParts, type CardFinishChoice, type CardPage } from '../data/cardPages';
@@ -7,9 +7,8 @@ import { useOffer } from '../hooks/useOffer';
 import { hasAdConsent, onConsentChange } from '../utils/consent';
 import { formatKes } from '../utils/formatPrice';
 import { trackMetaEventWithServer } from '../utils/metaPixel';
-import { FIRST_PAINT_OFFERS } from '../seo/offerSpace';
 import { scrollToSection } from '../utils/scrollToSection';
-import { serverNow, subscribeServerClock } from '../utils/serverClock';
+import { serverNow } from '../utils/serverClock';
 import { cardPageWhatsAppSource } from '../utils/whatsapp';
 import { CardOrderForm } from './CardOrderForm';
 import { FinishSwatches, Headline } from './CardPageParts';
@@ -279,49 +278,17 @@ function FinishImage({
   );
 }
 
-// Whether the server's time is known yet (false in the prerendered page and
-// while hydrating it).
-function useServerClockKnown(): boolean {
-  return useSyncExternalStore(subscribeServerClock, () => serverNow() !== null, () => false);
-}
-
 function CardPrice({ card, className = '' }: { card: CardPage; className?: string }) {
+  // The offer the page was served with until the server's time is known
+  // (see hooks/useOffer), so the HTML itself already shows the right price.
   const offer = useOffer();
-  const clockKnown = useServerClockKnown();
   const price = FINISH_PRICES_BY_LABEL[card.priceLabel];
-  const priceClass = 'font-inter text-[clamp(18px,1.8vw,22px)] font-semibold tracking-[.01em] text-accent';
   return (
-    <div
-      // offer-reserve: on phones, room for the offer badge while an offer
-      // is on (see src/seo/offerSpace.ts and index.css).
-      className={`offer-reserve flex flex-wrap items-center gap-x-3 gap-y-2 ${className}`}
-    >
-      {clockKnown ? (
-        <>
-          <span className={priceClass}>
-            <OfferPrice price={price} offer={offer} />
-          </span>
-          {offer && <OfferBadge offer={offer} showEnd />}
-        </>
-      ) : (
-        // Until the server's time is known: the regular price and each
-        // offer's version are all in the page, and the head script (by the
-        // visitor's clock) shows the one that applies from the first paint.
-        // The server's clock then confirms it, or corrects it.
-        <>
-          <span className={`offer-price-regular ${priceClass}`}>
-            <OfferPrice price={price} offer={null} />
-          </span>
-          {FIRST_PAINT_OFFERS.map((o) => (
-            <span key={o.id} className="offer-price-variant contents" data-offer={o.id}>
-              <span className={priceClass}>
-                <OfferPrice price={price} offer={o} />
-              </span>
-              <OfferBadge offer={o} showEnd />
-            </span>
-          ))}
-        </>
-      )}
+    <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 ${className}`}>
+      <span className="font-inter text-[clamp(18px,1.8vw,22px)] font-semibold tracking-[.01em] text-accent">
+        <OfferPrice price={price} offer={offer} />
+      </span>
+      {offer && <OfferBadge offer={offer} showEnd />}
     </div>
   );
 }

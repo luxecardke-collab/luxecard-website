@@ -1,16 +1,21 @@
 import { useSyncExternalStore } from 'react';
 import { activeOffer, type Offer } from '../../api/_lib/pricing';
+import { firstPaintOffer } from '../utils/firstPaintOffer';
 import { serverNow, subscribeServerClock } from '../utils/serverClock';
 
 /**
  * The offer on right now by the server's clock (see utils/serverClock), or
- * null. Always null in the prerendered HTML and while hydrating it, so the
- * offer only ever appears once the server's time is known.
+ * null. Until the server's time is known (in the prerendered HTML, while
+ * hydrating it, and just after), it's the offer the page was served with
+ * (utils/firstPaintOffer), which the server's clock chose too.
  */
 export function useOffer(): Offer | null {
   return useSyncExternalStore(
     subscribeServerClock,
-    () => activeOffer(serverNow()),
-    () => null
+    () => {
+      const now = serverNow();
+      return now ? activeOffer(now) : firstPaintOffer();
+    },
+    firstPaintOffer
   );
 }
