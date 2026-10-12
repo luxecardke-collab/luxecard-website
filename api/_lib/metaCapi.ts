@@ -11,6 +11,11 @@ import { productId } from './pricing.js';
 // VITE_META_PIXEL_ID so only one ID has to be configured). Optional
 // META_TEST_EVENT_CODE routes events to Events Manager > Test events; set
 // it for the Preview environment only, never Production.
+//
+// Where events may go (metaTarget below): only Production sends to the live
+// dataset, and only events from www.luxecard.co.ke and real (live-mode)
+// payments. Previews send only with META_TEST_EVENT_CODE, so their events
+// show in Test events and nowhere else. Local runs send nothing.
 const GRAPH_API_VERSION = 'v26.0';
 const TIMEOUT_MS = 4000;
 
@@ -33,7 +38,33 @@ export type MetaEvent = {
   customData?: Record<string, unknown>;
   // Meta's action_source; 'website' unless stated.
   actionSource?: 'website' | 'chat' | 'system_generated';
+  // For an event the browser reported: the address it was sent to (the
+  // request's Host). Only www.luxecard.co.ke counts on Production.
+  siteHost?: string | null;
+  // A Paystack test-mode payment (its transaction's domain is "test"):
+  // never a live Purchase.
+  testPayment?: boolean;
 };
+
+export const LIVE_HOST = 'www.luxecard.co.ke';
+
+// Where this event may go: the live dataset, Test events only, or nowhere
+// (with the reason, which is logged and shown in team alerts).
+export function metaTarget(event: Pick<MetaEvent, 'siteHost' | 'testPayment'>): { testCode: string | null } | { skip: string } {
+  const env = process.env.VERCEL_ENV;
+  const testCode = process.env.META_TEST_EVENT_CODE || null;
+  if (env === 'production') {
+    if (event.siteHost !== undefined && event.siteHost !== LIVE_HOST) {
+      return { skip: `sent from ${event.siteHost ?? 'an unknown address'}, not ${LIVE_HOST}` };
+    }
+    if (event.testPayment && !testCode) return { skip: 'a Paystack test payment, never a live Purchase' };
+    return { testCode };
+  }
+  if (env === 'preview') {
+    return testCode ? { testCode } : { skip: 'Preview without META_TEST_EVENT_CODE, so it would reach the live dataset' };
+  }
+  return { skip: 'not on Vercel (a local run sends nothing to Meta)' };
+}
 
 // What happened to one event: shown in team alerts, logged, and returned to
 // the browser in test mode so it can be checked against Events Manager.
@@ -86,7 +117,12 @@ export async function sendMetaEvent(event: MetaEvent): Promise<MetaResult> {
     return { status: 'skipped', reason };
   }
 
-  const testCode = process.env.META_TEST_EVENT_CODE;
+  const target = metaTarget(event);
+  if ('skip' in target) {
+    console.info(`Meta Conversions API: ${event.name} ${event.eventId} not sent: ${target.skip}.`);
+    return { status: 'skipped', reason: target.skip };
+  }
+  const testCode = target.testCode;
   const body = {
     data: [
       {
@@ -170,6 +206,7 @@ export type MetaPurchase = {
   clientIpAddress?: string | null;
   fbp?: string | null;
   fbc?: string | null;
+  testPayment?: boolean;
 };
 
 // The server-side Purchase. event_id is the Paystack reference, the same
@@ -181,6 +218,7 @@ export function sendMetaPurchase(purchase: MetaPurchase): Promise<MetaResult> {
     eventId: purchase.reference,
     eventTime: purchase.eventTime,
     eventSourceUrl: purchase.eventSourceUrl,
+    testPayment: purchase.testPayment,
     user: {
       email: purchase.email,
       phone: purchase.phone,

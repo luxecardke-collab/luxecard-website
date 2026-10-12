@@ -241,6 +241,7 @@ export async function recordPaymentLinkSale(
       eventId: reference,
       eventTime: Number.isNaN(paidAtMs) ? undefined : Math.floor(paidAtMs / 1000),
       actionSource: WHATSAPP_SALE_ACTION_SOURCE,
+      testPayment: payment.domain === 'test',
       eventSourceUrl: ref.first_page ? `https://www.luxecard.co.ke${ref.first_page}` : null,
       user: { email: customerEmail || null, phone: customerPhone || null, fbc: ref.fbc, fbp: ref.fbp },
       customData: { value: amount, currency: 'KES', order_source: 'whatsapp', payment_type: paymentType },

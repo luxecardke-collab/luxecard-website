@@ -24,6 +24,12 @@ export function visitorMetaUser(req: IncomingMessage, body: { fbp?: unknown; fbc
   };
 }
 
+// The address the browser sent the event to (e.g. www.luxecard.co.ke).
+export function siteHost(req: IncomingMessage): string | null {
+  const host = req.headers.host;
+  return typeof host === 'string' && host ? host.toLowerCase() : null;
+}
+
 // The page the event happened on, only if it's on this site.
 export function sameSiteUrl(req: IncomingMessage, value: unknown): string | null {
   const url = clip(value, 500);

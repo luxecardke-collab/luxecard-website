@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { isEmail } from './_lib/input.js';
 import { metaTestMode, sendMetaEvent, type MetaEvent } from './_lib/metaCapi.js';
-import { EVENT_ID_PATTERN, sameSiteUrl, visitorMetaUser } from './_lib/metaRequest.js';
+import { EVENT_ID_PATTERN, sameSiteUrl, siteHost, visitorMetaUser } from './_lib/metaRequest.js';
 import { PRODUCT_IDS_BY_LABEL } from './_lib/pricing.js';
 import { getClientIp, isRateLimited } from './_lib/rateLimit.js';
 
@@ -90,6 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     name: name as MetaEvent['name'],
     eventId,
     eventSourceUrl: sameSiteUrl(req, body.source_url),
+    siteHost: siteHost(req),
     user: { ...visitorMetaUser(req, body), email, phone },
     customData: cleanCustomData(body.custom_data),
   };

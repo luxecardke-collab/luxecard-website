@@ -8,6 +8,22 @@ import { hasAdConsent, onConsentChange } from './consent';
 // browser's Purchase by sharing the Paystack reference as the event ID.
 const PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID;
 
+// Where the site is running decides what may reach Meta at all:
+// - www.luxecard.co.ke: the browser Pixel, and server copies of its events.
+// - a Vercel preview (*.vercel.app): never the Pixel (it can't be marked as a
+//   test); server copies only, which the server sends as Test events only
+//   (api/_lib/metaCapi.ts metaTarget).
+// - anywhere else (localhost, …): nothing.
+const LIVE_HOST = 'www.luxecard.co.ke';
+type MetaSite = 'live' | 'preview' | 'none';
+function metaSite(): MetaSite {
+  if (typeof window === 'undefined') return 'none';
+  const host = window.location.hostname;
+  if (host === LIVE_HOST) return 'live';
+  if (host.endsWith('.vercel.app')) return 'preview';
+  return 'none';
+}
+
 type Fbq = ((...args: unknown[]) => void) & {
   callMethod?: (...args: unknown[]) => void;
   queue: unknown[];
@@ -52,7 +68,7 @@ function installBaseCode() {
 }
 
 function loadPixel() {
-  if (!PIXEL_ID || loaded) return;
+  if (!PIXEL_ID || loaded || metaSite() !== 'live') return;
   // Visitors who arrived from an ad but only accept cookies on a later page
   // no longer have the fbclid in the URL for the Pixel to pick up, so its
   // click cookie is set from this visit's fbclid (kept first-party since
@@ -105,10 +121,12 @@ export function trackMetaEvent(name: string, params?: Record<string, unknown>, e
   else window.fbq?.('track', name, params ?? {});
 }
 
-// Meta tracking is allowed right now: the Pixel is configured and the
-// visitor has accepted cookies.
+// Server copies of events may be sent right now: Meta tracking is set up,
+// the visitor has accepted cookies, and the site is the live one or a
+// preview (where the server only sends Test events). The browser's own
+// Pixel copy only ever fires on the live site (trackMetaEvent).
 export function metaTrackingAllowed(): boolean {
-  return loaded && hasAdConsent();
+  return !!PIXEL_ID && hasAdConsent() && metaSite() !== 'none';
 }
 
 // A fresh ID shared by an event's browser (Pixel) and server (Conversions
@@ -202,6 +220,6 @@ function readCookie(name: string): string | null {
 // so the server-side Purchase can be matched to this visitor. Returns null
 // when the visitor hasn't accepted, in which case no server event is sent.
 export function getMetaCheckoutTracking(): { consent: true; fbp: string | null; fbc: string | null } | null {
-  if (!PIXEL_ID || !hasAdConsent()) return null;
+  if (!metaTrackingAllowed()) return null;
   return { consent: true, ...getMetaIds() };
 }

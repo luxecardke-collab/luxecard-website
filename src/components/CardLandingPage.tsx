@@ -6,7 +6,8 @@ import { PHOTOS_BY_MATERIAL } from '../data/content';
 import { useOffer } from '../hooks/useOffer';
 import { hasAdConsent, onConsentChange } from '../utils/consent';
 import { formatKes } from '../utils/formatPrice';
-import { trackMetaEventWithServer } from '../utils/metaPixel';
+import { metaTrackingAllowed, trackMetaEventWithServer } from '../utils/metaPixel';
+import { trackAddToCart } from '../utils/checkout';
 import { FIRST_PAINT_OFFERS } from '../seo/offerSpace';
 import { scrollToSection } from '../utils/scrollToSection';
 import { serverNow, subscribeServerClock } from '../utils/serverClock';
@@ -37,6 +38,22 @@ function scrollToOrder() {
   if (form) scrollToSection(form);
 }
 
+// Whether this page view's AddToCart has gone (every page is a full load).
+let addToCartSent = false;
+
+// A "Get my … LuxeCard" button (hero, finishes, what you get, closing call
+// to action, phones' sticky bar): Meta AddToCart for this card, one at the
+// price shown, once per page view (browser + Conversions API, same event
+// ID; nothing without cookie consent, and then it can still go on a later
+// tap once they accept), then down to the order form.
+function orderButtonTapped(card: CardPage) {
+  if (!addToCartSent) {
+    trackAddToCart({ name: card.priceLabel, price: FINISH_PRICES_BY_LABEL[card.priceLabel], quantity: 1 }, activeOffer(serverNow()));
+    addToCartSent = metaTrackingAllowed();
+  }
+  scrollToOrder();
+}
+
 // A portfolio photo's file name ("wood-03") from its caption ("WOOD 03").
 const photoFile = (caption: string) => caption.toLowerCase().replace(' ', '-');
 
@@ -61,7 +78,7 @@ export function CardLandingPage({ card }: { card: CardPage }) {
         heading={<Headline text={card.showcase.headline} />}
         label={card.showcase.label}
         items={card.showcase.items}
-        onOrder={scrollToOrder}
+        onOrder={() => orderButtonTapped(card)}
         orderLabel={card.showcaseCta}
         trackViewContent={false}
       />
@@ -94,7 +111,7 @@ export function CardLandingPage({ card }: { card: CardPage }) {
         // Plain (no gold) on the light background, as on the homepage.
         heading={headlineParts(card.whatYouGet.headline).map((part) => part.text).join('')}
         intro={<PriceOnLight card={card} />}
-        button={{ label: card.cta, onClick: scrollToOrder, gold: true }}
+        button={{ label: card.cta, onClick: () => orderButtonTapped(card), gold: true }}
         showWhatsApp={false}
         benefits={card.whatYouGet.points}
       />
@@ -103,7 +120,7 @@ export function CardLandingPage({ card }: { card: CardPage }) {
       <FinalCta
         heading={<FinalHeading text="MAKE YOUR NEXT INTRODUCTION [COUNT.]" />}
         buttonLabel={`${card.cta} →`}
-        onButtonClick={scrollToOrder}
+        onButtonClick={() => orderButtonTapped(card)}
         whatsappSource={cardPageWhatsAppSource(card, 'talk-to-us')}
       />
       <StickyOrderBar card={card} />
@@ -373,7 +390,7 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
             <Truck size={16} strokeWidth={1.8} className="mt-[2px] shrink-0 text-accent" aria-hidden="true" />
             <span>{deliveryLine(card)}</span>
           </p>
-          <PrimaryButton onClick={scrollToOrder} className="mt-6">
+          <PrimaryButton onClick={() => orderButtonTapped(card)} className="mt-6">
             {card.cta} <span className="font-inter">→</span>
           </PrimaryButton>
         </div>
@@ -468,7 +485,7 @@ function StickyOrderBar({ card }: { card: CardPage }) {
     >
       <button
         type="button"
-        onClick={scrollToOrder}
+        onClick={() => orderButtonTapped(card)}
         className="w-full rounded-full bg-ivory px-5 py-[14px] text-[15px] font-semibold text-ink"
       >
         {card.cta} · {formatKes(offerUnitPrice(FINISH_PRICES_BY_LABEL[card.priceLabel], offer))}

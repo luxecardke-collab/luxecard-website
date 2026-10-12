@@ -8,7 +8,7 @@ import { LINKS } from '../data/links';
 import { PRODUCTION_NOTE } from '../data/production';
 import { useOffer } from '../hooks/useOffer';
 import { QUOTE_CONFIRMATION_MESSAGE, sendCartLead, sendQuoteRequest } from '../utils/cartLead';
-import { startCheckout, trackAddToCart } from '../utils/checkout';
+import { startCheckout } from '../utils/checkout';
 import { formatKes } from '../utils/formatPrice';
 import { HONEYPOT_NAME, readHoneypot } from '../utils/honeypot';
 import { inputClass } from '../utils/inputClass';
@@ -30,9 +30,11 @@ import { PaymentLine } from './PaymentLine';
 import { RevealSection } from './RevealSection';
 
 // A card page's order form: this one card, straight to Paystack with no cart
-// step. It saves the lead and fires AddToCart exactly as adding to the cart
-// does, then goes through the same checkout as the cart (utils/checkout.ts),
-// with the same fields, validation and honeypot as the site's order forms.
+// step. It saves the lead as adding to the cart does, then goes through the
+// same checkout as the cart (utils/checkout.ts, which fires
+// InitiateCheckout), with the same fields, validation and honeypot as the
+// site's order forms. AddToCart fires earlier, on the page's "Get my …
+// LuxeCard" buttons (CardLandingPage).
 
 const AFTER_PAYMENT = [
   'We reach out within 24 hours to collect your details and design your card.',
@@ -150,7 +152,6 @@ export function CardOrderForm({
     // Saved first, like adding to the cart, so the lead is kept even if
     // they never pay.
     sendCartLead(leadPayload(c, hp));
-    trackAddToCart({ name: card.priceLabel, price: unitPrice, quantity: form.quantity }, offer, { email: c.email, phone: c.phone });
 
     setStatus('checking-out');
     void syncServerClock();
