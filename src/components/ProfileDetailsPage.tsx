@@ -367,13 +367,14 @@ export function ProfileDetailsPage() {
                     return (
                       <div key={s.key} data-field={field} className="flex flex-col gap-2">
                         <div className="flex gap-2">
+                          {/* A fixed-width network picker; the link takes the rest. */}
                           <select
                             aria-label="Network"
                             value={s.network}
                             onChange={(e) =>
                               setSocials((list) => list.map((x) => (x.key === s.key ? { ...x, network: e.target.value as SocialNetwork } : x)))
                             }
-                            className={`${inputClass()} w-[132px] shrink-0 appearance-none bg-[#101013] pr-2`}
+                            className={`${inputClass().replace('w-full ', '')} w-[124px] shrink-0 appearance-none pr-2 sm:w-[140px] [&>option]:bg-[#101013]`}
                           >
                             {SOCIAL_NETWORKS.map((n) => (
                               <option key={n.id} value={n.id}>
@@ -393,7 +394,7 @@ export function ProfileDetailsPage() {
                               if (clean) setSocials((list) => list.map((x) => (x.key === s.key ? { ...x, url: clean } : x)));
                             }}
                             placeholder={example}
-                            className={`${inputClass(!!show(field))} min-w-0`}
+                            className={`${inputClass(!!show(field)).replace('w-full ', '')} min-w-0 flex-1`}
                           />
                           <button
                             type="button"
