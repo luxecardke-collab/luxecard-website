@@ -102,7 +102,7 @@ function render(email: TeamEmail) {
 // What happened to an alert: Resend accepted it (with its email id), or why
 // it didn't go. Callers that need a record of it (api/profile-details.ts)
 // store this; the others can ignore it.
-export type EmailResult = { status: 'sent'; id: string | null } | { status: 'failed'; reason: string };
+export type EmailResult = { status: 'sent'; id: string | null; to: string[] } | { status: 'failed'; reason: string };
 
 // One line for a record, e.g. "sent (Resend id …)" or "failed: <reason>".
 export function describeEmailResult(result: EmailResult): string {
@@ -157,7 +157,7 @@ export async function sendTeamEmail(email: TeamEmail): Promise<EmailResult> {
     } catch {
       // accepted; keep the id unknown
     }
-    return { status: 'sent', id };
+    return { status: 'sent', id, to };
   } catch (err) {
     console.error('Failed to send alert email:', err);
     return { status: 'failed', reason: err instanceof Error ? err.message : String(err) };

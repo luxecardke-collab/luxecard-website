@@ -259,5 +259,9 @@ async function submit(req: VercelRequest, res: VercelResponse, body: Record<stri
 
   // Previews also report the email's outcome, for testing; the live site
   // never tells the customer anything about it.
-  res.status(200).json(isTest ? { ok: true, alert: alertStatus } : { ok: true });
+  res.status(200).json(
+    isTest
+      ? { ok: true, alert: alertStatus, alertTo: alert.status === 'sent' ? alert.to : [], alertStatusSaved: !statusError }
+      : { ok: true }
+  );
 }
