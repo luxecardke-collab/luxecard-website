@@ -9,7 +9,7 @@ import {
   MAX_SOCIALS,
   MAX_TEXT,
   MAX_UPLOAD_BYTES,
-  normalizeKenyanPhone,
+  normalizePhone,
   normalizeUrl,
   PROFILE_BUCKET,
   REF_PATTERN,
@@ -128,9 +128,9 @@ async function submit(req: VercelRequest, res: VercelResponse, body: Record<stri
   // With a business card, only the name, WhatsApp number and consent are
   // needed; the team copies the rest from the card.
   const fullName = cleanString(body.fullName, MAX_TEXT);
-  const phone = normalizeKenyanPhone(cleanString(body.phone, 40));
+  const phone = normalizePhone(cleanString(body.phone, 40));
   const secondPhoneRaw = cleanString(body.secondPhone, 40);
-  const secondPhone = secondPhoneRaw ? normalizeKenyanPhone(secondPhoneRaw) : null;
+  const secondPhone = secondPhoneRaw ? normalizePhone(secondPhoneRaw) : null;
   const email = cleanString(body.email, MAX_TEXT).toLowerCase();
   const websiteRaw = cleanString(body.website, 600);
   const website = websiteRaw ? normalizeUrl(websiteRaw) : null;

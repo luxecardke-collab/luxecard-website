@@ -10,15 +10,47 @@ export const MAX_SOCIALS = 5;
 export const MAX_TEXT = 200;
 export const MAX_URL = 500;
 
-// ---------- Phones: Kenyan numbers ----------
-// Accepts 0712 345 678, 712345678, 254712345678 and +254 712 345 678
-// (spaces, dashes and brackets ignored), mobile (7…) and the newer 1…
-// prefixes. Returns +254XXXXXXXXX, or null if it isn't one.
-export function normalizeKenyanPhone(input: string): string | null {
-  const digits = input.replace(/[\s\-().]/g, '');
-  const m = /^(?:\+?254|0)?([17]\d{8})$/.exec(digits);
-  return m ? `+254${m[1]}` : null;
+// ---------- Phones: any country, Kenya by default ----------
+// The world's country calling codes (ITU E.164). No code is the start of
+// another, so the first one a number begins with is its country code.
+const COUNTRY_CODES = new Set(
+  (
+    '1 7 20 27 30 31 32 33 34 36 39 40 41 43 44 45 46 47 48 49 51 52 53 54 55 56 57 58 60 61 62 63 64 65 66 81 82 84 86 90 91 92 93 94 95 98 ' +
+    '211 212 213 216 218 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 ' +
+    '250 251 252 253 254 255 256 257 258 260 261 262 263 264 265 266 267 268 269 290 291 297 298 299 ' +
+    '350 351 352 353 354 355 356 357 358 359 370 371 372 373 374 375 376 377 378 379 380 381 382 383 385 386 387 389 420 421 423 ' +
+    '500 501 502 503 504 505 506 507 508 509 590 591 592 593 594 595 596 597 598 599 ' +
+    '670 672 673 674 675 676 677 678 679 680 681 682 683 685 686 687 688 689 690 691 692 ' +
+    '800 808 850 852 853 855 856 870 878 880 881 882 883 886 888 ' +
+    '960 961 962 963 964 965 966 967 968 970 971 972 973 974 975 976 977 979 992 993 994 995 996 998'
+  ).split(' ')
+);
+
+// The 8–15 digits after a number's country code.
+const NATIONAL_DIGITS = /^\d{8,15}$/;
+
+// Accepts an international number with its country code (+254 712 345 678,
+// +256 772 123 456, +44 7700 900123, or the same starting 00 instead of +),
+// and Kenyan numbers written locally (0712 345 678, 712 345 678, or
+// 254712345678 without the +). Spaces, dashes, dots and brackets are
+// ignored. Returns it in international format (+254712345678), or null.
+export function normalizePhone(input: string): string | null {
+  const compact = input.trim().replace(/[\s\-().]/g, '');
+  let digits: string;
+  if (/^\+\d+$/.test(compact)) digits = compact.slice(1);
+  else if (/^00\d+$/.test(compact)) digits = compact.slice(2);
+  else if (/^0\d{9}$/.test(compact)) digits = `254${compact.slice(1)}`; // local Kenyan: 0 + 9 digits
+  else if (/^[17]\d{8}$/.test(compact)) digits = `254${compact}`; // Kenyan mobile without its 0
+  else if (/^254\d{9}$/.test(compact)) digits = compact; // Kenyan, + left off
+  else return null;
+  for (const length of [1, 2, 3]) {
+    const code = digits.slice(0, length);
+    if (COUNTRY_CODES.has(code)) return NATIONAL_DIGITS.test(digits.slice(length)) ? `+${digits}` : null;
+  }
+  return null;
 }
+
+export const PHONE_ERROR = 'Enter a valid phone number. Include your country code if outside Kenya, e.g. +256 772 123 456.';
 
 // ---------- Links ----------
 // Adds https:// when there's no scheme, then checks it's a real web
