@@ -85,6 +85,11 @@ export function ProfileDetailsPage() {
   const [socials, setSocials] = useState<Social[]>([]);
   const [bio, setBio] = useState('');
   const [consent, setConsent] = useState(false);
+  // A gift: the person filling this in is buying the card for someone
+  // else, and is the only one the team contacts (the surprise is safe).
+  const [isGift, setIsGift] = useState(false);
+  const [buyerName, setBuyerName] = useState('');
+  const [buyerPhone, setBuyerPhone] = useState('');
   const [uploads, setUploads] = useState<Record<UploadKind, Upload>>({
     business_card: { status: 'idle' },
     photo: { status: 'idle' },
@@ -107,9 +112,19 @@ export function ProfileDetailsPage() {
   // Each field's problem, or null. Shown once the field has been left, or
   // after a first attempt to send.
   const errors: Record<string, string | null> = {
-    fullName: fullName.trim() ? null : 'Please enter your full name.',
+    buyerName: isGift && !buyerName.trim() ? 'Please enter your name.' : null,
+    buyerPhone: !isGift
+      ? null
+      : !buyerPhone.trim()
+        ? 'Please enter your WhatsApp number.'
+        : normalizePhone(buyerPhone)
+          ? null
+          : PHONE_ERROR,
+    fullName: fullName.trim() ? null : isGift ? 'Please enter their full name.' : 'Please enter your full name.',
     phone: !phone.trim()
-      ? 'Please enter your WhatsApp number.'
+      ? isGift
+        ? 'Please enter their WhatsApp number.'
+        : 'Please enter your WhatsApp number.'
       : normalizePhone(phone)
         ? null
         : PHONE_ERROR,
@@ -117,13 +132,8 @@ export function ProfileDetailsPage() {
       secondPhone.trim() && !normalizePhone(secondPhone)
         ? PHONE_ERROR
         : null,
-    email: !email.trim()
-      ? hasCard
-        ? null
-        : 'Please enter your email address.'
-      : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
-        ? null
-        : 'Please enter a valid email address.',
+    // Optional, but a real address if given.
+    email: !email.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? null : 'Please enter a valid email address.',
     website: website.trim() && !normalizeUrl(website) ? 'Please enter a valid web address, e.g. yourcompany.co.ke.' : null,
     bio: bio.length > MAX_BIO ? `Please keep your bio to ${MAX_BIO} characters.` : null,
     consent: consent ? null : 'Please tick this box so we can use your details.',
@@ -186,6 +196,8 @@ export function ProfileDetailsPage() {
           socials: socials.map(({ network, url }) => ({ network, url })),
           bio,
           consent,
+          isGift,
+          ...(isGift ? { buyerName, buyerPhone } : {}),
           businessCardPath: path(uploads.business_card),
           photoPath: path(uploads.photo),
           logoPath: path(uploads.logo),
@@ -246,6 +258,53 @@ export function ProfileDetailsPage() {
             <form ref={formRef} noValidate onSubmit={handleSubmit} className="relative mt-9 flex flex-col gap-6">
               <HoneypotField />
 
+              {/* A gift: then the buyer's own name and number, and the rest
+                  of the form is the card owner's. */}
+              <div data-field="gift" className="flex flex-col gap-4">
+                <TickBox checked={isGift} onChange={setIsGift}>
+                  This card is a gift / I'm filling this in for someone else.
+                </TickBox>
+                {isGift && (
+                  <div className="flex flex-col gap-5 rounded-2xl border border-[rgba(255,255,255,.12)] bg-[rgba(255,255,255,.02)] p-5">
+                    <div data-field="buyerName">
+                      <Field label="Your name" required invalid={!!show('buyerName')} errorText={show('buyerName') ?? undefined}>
+                        <input
+                          value={buyerName}
+                          onChange={(e) => setBuyerName(e.target.value)}
+                          onBlur={touch('buyerName')}
+                          autoComplete="name"
+                          maxLength={200}
+                          className={inputClass(!!show('buyerName'))}
+                        />
+                      </Field>
+                    </div>
+                    <div data-field="buyerPhone">
+                      <Field
+                        label="Your WhatsApp number"
+                        required
+                        invalid={!!show('buyerPhone')}
+                        errorText={show('buyerPhone') ?? undefined}
+                        hint="Include your country code if outside Kenya, e.g. +44 7700 900123."
+                      >
+                        <input
+                          type="tel"
+                          inputMode="tel"
+                          value={buyerPhone}
+                          onChange={(e) => setBuyerPhone(e.target.value)}
+                          onBlur={touch('buyerPhone')}
+                          autoComplete="tel"
+                          placeholder="0712 345 678"
+                          className={inputClass(!!show('buyerPhone'))}
+                        />
+                      </Field>
+                    </div>
+                    <p className="m-0 text-[13.5px] leading-[1.5] text-[rgba(243,240,234,.7)]">
+                      We'll only contact you about this order. We won't reach out to them, so the surprise is safe.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* The shortcut: a business card instead of typing. */}
               <div
                 data-field="business_card"
@@ -271,7 +330,7 @@ export function ProfileDetailsPage() {
                 )}
               </div>
 
-              <Section title="Your details">
+              <Section title={isGift ? 'The card owner’s details' : 'Your details'}>
                 <div data-field="fullName">
                   <Field label="Full name" required invalid={!!show('fullName')} errorText={show('fullName') ?? undefined}>
                     <input
@@ -294,7 +353,7 @@ export function ProfileDetailsPage() {
                 </div>
               </Section>
 
-              <Section title="How people reach you">
+              <Section title={isGift ? 'How people reach them' : 'How people reach you'}>
                 <div data-field="phone">
                   <Field
                     label="Phone (WhatsApp)"
@@ -329,7 +388,7 @@ export function ProfileDetailsPage() {
                   </Field>
                 </div>
                 <div data-field="email">
-                  <Field label="Email" required={!hasCard} invalid={!!show('email')} errorText={show('email') ?? undefined}>
+                  <Field label="Email" invalid={!!show('email')} errorText={show('email') ?? undefined}>
                     <input
                       type="email"
                       inputMode="email"
@@ -453,20 +512,11 @@ export function ProfileDetailsPage() {
               </Section>
 
               <div data-field="consent" className="flex flex-col gap-2">
-                <label className="flex cursor-pointer items-start gap-3">
-                  <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="peer sr-only" />
-                  <span
-                    aria-hidden="true"
-                    className={`mt-px flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border ${
-                      show('consent') ? 'border-[#F87171]' : 'border-[rgba(255,255,255,.22)]'
-                    } bg-[rgba(255,255,255,.03)] text-ink transition-colors duration-200 peer-checked:border-accent peer-checked:bg-accent peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent [&>svg]:opacity-0 peer-checked:[&>svg]:opacity-100`}
-                  >
-                    <Check size={14} strokeWidth={3} />
-                  </span>
-                  <span className="text-[14.5px] leading-[1.5] text-ivory">
-                    I agree to these details showing on my public profile and to being contacted about my order.
-                  </span>
-                </label>
+                <TickBox checked={consent} onChange={setConsent} invalid={!!show('consent')}>
+                  {isGift
+                    ? "I confirm these details can appear on the profile, and they're details the card owner is happy to share."
+                    : 'I agree to these details showing on my public profile and to being contacted about my order.'}
+                </TickBox>
                 {show('consent') && <span className="pl-[34px] text-[12.5px] text-[#F87171]">{show('consent')}</span>}
               </div>
 
@@ -499,6 +549,35 @@ export function ProfileDetailsPage() {
         )}
       </main>
     </div>
+  );
+}
+
+// A checkbox in the site's style (the box is drawn; the real one is hidden
+// but still focusable and read by screen readers).
+function TickBox({
+  checked,
+  onChange,
+  invalid = false,
+  children,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  invalid?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="peer sr-only" />
+      <span
+        aria-hidden="true"
+        className={`mt-px flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border ${
+          invalid ? 'border-[#F87171]' : 'border-[rgba(255,255,255,.22)]'
+        } bg-[rgba(255,255,255,.03)] text-ink transition-colors duration-200 peer-checked:border-accent peer-checked:bg-accent peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent [&>svg]:opacity-0 peer-checked:[&>svg]:opacity-100`}
+      >
+        <Check size={14} strokeWidth={3} />
+      </span>
+      <span className="text-[14.5px] leading-[1.5] text-ivory">{children}</span>
+    </label>
   );
 }
 

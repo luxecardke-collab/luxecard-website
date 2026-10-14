@@ -342,6 +342,9 @@ export type Database = {
           is_test: boolean;
           status: string;
           alert_status: string | null;
+          is_gift: boolean;
+          buyer_name: string | null;
+          buyer_phone: string | null;
         };
         Insert: {
           id?: string;
@@ -364,6 +367,9 @@ export type Database = {
           is_test?: boolean;
           status?: string;
           alert_status?: string | null;
+          is_gift?: boolean;
+          buyer_name?: string | null;
+          buyer_phone?: string | null;
         };
         Update: Partial<Database['public']['Tables']['profile_submissions']['Insert']>;
         Relationships: [
