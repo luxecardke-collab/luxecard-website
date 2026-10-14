@@ -502,7 +502,7 @@ export function ProfileDetailsPage() {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <fieldset className="m-0 flex flex-col gap-5 border-0 border-t border-[rgba(255,255,255,.08)] p-0 pt-6">
+    <fieldset className="m-0 flex min-w-0 flex-col gap-5 border-0 border-t border-[rgba(255,255,255,.08)] p-0 pt-6">
       <legend className="float-left mb-1 w-full p-0 font-manrope text-[18px] font-semibold tracking-[-.01em] text-ivory">
         {title}
       </legend>
