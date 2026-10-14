@@ -169,6 +169,14 @@ export function OrderConfirmation() {
           ? "We'll continue with you on WhatsApp."
           : `We'll reach out within 24 hours to discuss your card design. ${PRODUCTION_NOTE}`}
       </p>
+      {reference && (
+        <a
+          href={`/details?ref=${encodeURIComponent(reference)}`}
+          className="mt-9 inline-flex items-center gap-2.5 rounded-full bg-accent px-7 py-[15px] text-[15px] font-semibold text-ink transition-transform duration-300 ease-lux hover:-translate-y-0.5"
+        >
+          Next: send us your profile details <span className="font-inter">→</span>
+        </a>
+      )}
       <a
         href="/"
         className="mt-9 inline-flex items-center gap-2.5 rounded-full bg-ivory px-7 py-[15px] text-[15px] font-semibold text-ink transition-transform duration-300 ease-lux hover:-translate-y-0.5 hover:bg-white"

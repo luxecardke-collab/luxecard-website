@@ -1,12 +1,15 @@
 import { inject, type BeforeSendEvent } from '@vercel/analytics';
 import { afterPageLoad } from './afterPageLoad';
 
-// Order references (Paystack's ?reference= on /order-confirmation) identify
-// a customer's order, so they're stripped before a page view is recorded.
+// Order references (Paystack's ?reference= on /order-confirmation, and the
+// ?ref= on /details, an order or WhatsApp reference) identify a customer, so
+// they're stripped before a page view is recorded.
 function withoutOrderReference(event: BeforeSendEvent): BeforeSendEvent {
   const url = new URL(event.url);
-  if (!url.searchParams.has('reference')) return event;
+  const onDetails = url.pathname.replace(/\/+$/, '') === '/details' && url.searchParams.has('ref');
+  if (!url.searchParams.has('reference') && !onDetails) return event;
   url.searchParams.delete('reference');
+  if (onDetails) url.searchParams.delete('ref');
   return { ...event, url: url.toString() };
 }
 

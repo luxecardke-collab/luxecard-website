@@ -319,6 +319,68 @@ export type Database = {
           },
         ];
       };
+      // Migration 0010: the profile details form (/details).
+      profile_submissions: {
+        Row: {
+          id: string;
+          created_at: string;
+          ref: string | null;
+          order_id: string | null;
+          whatsapp_ref: string | null;
+          full_name: string;
+          phones: string[];
+          email: string | null;
+          title: string | null;
+          company: string | null;
+          website: string | null;
+          socials: { network: string; url: string }[];
+          bio: string | null;
+          business_card_path: string | null;
+          photo_path: string | null;
+          logo_path: string | null;
+          consent_at: string;
+          is_test: boolean;
+          status: string;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          ref?: string | null;
+          order_id?: string | null;
+          whatsapp_ref?: string | null;
+          full_name: string;
+          phones: string[];
+          email?: string | null;
+          title?: string | null;
+          company?: string | null;
+          website?: string | null;
+          socials?: { network: string; url: string }[];
+          bio?: string | null;
+          business_card_path?: string | null;
+          photo_path?: string | null;
+          logo_path?: string | null;
+          consent_at: string;
+          is_test?: boolean;
+          status?: string;
+        };
+        Update: Partial<Database['public']['Tables']['profile_submissions']['Insert']>;
+        Relationships: [
+          {
+            foreignKeyName: 'profile_submissions_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: false;
+            referencedRelation: 'orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_submissions_whatsapp_ref_fkey';
+            columns: ['whatsapp_ref'];
+            isOneToOne: false;
+            referencedRelation: 'whatsapp_refs';
+            referencedColumns: ['code'];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

@@ -73,6 +73,18 @@ export const ORDER_CONFIRMATION_PAGE: PageMeta = {
   prerender: false,
 };
 
+// The unlisted page where customers send their profile details (not in
+// the nav, footer or sitemap). Reads ?ref=, so it's rendered in the browser
+// only.
+export const DETAILS_PAGE: PageMeta = {
+  path: '/details',
+  file: 'details.html',
+  title: 'Your digital profile | LuxeCard',
+  description: 'Send us the details for your LuxeCard digital profile.',
+  noindex: true,
+  prerender: false,
+};
+
 // Served by Vercel, with a 404 status, for any URL that isn't one of the
 // pages above (it serves a 404.html at the root of the build automatically).
 // `path` is only what it's rendered as; any unknown path renders the same.
@@ -90,6 +102,7 @@ export const PAGES: PageMeta[] = [
   ...LEGAL_PAGES,
   ...CARD_LANDING_PAGES,
   ORDER_CONFIRMATION_PAGE,
+  DETAILS_PAGE,
   NOT_FOUND_PAGE,
 ];
 

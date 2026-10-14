@@ -7,6 +7,7 @@ export type Route =
   | { kind: 'home' }
   | { kind: 'affiliate' }
   | { kind: 'order-confirmation' }
+  | { kind: 'details' }
   | { kind: 'legal'; doc: LegalDoc }
   | { kind: 'card'; page: CardPage }
   | { kind: 'not-found' };
@@ -20,6 +21,7 @@ export function routeFor(path: string): Route {
   if (path === '/') return { kind: 'home' };
   if (path === '/affiliate') return { kind: 'affiliate' };
   if (path === '/order-confirmation') return { kind: 'order-confirmation' };
+  if (path === '/details') return { kind: 'details' };
   const doc = LEGAL_DOCS.find((d) => d.path === path);
   if (doc) return { kind: 'legal', doc };
   const card = cardPageFor(path);

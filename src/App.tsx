@@ -36,6 +36,9 @@ const OrderConfirmation = lazy(() =>
 );
 // The cart drawer is lazy too (see CartProvider's shouldLoadDrawer); gated
 // the same way as the two modals in InquiryModalProvider/ContactModalProvider.
+const ProfileDetailsPage = lazy(() =>
+  import('./components/ProfileDetailsPage').then((m) => ({ default: m.ProfileDetailsPage }))
+);
 const CartDrawer = lazy(() => import('./components/CartDrawer').then((m) => ({ default: m.CartDrawer })));
 
 // Fetches the cart drawer's and both modals' chunks once the page has had a
@@ -167,6 +170,17 @@ function App({ path }: { path: string }) {
 
 function Page({ path }: { path: string }) {
   const route = routeFor(path);
+
+  if (route.kind === 'details') {
+    return (
+      <>
+        <Suspense fallback={null}>
+          <ProfileDetailsPage />
+        </Suspense>
+        <CookieBanner />
+      </>
+    );
+  }
 
   if (route.kind === 'order-confirmation') {
     return (
