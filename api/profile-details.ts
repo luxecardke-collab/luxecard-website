@@ -135,12 +135,20 @@ async function submit(req: VercelRequest, res: VercelResponse, body: Record<stri
   const websiteRaw = cleanString(body.website, 600);
   const website = websiteRaw ? normalizeUrl(websiteRaw) : null;
   const bio = cleanString(body.bio, MAX_BIO + 50);
+  // A gift: the buyer filled this in for the card owner, and is the only
+  // one the team may contact.
+  const isGift = body.isGift === true;
+  const buyerName = isGift ? cleanString(body.buyerName, MAX_TEXT) : '';
+  const buyerPhone = isGift ? normalizePhone(cleanString(body.buyerPhone, 40)) : null;
 
   const errors: string[] = [];
   if (!fullName) errors.push('name');
   if (!phone) errors.push('phone');
   if (secondPhoneRaw && !secondPhone) errors.push('second phone');
-  if (email ? !isEmail(email) : !businessCard) errors.push('email');
+  // Email is optional (gift or not, card or not), but must be real if given.
+  if (email && !isEmail(email)) errors.push('email');
+  if (isGift && !buyerName) errors.push('your name');
+  if (isGift && !buyerPhone) errors.push('your WhatsApp number');
   if (websiteRaw && !website) errors.push('website');
   if (bio.length > MAX_BIO) errors.push('bio');
   if (body.consent !== true) errors.push('consent');
@@ -208,6 +216,9 @@ async function submit(req: VercelRequest, res: VercelResponse, body: Record<stri
     logo_path: logo,
     consent_at: new Date().toISOString(),
     is_test: isTest,
+    is_gift: isGift,
+    buyer_name: isGift ? buyerName : null,
+    buyer_phone: isGift ? buyerPhone : null,
   }).select('id').single();
   if (error || !saved) {
     console.error('Failed to save profile details:', error);
@@ -226,7 +237,7 @@ async function submit(req: VercelRequest, res: VercelResponse, body: Record<stri
   const rows: AlertRow[] = [
     ['Matched', matchLine],
     ['Name', fullName],
-    ['Phone (WhatsApp)', phone],
+    [isGift ? 'Card owner’s phone (WhatsApp)' : 'Phone (WhatsApp)', phone],
     ['Second phone', secondPhone],
     ['Email', email],
     ['Job title', cleanString(body.title, MAX_TEXT)],
@@ -239,8 +250,11 @@ async function submit(req: VercelRequest, res: VercelResponse, body: Record<stri
     ['Logo', logoLink],
   ];
   const alert = await sendTeamEmail({
-    subject: `${isTest ? '[TEST] ' : ''}Profile details received: ${fullName}`,
-    heading: 'Profile details received',
+    subject: `${isTest ? '[TEST] ' : ''}${isGift ? '[GIFT] ' : ''}Profile details received: ${fullName}`,
+    // A gift starts with who to contact, before anything else.
+    heading: isGift
+      ? `GIFT: contact the buyer only: ${buyerName}, ${buyerPhone}. Do not contact the card owner.`
+      : 'Profile details received',
     rows,
     note: [
       businessCard ? 'They sent a business card: copy the details from it for anything not filled in above.' : '',
@@ -248,7 +262,9 @@ async function submit(req: VercelRequest, res: VercelResponse, body: Record<stri
     ]
       .filter(Boolean)
       .join(' '),
-    ...(email ? { replyTo: email } : {}),
+    // Replies go to the customer, except on a gift: the email address is the
+    // card owner's, who mustn't be contacted.
+    ...(email && !isGift ? { replyTo: email } : {}),
   });
 
   // What happened to the email, on the row; a problem here is only logged.
