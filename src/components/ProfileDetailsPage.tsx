@@ -464,7 +464,7 @@ export function ProfileDetailsPage() {
                     <Check size={14} strokeWidth={3} />
                   </span>
                   <span className="text-[14.5px] leading-[1.5] text-ivory">
-                    I confirm these details can appear on my public LuxeCard profile, and LuxeCard may contact me about my order.
+                    I agree to these details showing on my public profile and to being contacted about my order.
                   </span>
                 </label>
                 {show('consent') && <span className="pl-[34px] text-[12.5px] text-[#F87171]">{show('consent')}</span>}
