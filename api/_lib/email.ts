@@ -1,3 +1,4 @@
+import { fetchWithTimeout } from './http.js';
 import { BULK_DISCOUNT_RATE, type CartTotals, type CheckoutItem } from './pricing.js';
 
 // Where replies to an alert go by default. Ready for when ALERT_FROM_EMAIL
@@ -98,10 +99,20 @@ function render(email: TeamEmail) {
   return { text, html };
 }
 
+// What happened to an alert: Resend accepted it (with its email id), or why
+// it didn't go. Callers that need a record of it (api/profile-details.ts)
+// store this; the others can ignore it.
+export type EmailResult = { status: 'sent'; id: string | null } | { status: 'failed'; reason: string };
+
+// One line for a record, e.g. "sent (Resend id …)" or "failed: <reason>".
+export function describeEmailResult(result: EmailResult): string {
+  return result.status === 'sent' ? `sent (Resend id ${result.id ?? 'unknown'})` : `failed: ${result.reason}`.slice(0, 500);
+}
+
 // Sends an alert to the team through Resend. Never throws and never blocks
 // for long: an alert failing must not break saving an order, lead or signup,
-// so every problem is logged and swallowed.
-export async function sendTeamEmail(email: TeamEmail): Promise<void> {
+// so every problem is logged (and returned) instead.
+export async function sendTeamEmail(email: TeamEmail): Promise<EmailResult> {
   try {
     const apiKey = process.env.RESEND_API_KEY;
     const to = (process.env.ORDER_ALERT_EMAIL ?? '')
@@ -110,8 +121,10 @@ export async function sendTeamEmail(email: TeamEmail): Promise<void> {
       .filter(Boolean);
 
     if (!apiKey || to.length === 0) {
-      console.error('Alert email skipped: RESEND_API_KEY or ORDER_ALERT_EMAIL is not set.');
-      return;
+      const missing = [!apiKey && 'RESEND_API_KEY', to.length === 0 && 'ORDER_ALERT_EMAIL'].filter(Boolean).join(' and ');
+      const reason = `${missing} not set in this environment (${process.env.VERCEL_ENV ?? 'local'})`;
+      console.error(`Alert email skipped: ${reason}.`);
+      return { status: 'failed', reason };
     }
 
     const replyTo =
@@ -120,7 +133,7 @@ export async function sendTeamEmail(email: TeamEmail): Promise<void> {
         : process.env.ALERT_REPLY_TO || DEFAULT_REPLY_TO;
     const { text, html } = render(email);
 
-    const res = await fetch('https://api.resend.com/emails', {
+    const res = await fetchWithTimeout('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -131,13 +144,22 @@ export async function sendTeamEmail(email: TeamEmail): Promise<void> {
         text,
         html,
       }),
-      signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
-    });
+    }, SEND_TIMEOUT_MS);
 
+    const body = await res.text().catch(() => '');
     if (!res.ok) {
-      console.error('Resend rejected the alert email:', res.status, await res.text().catch(() => ''));
+      console.error('Resend rejected the alert email:', res.status, body);
+      return { status: 'failed', reason: `Resend refused it (HTTP ${res.status}): ${body.slice(0, 300)}` };
     }
+    let id: string | null = null;
+    try {
+      id = (JSON.parse(body) as { id?: string }).id ?? null;
+    } catch {
+      // accepted; keep the id unknown
+    }
+    return { status: 'sent', id };
   } catch (err) {
     console.error('Failed to send alert email:', err);
+    return { status: 'failed', reason: err instanceof Error ? err.message : String(err) };
   }
 }

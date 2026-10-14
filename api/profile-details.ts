@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import type { IncomingMessage, ServerResponse } from 'http';
 import { isTestEnvironment } from './_lib/attribution.js';
-import { formatKes, sendTeamEmail, type AlertRow } from './_lib/email.js';
+import { describeEmailResult, formatKes, sendTeamEmail, type AlertRow } from './_lib/email.js';
 import { cleanString, isEmail, isHoneypotTripped } from './_lib/input.js';
 import {
   isSocialNetwork,
@@ -34,7 +34,9 @@ type VercelResponse = ServerResponse & {
 //   file straight to the private profile-uploads bucket (files never pass
 //   through this function, which has a request size limit);
 // - "submit": checks the details again, saves them (profile_submissions),
-//   and emails the team with 7-day signed links to the files.
+//   and emails the team with 7-day signed links to the files. The email's
+//   outcome is recorded on the row (alert_status) and never changes the
+//   answer: once the details are saved, the customer gets their thank-you.
 // Nothing about any order is ever sent back to the browser.
 
 const MAX_UPLOAD_URLS_PER_IP_PER_HOUR = 40;
@@ -189,7 +191,7 @@ async function submit(req: VercelRequest, res: VercelResponse, body: Record<stri
     }
   }
 
-  const { error } = await supabase.from('profile_submissions').insert({
+  const { data: saved, error } = await supabase.from('profile_submissions').insert({
     ref,
     order_id: orderId,
     whatsapp_ref: whatsappRef,
@@ -206,8 +208,8 @@ async function submit(req: VercelRequest, res: VercelResponse, body: Record<stri
     logo_path: logo,
     consent_at: new Date().toISOString(),
     is_test: isTest,
-  });
-  if (error) {
+  }).select('id').single();
+  if (error || !saved) {
     console.error('Failed to save profile details:', error);
     res.status(500).json({ error: 'We couldn’t save your details. Please try again.' });
     return;
@@ -236,7 +238,7 @@ async function submit(req: VercelRequest, res: VercelResponse, body: Record<stri
     ['Profile photo', photoLink],
     ['Logo', logoLink],
   ];
-  await sendTeamEmail({
+  const alert = await sendTeamEmail({
     subject: `${isTest ? '[TEST] ' : ''}Profile details received: ${fullName}`,
     heading: 'Profile details received',
     rows,
@@ -249,5 +251,13 @@ async function submit(req: VercelRequest, res: VercelResponse, body: Record<stri
     ...(email ? { replyTo: email } : {}),
   });
 
-  res.status(200).json({ ok: true });
+  // What happened to the email, on the row; a problem here is only logged.
+  const alertStatus = describeEmailResult(alert);
+  if (alert.status === 'failed') console.error(`Profile details ${saved.id}: alert email ${alertStatus}`);
+  const { error: statusError } = await supabase.from('profile_submissions').update({ alert_status: alertStatus }).eq('id', saved.id);
+  if (statusError) console.error(`Profile details ${saved.id}: couldn't record the alert status:`, statusError);
+
+  // Previews also report the email's outcome, for testing; the live site
+  // never tells the customer anything about it.
+  res.status(200).json(isTest ? { ok: true, alert: alertStatus } : { ok: true });
 }

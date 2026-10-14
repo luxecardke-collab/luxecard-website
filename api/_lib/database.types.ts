@@ -341,6 +341,7 @@ export type Database = {
           consent_at: string;
           is_test: boolean;
           status: string;
+          alert_status: string | null;
         };
         Insert: {
           id?: string;
@@ -362,6 +363,7 @@ export type Database = {
           consent_at: string;
           is_test?: boolean;
           status?: string;
+          alert_status?: string | null;
         };
         Update: Partial<Database['public']['Tables']['profile_submissions']['Insert']>;
         Relationships: [
