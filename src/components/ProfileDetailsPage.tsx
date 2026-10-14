@@ -5,7 +5,8 @@ import {
   MAX_BIO,
   MAX_SOCIALS,
   MAX_UPLOAD_BYTES,
-  normalizeKenyanPhone,
+  normalizePhone,
+  PHONE_ERROR,
   normalizeUrl,
   REF_PATTERN,
   SOCIAL_NETWORKS,
@@ -109,12 +110,12 @@ export function ProfileDetailsPage() {
     fullName: fullName.trim() ? null : 'Please enter your full name.',
     phone: !phone.trim()
       ? 'Please enter your WhatsApp number.'
-      : normalizeKenyanPhone(phone)
+      : normalizePhone(phone)
         ? null
-        : 'Enter a Kenyan number, e.g. 0712 345 678 or +254 712 345 678.',
+        : PHONE_ERROR,
     secondPhone:
-      secondPhone.trim() && !normalizeKenyanPhone(secondPhone)
-        ? 'Enter a Kenyan number, e.g. 0712 345 678 or +254 712 345 678.'
+      secondPhone.trim() && !normalizePhone(secondPhone)
+        ? PHONE_ERROR
         : null,
     email: !email.trim()
       ? hasCard
@@ -236,8 +237,10 @@ export function ProfileDetailsPage() {
             <h1 className="m-0 font-manrope text-[clamp(32px,7vw,48px)] font-bold leading-[1.05] tracking-[-.03em]">
               Your digital profile
             </h1>
-            <p className="m-0 mt-4 text-[16px] leading-[1.6] text-[rgba(243,240,234,.65)]">
-              Takes about 2 minutes. We'll send you a preview to approve before it goes live, and you can update it any time.
+            {/* One line on phones: 16px where it fits, shrinking with the
+                screen below that (never under 13px, where it wraps instead). */}
+            <p className="m-0 mt-4 text-[clamp(13px,calc((100vw_-_40px)/25.9),16px)] leading-[1.6] text-[rgba(243,240,234,.65)]">
+              Takes 2 minutes. We'll send you a preview to approve.
             </p>
 
             <form ref={formRef} noValidate onSubmit={handleSubmit} className="relative mt-9 flex flex-col gap-6">
@@ -298,7 +301,7 @@ export function ProfileDetailsPage() {
                     required
                     invalid={!!show('phone')}
                     errorText={show('phone') ?? undefined}
-                    hint="Kenyan number, e.g. 0712 345 678 or +254 712 345 678."
+                    hint="Include your country code if outside Kenya, e.g. +44 7700 900123."
                   >
                     <input
                       type="tel"
@@ -461,8 +464,7 @@ export function ProfileDetailsPage() {
                     <Check size={14} strokeWidth={3} />
                   </span>
                   <span className="text-[14.5px] leading-[1.5] text-ivory">
-                    I confirm these details can appear on my public LuxeCard profile, and LuxeCard may contact me about my order.
-                    <span className="text-accent"> *</span>
+                    I agree to these details showing on my public profile and to being contacted about my order.
                   </span>
                 </label>
                 {show('consent') && <span className="pl-[34px] text-[12.5px] text-[#F87171]">{show('consent')}</span>}
