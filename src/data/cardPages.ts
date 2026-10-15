@@ -4,7 +4,8 @@ import metallicBlackPhoto from '../assets/landing/metal/metallic-black.webp';
 import woodBlackPhoto from '../assets/landing/wood/wood-black.webp';
 import woodNaturalPhoto from '../assets/landing/wood/wood-natural.webp';
 import { CARD_PAGE_SEO, type CardPageSeo } from './cardPageSeo';
-import { FAQS, type CardFinish, type Faq, type PhotoMaterial } from './content';
+import { BULK_DISCOUNT_RATE, BULK_DISCOUNT_THRESHOLD } from '../../api/_lib/pricing';
+import { FAQS, GROUP_AFTER, GROUP_BUSINESSES, GROUP_ORDERING, GROUP_USING, type CardFinish, type Faq, type PhotoMaterial } from './content';
 
 // One landing page per card (/wood, …), all rendered by CardLandingPage
 // from an entry here, in the homepage's own sections. Only card-specific
@@ -311,13 +312,54 @@ const CHAIRMAN: CardPage = {
     ],
   },
   gallery: { material: 'chairman' },
+  // Its own complete set, in the homepage's groups (no shared answers).
   faqs: [
     {
-      q: 'What makes the Chairman’s Card different?',
-      a: 'A gold finish, reserved for the boldest introductions, and delivery is included: LuxeCard covers all transport costs.',
+      q: 'What is the Chairman’s Card made from?',
+      a: 'Brushed gold metal, laser engraved with your design. It’s LuxeCard’s top finish.',
+    },
+    {
+      group: GROUP_USING,
+      q: 'Does it work with iPhone and Android?',
+      a: 'Yes: iPhone XR and newer, and most Android phones with NFC switched on. Any phone can scan the QR code.',
+    },
+    {
+      group: GROUP_USING,
+      q: 'Does the other person need an app?',
+      a: 'No. Your profile opens in their phone’s browser.',
+    },
+    {
+      group: GROUP_USING,
+      q: 'Can I update my details later?',
+      a: 'Yes, any time: details, links and photo. The card never needs reprinting.',
+    },
+    {
+      group: GROUP_ORDERING,
+      q: 'Are there any monthly fees?',
+      a: 'No. It’s a one-off payment with no subscriptions or recurring fees.',
+    },
+    {
+      group: GROUP_ORDERING,
+      q: 'What if I don’t like the design?',
+      a: 'You review a mockup first. Production only starts once you approve it.',
+    },
+    {
+      group: GROUP_ORDERING,
+      q: 'How long does it take?',
+      a: 'We contact you within 24 hours. In Nairobi, you get your card within 3 hours of approving your mockup, with free express delivery. Outside Nairobi, LuxeCard covers all transport costs.',
+    },
+    {
+      group: GROUP_BUSINESSES,
+      q: 'Can I order for my executive team, or as a gift?',
+      a: `Yes. More than ${BULK_DISCOUNT_THRESHOLD} cards get ${Math.round(BULK_DISCOUNT_RATE * 100)}% off, with eTIMS invoices available. Quotation orders need a 50% deposit.`,
+    },
+    {
+      group: GROUP_AFTER,
+      q: 'What if my card arrives damaged?',
+      a: 'Contact us with your order number and photos. See our {returns} for details.',
     },
   ],
-  sharedFaqIds: SHARED_FAQ_IDS,
+  sharedFaqIds: [],
   order: { headline: 'ORDER YOUR [CHAIRMAN’S] CARD' },
 };
 
@@ -344,12 +386,13 @@ export function cardPageFor(path: string): CardPage | undefined {
   return CARD_PAGES.find((p) => p.path === path);
 }
 
-// The card's own questions under "About the … card", then the site's shared
+// The card's own questions under "About the … card" (or the group a question
+// names itself), then the site's shared
 // answers in their homepage groups (with the card pages' wording where it
 // differs).
 export function cardPageFaqs(card: CardPage): Faq[] {
   const group = card.name === "Chairman's Card" ? 'About the Chairman’s Card' : `About the ${card.name} card`;
-  const own = card.faqs.map((f) => ({ ...f, group }));
+  const own = card.faqs.map((f) => ({ ...f, group: f.group ?? group }));
   const shared = card.sharedFaqIds.map((id) => {
     const faq = FAQS.find((f) => f.id === id);
     if (!faq) throw new Error(`No FAQ with id "${id}" (card page ${card.path})`);

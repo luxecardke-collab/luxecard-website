@@ -226,16 +226,17 @@ export const FOR_BUSINESS_BENEFITS = [
 // small heading whenever it changes. Placeholders inside an answer (see
 // FaqAccordion): "{contact}" becomes a "Contact us" link to the site's
 // WhatsApp contact; "{prices}" the card price list, with any offer applied;
-// "{offer}" a sentence about the offer, only while one is on.
+// "{offer}" a sentence about the offer, only while one is on; "{returns}" a
+// "return policy" link to the Returns/Refund Policy page.
 // `id` lets other pages (the card pages) reuse an answer without copying it;
 // `cardPageA` is the answer's wording there, where it differs (the card
 // pages order through their own form, not the cart).
 export type Faq = { q: string; a: string; group?: string; id?: string; cardPageA?: string };
 
-const GROUP_ORDERING = 'Ordering and pricing';
-const GROUP_BUSINESSES = 'For businesses';
-const GROUP_USING = 'Using your card';
-const GROUP_AFTER = 'After you buy';
+export const GROUP_ORDERING = 'Ordering and pricing';
+export const GROUP_BUSINESSES = 'For businesses';
+export const GROUP_USING = 'Using your card';
+export const GROUP_AFTER = 'After you buy';
 
 // Prices, finish names and the bulk discount come from the checkout's own
 // price list (api/_lib/pricing.ts), so these answers always match what the

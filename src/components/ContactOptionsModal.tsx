@@ -64,7 +64,7 @@ export function ContactOptionsModal({ isOpen, onClose }: { isOpen: boolean; onCl
             {...whatsappLinkProps(WHATSAPP_SOURCES.contactPopup)}
             className="rounded-xl border border-[rgba(255,255,255,.14)] bg-[rgba(255,255,255,.03)] px-4 py-3 text-[15px] text-ivory transition-colors duration-300 hover:border-accent hover:text-accent"
           >
-            WhatsApp {LINKS.PHONE_DISPLAY}
+            WhatsApp {LINKS.WHATSAPP_DISPLAY}
           </a>
           {options.map((option) => (
             <a
