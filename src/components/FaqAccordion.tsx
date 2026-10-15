@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react';
 import { FINISH_PRICES_BY_LABEL } from '../../api/_lib/pricing';
 import { FINISH_LABELS_IN_ORDER } from '../data/content';
+import { LINKS } from '../data/links';
 import { useOffer } from '../hooks/useOffer';
 import { offerHeadline, offerLastDay } from '../utils/offerText';
 import { OfferPrice } from './OfferPrice';
@@ -12,7 +13,7 @@ import { WHATSAPP_SOURCES, whatsappLinkProps } from '../utils/whatsapp';
 export type FaqItem = { q: string; a: string; group?: string };
 
 // Placeholders an answer can contain (see content.ts).
-const TOKEN_PATTERN = /(\{contact\}|\{prices\}|\{offer\})/;
+const TOKEN_PATTERN = /(\{contact\}|\{prices\}|\{offer\}|\{returns\})/;
 
 // "Plastic KES 7,000, Wood KES 9,000, …", with any offer applied.
 function FinishPriceList() {
@@ -56,6 +57,17 @@ function FaqAnswer({ text }: { text: string }) {
               className="text-accent underline underline-offset-[3px] transition-opacity duration-300 hover:opacity-80"
             >
               Contact us
+            </a>
+          );
+        }
+        if (part === '{returns}') {
+          return (
+            <a
+              key={i}
+              href={LINKS.LEGAL.returns}
+              className="text-accent underline underline-offset-[3px] transition-opacity duration-300 hover:opacity-80"
+            >
+              return policy
             </a>
           );
         }

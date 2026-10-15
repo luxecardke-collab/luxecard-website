@@ -1,12 +1,17 @@
-const WHATSAPP_NUMBER = '254729728339'; // +254 729 728339
+// WhatsApp (every wa.me link and the number shown beside WhatsApp links)
+// and phone calls (tel: links and the number shown for calls) use
+// different numbers; keep them apart.
+const WHATSAPP_NUMBER = '254114914989'; // +254 114 914 989
 const WHATSAPP_MESSAGE = "Hi, I'm interested in getting a LuxeCard";
 const EMAIL = 'sales@luxecard.co.ke';
 
 export const LINKS = {
   CONTACT: `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`,
   WHATSAPP_NUMBER,
+  WHATSAPP_DISPLAY: '+254 114 914 989',
+  // For calls only (not WhatsApp).
   PHONE_DISPLAY: '+254 729 728339',
-  PHONE_TEL: `tel:+${WHATSAPP_NUMBER}`,
+  PHONE_TEL: 'tel:+254729728339',
   PHONE2_DISPLAY: '+254 142 492026',
   PHONE2_TEL: 'tel:+254142492026',
   EMAIL,

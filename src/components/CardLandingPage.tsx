@@ -15,6 +15,7 @@ import { CardOrderForm } from './CardOrderForm';
 import { FinishSwatches, Headline } from './CardPageParts';
 import { Ecosystem } from './Ecosystem';
 import { Faq } from './Faq';
+import { ContactVisit } from './ContactVisit';
 import { FinalCta, FinalCtaGlow } from './FinalCta';
 import { ForBusiness } from './ForBusiness';
 import { HowItWorks } from './HowItWorks';
@@ -28,8 +29,8 @@ import { VCardShowcase } from './VCardShowcase';
 // sections in the homepage's order, with this card's content (from
 // src/data/cardPages.ts): hero, reviews, the card ("Crafted to Impress"),
 // how it works, real cards (the portfolio), what you get (the homepage's
-// light section), then the page's own order form, the FAQ and the closing
-// call to action. Ordering happens on the page itself (#order), straight to
+// light section), then the page's own order form, the FAQ, the closing
+// call to action and the homepage's "Find us". Ordering happens on the page itself (#order), straight to
 // checkout without the cart.
 
 function scrollToOrder() {
@@ -122,6 +123,8 @@ export function CardLandingPage({ card }: { card: CardPage }) {
         onButtonClick={() => orderButtonTapped(card)}
         whatsappSource={cardPageWhatsAppSource(card, 'talk-to-us')}
       />
+      {/* The homepage's own "Find us" section, unchanged. */}
+      <ContactVisit />
       <StickyOrderBar card={card} />
     </main>
   );
