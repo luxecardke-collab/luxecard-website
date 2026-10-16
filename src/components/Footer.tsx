@@ -180,7 +180,7 @@ export function Footer() {
         <span data-whatsapp-landmark="footer-credit">
           DESIGNED & BUILT BY{' '}
           <a
-            href="https://the-company-design-website.vercel.app/?utm_source=luxecard&utm_medium=footer"
+            href="https://the-company-design-website.vercel.app/?utm_source=luxecard&utm_medium=footer&utm_campaign=credit"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="TheCompany.design (opens in a new tab)"
