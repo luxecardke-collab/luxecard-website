@@ -151,9 +151,8 @@ function FilterPills({
   active: PhotoMaterial | null;
   onChange: (value: PhotoMaterial | null) => void;
 }) {
-  // Each pill is as wide as its label (four don't fit as equal widths on a
-  // phone), so the white highlight takes the chosen pill's measured place
-  // and size. Until it's measured (the prerendered page), the chosen pill
+  // Four equal segments (each as wide as the widest label), labels centered;
+  // the white highlight takes the chosen segment's measured place and size. Until it's measured (the prerendered page), the chosen pill
   // gets the white background itself, so there's no flash.
   const rowRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<{ left: number; width: number } | null>(null);
@@ -173,7 +172,7 @@ function FilterPills({
   return (
     <div
       ref={rowRef}
-      className="relative mx-auto mt-8 flex w-fit max-w-full rounded-full border border-[rgba(255,255,255,.12)] bg-[rgba(255,255,255,.03)] p-1"
+      className="relative mx-auto mt-8 grid w-fit max-w-full grid-cols-4 rounded-full border border-[rgba(255,255,255,.12)] bg-[rgba(255,255,255,.03)] p-1"
     >
       {box && (
         <div
@@ -190,7 +189,7 @@ function FilterPills({
             type="button"
             aria-pressed={selected}
             onClick={() => onChange(selected ? null : f.value)}
-            className="relative z-10 flex items-center justify-center whitespace-nowrap rounded-full px-[clamp(9px,3vw,14px)] py-2.5 text-[clamp(12.5px,3.5vw,13.5px)] font-medium transition-colors duration-300"
+            className="relative z-10 flex items-center justify-center whitespace-nowrap rounded-full px-[clamp(6px,2.6vw,14px)] py-2.5 text-[clamp(12.5px,3.5vw,13.5px)] font-medium transition-colors duration-300"
             style={{
               color: selected ? '#0B0B0D' : 'rgba(243,240,234,.6)',
               background: selected && !box ? '#F3F0EA' : undefined,
