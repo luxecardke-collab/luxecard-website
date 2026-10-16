@@ -51,6 +51,15 @@ function withoutHoistedLinks(html, head) {
 // scratch. There the markup is hidden from the start, so the browser doesn't
 // lay out and paint a whole page that's about to be replaced — those screens
 // load exactly as they did before prerendering. Crawlers still read it all.
+// Google Search Console's ownership check: GSC_VERIFICATION (a Vercel
+// environment variable, read at build time) is the token from its "HTML
+// tag" method; the whole <meta …> tag Search Console shows is accepted too.
+// Unset, empty or malformed: no tag at all (a malformed one is warned about
+// in the build log rather than failing the build).
+const gscToken = (process.env.GSC_VERIFICATION ?? '').trim().match(/content=["']([^"']+)["']/)?.[1] ?? (process.env.GSC_VERIFICATION ?? '').trim();
+const GSC_TAG = /^[A-Za-z0-9_-]+$/.test(gscToken) ? `<meta name="google-site-verification" content="${gscToken}" />` : '';
+if (gscToken && !GSC_TAG) console.warn('WARNING: GSC_VERIFICATION is set but is not a Search Console token (letters, digits, - and _ only); no verification tag added.');
+
 const HIDE_UNHYDRATED = `<style>@media not all and ${HYDRATABLE_MEDIA} { #root[data-route] > * { display: none } }</style>`;
 
 for (const page of PAGES) {
@@ -62,7 +71,7 @@ for (const page of PAGES) {
       ? `<link rel="preload" as="image" imagesrcset="${heroImage.srcSet}" imagesizes="${heroImage.sizes}" media="(min-width: 900px)" fetchpriority="high" />`
       : `<link rel="preload" as="image" href="${heroImage.image}" media="(min-width: 900px)" fetchpriority="high" />`
     : '';
-  const head = [renderHeadTags(page), preload, page.prerender === false ? '' : HIDE_UNHYDRATED, renderJsonLd(page.path)]
+  const head = [renderHeadTags(page), GSC_TAG, preload, page.prerender === false ? '' : HIDE_UNHYDRATED, renderJsonLd(page.path)]
     .filter(Boolean)
     .join('\n    ');
   // data-route tells main.tsx which page this markup was rendered for, so it
