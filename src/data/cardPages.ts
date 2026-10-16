@@ -38,7 +38,8 @@ export type CardPage = {
   // How customers see the card's name ("Metallic", not "metal").
   name: string;
   cta: string;
-  hero: { headline: string; subtext: string };
+  // label: the small line above the slogan, and the page's H1.
+  hero: { label: string; headline: string; subtext: string };
   // Swatches, or null for a card with no choice (see image, finishNote).
   finishes: CardFinishChoice[] | null;
   // The one picture for a card without swatches.
@@ -103,6 +104,7 @@ const PLASTIC: CardPage = {
   name: 'Plastic',
   cta: 'Get my Plastic LuxeCard',
   hero: {
+    label: 'Plastic NFC Business Card',
     headline: 'YOUR BRAND. [YOUR COLOURS.]',
     subtext: 'Light, durable and branded in your colours. Made for NFC tap-to-share.',
   },
@@ -145,6 +147,7 @@ const WOOD: CardPage = {
   name: 'Wood',
   cta: 'Get my Wood LuxeCard',
   hero: {
+    label: 'Wood NFC Business Card',
     headline: 'A BUSINESS CARD PEOPLE [REMEMBER.]',
     subtext: 'Light, unique and taps better with NFC. Can also be printed in your brand colours.',
   },
@@ -203,6 +206,7 @@ const METALLIC: CardPage = {
   name: 'Metallic',
   cta: 'Get my Metallic LuxeCard',
   hero: {
+    label: 'Metallic NFC Business Card',
     headline: 'A CARD WITH [REAL WEIGHT.]',
     // "Solid metal weight": the products section's own words for this card.
     subtext: 'Premium, heavier and the most durable. Laser-engraved to precision.',
@@ -267,6 +271,7 @@ const CHAIRMAN: CardPage = {
   name: "Chairman's Card",
   cta: 'Get my Chairman’s Card',
   hero: {
+    label: 'Gold NFC Business Card',
     headline: 'RESERVED FOR THE [BOLDEST] INTRODUCTIONS.',
     subtext: 'Premium, heavier and the most durable. Laser-engraved to precision.',
   },

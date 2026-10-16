@@ -119,7 +119,7 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
               <h2 className="m-0 mb-4 flex items-center gap-4 font-manrope text-[clamp(20px,1.9vw,24px)] font-semibold leading-[1.25] tracking-[-.02em]">
                 <span className="font-inter text-[12px] font-medium tracking-[.1em] tabular-nums text-accent">
                   {pad(i + 1)}
-                </span>
+                </span>{' '}
                 {s.title}
               </h2>
               <div className="flex flex-col gap-4 text-[16px] leading-[1.75] text-[rgba(243,240,234,.72)] text-pretty">

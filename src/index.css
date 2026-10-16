@@ -250,12 +250,13 @@ button {
    same sum, from the homepage hero heading's size (.hero-title) and
    subtext size, so the two stay in step at every desktop width:
      heading: 3 lines x .96 x font size; subtext: 2 lines x 1.55 x its size;
-     222px: the gaps (27 + 40 + 54), the buttons (57) and trust row (44). */
+     222px: the gaps (27 + 40 + 54), the buttons (57) and trust row (44);
+     32px: the H1 label above the slogan (16px line + 16px gap). */
 @media (min-width: 1024px) {
   .card-hero-offset {
     --home-title: min(78px, calc((100vw - 2 * clamp(20px, 4vw, 48px) - clamp(48px, 6vw, 80px)) / 16.2));
     --home-subtext: clamp(16px, 1.35vw, 19px);
-    margin-top: calc((648px - 2.88 * var(--home-title) - 222px - 3.1 * var(--home-subtext)) / 2);
+    margin-top: calc((648px - 2.88 * var(--home-title) - 222px - 3.1 * var(--home-subtext) - 32px) / 2);
   }
 }
 
@@ -263,11 +264,11 @@ button {
    /plastic's (centred with its two-line heading, two-line subtext, price
    (33px) and button), on every card page, whatever its text below:
      (1.92 x heading size + 3.1 x subtext size + 28 + 40 + 33 + 28 + 57
-      - the card's 218px) / 2 */
+      - the card's 218px) / 2, plus the 32px H1 label above the heading */
 @media (min-width: 1024px) {
   .card-hero-visual {
     align-self: start;
-    margin-top: calc((1.92 * var(--home-title) + 3.1 * var(--home-subtext) - 32px) / 2);
+    margin-top: calc((1.92 * var(--home-title) + 3.1 * var(--home-subtext) - 32px) / 2 + 32px);
   }
 }
 

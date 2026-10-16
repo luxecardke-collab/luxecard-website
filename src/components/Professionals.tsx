@@ -115,6 +115,7 @@ export function Professionals({ heading, cardPhotos }: { heading?: ReactNode; ca
             {heading ?? (
               <>
                 TRUSTED ACROSS
+                {' '}
                 <br />
                 INDUSTRIES.
               </>

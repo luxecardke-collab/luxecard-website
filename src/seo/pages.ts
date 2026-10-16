@@ -22,13 +22,17 @@ export type PageMeta = {
   // false for pages that only make sense in the browser (they read the URL's
   // query string to render): their HTML has an empty #root.
   prerender?: false;
+  // The page's own link-preview image (1200x630 JPEG), instead of the site's
+  // default og-image.png.
+  image?: string;
 };
 
 export const HOME_PAGE: PageMeta = {
   path: '/',
   file: 'index.html',
-  title: 'LuxeCard: Your introduction, upgraded.',
-  description: 'One tap connects people to your contact, socials, portfolio, business and more.',
+  title: 'NFC Business Cards Kenya | Design & Printing | LuxeCard',
+  description:
+    'NFC business cards designed and printed in Nairobi. One tap shares your virtual business card: contact, socials and portfolio. Free Nairobi delivery.',
 };
 
 export const AFFILIATE_PAGE: PageMeta = {
@@ -60,6 +64,7 @@ export const CARD_LANDING_PAGES: PageMeta[] = CARD_PAGE_SEO.map((card) => ({
   file: `${card.slug}.html`,
   title: card.title,
   description: card.description,
+  image: `${SITE_URL}/images/og/${card.slug}.jpg`,
 }));
 
 // Where Paystack sends a customer after paying; reads ?reference= to show
@@ -68,7 +73,7 @@ export const ORDER_CONFIRMATION_PAGE: PageMeta = {
   path: '/order-confirmation',
   file: 'order-confirmation.html',
   title: 'Order Confirmation | LuxeCard',
-  description: HOME_PAGE.description,
+  description: 'One tap connects people to your contact, socials, portfolio, business and more.',
   noindex: true,
   prerender: false,
 };
@@ -114,6 +119,8 @@ export function renderHeadTags(page: PageMeta): string {
   const url = `${SITE_URL}${page.path}`;
   const title = escapeAttr(page.title);
   const description = escapeAttr(page.description);
+  const image = page.image ?? OG_IMAGE;
+  const imageType = image.endsWith('.jpg') ? 'image/jpeg' : 'image/png';
   const tags = [
     `<title>${title}</title>`,
     `<meta name="description" content="${description}" />`,
@@ -124,12 +131,12 @@ export function renderHeadTags(page: PageMeta): string {
     `<meta property="og:title" content="${title}" />`,
     `<meta property="og:description" content="${description}" />`,
     `<meta property="og:url" content="${url}" />`,
-    `<meta property="og:image" content="${OG_IMAGE}" />`,
+    `<meta property="og:image" content="${image}" />`,
     `<meta property="og:image:width" content="1200" />`,
     `<meta property="og:image:height" content="630" />`,
-    `<meta property="og:image:type" content="image/png" />`,
+    `<meta property="og:image:type" content="${imageType}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
-    `<meta name="twitter:image" content="${OG_IMAGE}" />`,
+    `<meta name="twitter:image" content="${image}" />`,
     `<meta name="twitter:title" content="${title}" />`,
     `<meta name="twitter:description" content="${description}" />`,
   ];

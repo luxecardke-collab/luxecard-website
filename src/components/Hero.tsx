@@ -31,13 +31,18 @@ export function Hero() {
         style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))' }}
       >
         <div style={textStyle}>
-          <h1 className="hero-title m-0 mb-7 font-manrope font-extrabold leading-[.96] max-md:leading-[1.06] tracking-[-0.035em]">
+          {/* The page's H1: what it is, in the site's small-label style. */}
+          <h1 className="m-0 mb-4 whitespace-nowrap font-inter text-[11px] font-medium uppercase leading-[16px] tracking-[.14em] text-accent">NFC Business Cards in Kenya</h1>
+          {/* The slogan (not a heading). */}
+          <div className="hero-title m-0 mb-7 font-manrope font-extrabold leading-[.96] max-md:leading-[1.06] tracking-[-0.035em]">
             YOUR
+            {' '}
             <br />
             <span className="whitespace-nowrap">BUSINESS CARD,</span>
+            {' '}
             <br />
             <span className="text-accent">UPGRADED.</span>
-          </h1>
+          </div>
 
           <p className="m-0 mb-10 max-w-[460px] text-[clamp(16px,1.35vw,19px)] leading-[1.35] text-[rgba(243,240,234,.6)] text-pretty min-[900px]:leading-[1.55]">
             Share your contact, socials and more with one tap or scan.

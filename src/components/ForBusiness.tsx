@@ -43,6 +43,7 @@ export function ForBusiness({
             {heading ?? (
               <>
                 ONE NETWORK.
+                {' '}
                 <br />
                 YOUR ENTIRE TEAM.
               </>

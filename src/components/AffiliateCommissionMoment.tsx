@@ -20,6 +20,7 @@ export function AffiliateCommissionMoment() {
       <div className="relative mx-auto max-w-[1000px]">
         <h2 className="m-0 font-manrope text-[clamp(40px,7vw,96px)] font-extrabold leading-[.97] max-md:leading-[1.06] tracking-[-.035em]">
           REFER. SHARE.
+          {' '}
           <br />
           <span className="text-accent">EARN</span> 10%.
         </h2>
