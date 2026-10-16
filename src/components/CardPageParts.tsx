@@ -20,7 +20,12 @@ export function Headline({ text }: { text: string }) {
     <>
       {text.split('\n').map((line, l) => (
         <Fragment key={l}>
-          {l > 0 && <br />}
+          {l > 0 && (
+            <>
+              {' '}
+              <br />
+            </>
+          )}
           {/* "|": a space below 900px, a line break from there, where each
               of its lines also stays whole (the narrow column is a few
               pixels short of "EVERY DAY." at some widths). */}

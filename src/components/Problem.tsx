@@ -16,6 +16,7 @@ export function Problem() {
           className="m-0 mb-[clamp(44px,6vh,76px)] max-w-[900px] font-manrope text-[clamp(34px,5vw,68px)] font-bold leading-[.96] max-md:leading-[1.06] tracking-[-.032em]"
         >
           DIGITIZING NETWORKING
+          {' '}
           <br />
           ACROSS AFRICA.
         </h2>

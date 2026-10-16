@@ -122,6 +122,7 @@ export function AffiliateLinkJourney() {
           </div>
           <h2 className="m-0 font-manrope text-[clamp(30px,4.2vw,52px)] font-bold leading-[1.05] tracking-[-.032em]">
             Your Link. Their Purchase.
+            {' '}
             <br />
             Your Commission.
           </h2>

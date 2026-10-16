@@ -19,6 +19,7 @@ export function AffiliateFaqSection() {
           className="m-0 mb-[clamp(36px,5vh,60px)] font-manrope text-[clamp(32px,4.4vw,58px)] font-bold leading-[.98] max-md:leading-[1.06] tracking-[-.032em]"
         >
           QUESTIONS,
+          {' '}
           <br />
           ANSWERED.
         </h2>

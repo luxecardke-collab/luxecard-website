@@ -232,6 +232,7 @@ export function VCardShowcase() {
             className="m-0 font-manrope text-[clamp(34px,5vw,68px)] font-bold leading-[.96] max-md:leading-[1.06] tracking-[-.032em]"
           >
             WHAT THEY SEE
+            {' '}
             <br />
             WHEN YOU <span className="text-accent">TAP.</span>
           </h2>

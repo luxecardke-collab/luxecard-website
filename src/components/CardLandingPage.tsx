@@ -87,6 +87,7 @@ export function CardLandingPage({ card }: { card: CardPage }) {
         heading={
           <>
             TAP. <span className="text-accent">CONNECT.</span>
+            {' '}
             <br />
             DONE.
           </>
@@ -98,6 +99,7 @@ export function CardLandingPage({ card }: { card: CardPage }) {
           heading={
             <>
               MADE FOR BRANDS
+              {' '}
               <br />
               ACROSS KENYA.
             </>

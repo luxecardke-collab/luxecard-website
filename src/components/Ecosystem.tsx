@@ -102,6 +102,7 @@ export function Ecosystem({
               {heading ?? (
                 <>
                   CRAFTED TO
+                  {' '}
                   <br />
                   IMPRESS.
                 </>

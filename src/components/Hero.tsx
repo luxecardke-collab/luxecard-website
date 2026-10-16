@@ -33,8 +33,10 @@ export function Hero() {
         <div style={textStyle}>
           <h1 className="hero-title m-0 mb-7 font-manrope font-extrabold leading-[.96] max-md:leading-[1.06] tracking-[-0.035em]">
             YOUR
+            {' '}
             <br />
             <span className="whitespace-nowrap">BUSINESS CARD,</span>
+            {' '}
             <br />
             <span className="text-accent">UPGRADED.</span>
           </h1>

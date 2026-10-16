@@ -21,6 +21,7 @@ export function Testimonials({ testimonials }: { testimonials?: Testimonial[] } 
             continues onto a second line: "ACROSS KENYA." */}
         LOVED BY <CountUp from={100} to={CUSTOMER_COUNT} suffix="+" className="text-accent" /> PROFESSIONALS
         <span className="hidden md:inline">
+          {' '}
           <br />
           ACROSS KENYA
         </span>
