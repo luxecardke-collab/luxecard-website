@@ -44,7 +44,9 @@ const MATERIAL_FILTERS: { value: PhotoMaterial; label: string }[] = [
   { value: 'plastic', label: 'Plastic' },
   { value: 'wood', label: 'Wood' },
   { value: 'metallic', label: 'Metallic' },
-  { value: 'chairman', label: "Chairman's Card" },
+  // "Gold" (the Chairman's Card's finish) so the four fit the phone toggle;
+  // it's only this toggle's label, still the Chairman's Card photos.
+  { value: 'chairman', label: 'Gold' },
 ];
 
 // A card page passes its own heading and that card's photos (no finish
@@ -171,7 +173,7 @@ function FilterPills({
   return (
     <div
       ref={rowRef}
-      className="relative mt-8 flex w-fit max-w-full rounded-full border border-[rgba(255,255,255,.12)] bg-[rgba(255,255,255,.03)] p-1"
+      className="relative mx-auto mt-8 flex w-fit max-w-full rounded-full border border-[rgba(255,255,255,.12)] bg-[rgba(255,255,255,.03)] p-1"
     >
       {box && (
         <div
