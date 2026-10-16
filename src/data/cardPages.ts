@@ -271,7 +271,7 @@ const CHAIRMAN: CardPage = {
   name: "Chairman's Card",
   cta: 'Get my Chairman’s Card',
   hero: {
-    label: 'Gold NFC Business Card: The Chairman’s Card',
+    label: 'Gold NFC Business Card',
     headline: 'RESERVED FOR THE [BOLDEST] INTRODUCTIONS.',
     subtext: 'Premium, heavier and the most durable. Laser-engraved to precision.',
   },

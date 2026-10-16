@@ -349,12 +349,7 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
       >
         <div className="animate-hero-rise">
           {/* The page's H1: what it is, in the site's small-label style. */}
-          {/* 11px, smaller only if the phone is too narrow for it on one line
-              (about 8.1px of width per letter at 11px, with a little room). */}
-          <h1
-            className="m-0 mb-4 whitespace-nowrap font-inter text-[11px] font-medium uppercase leading-[16px] tracking-[.14em] text-accent"
-            style={{ fontSize: `min(11px, calc((100vw - 40px) / ${(card.hero.label.length * 0.76).toFixed(1)}))` }}
-          >
+          <h1 className="m-0 mb-4 whitespace-nowrap font-inter text-[11px] font-medium uppercase leading-[16px] tracking-[.14em] text-accent">
             {card.hero.label}
           </h1>
           {/* The slogan (not a heading). From 900px: exactly the homepage hero
