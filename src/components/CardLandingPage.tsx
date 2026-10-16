@@ -348,11 +348,20 @@ function CardHero({ card, finish, onFinish }: { card: CardPage; finish: string |
         style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))' }}
       >
         <div className="animate-hero-rise">
-          {/* From 900px: exactly the homepage hero heading's size (.hero-title)
-              and line height. */}
-          <h1 className="m-0 mb-6 min-[1024px]:mb-7 font-manrope text-[clamp(40px,6.2vw,84px)] font-extrabold leading-[.98] max-md:leading-[1.04] tracking-[-0.035em] text-balance min-[900px]:text-[length:min(78px,calc((100vw_-_2*clamp(20px,4vw,48px)_-_clamp(48px,6vw,80px))/16.2))] min-[900px]:leading-[.96]">
-            <Headline text={card.hero.headline} />
+          {/* The page's H1: what it is, in the site's small-label style. */}
+          {/* 11px, smaller only if the phone is too narrow for it on one line
+              (about 8.1px of width per letter at 11px, with a little room). */}
+          <h1
+            className="m-0 mb-4 whitespace-nowrap font-inter text-[11px] font-medium uppercase leading-[16px] tracking-[.14em] text-accent"
+            style={{ fontSize: `min(11px, calc((100vw - 40px) / ${(card.hero.label.length * 0.76).toFixed(1)}))` }}
+          >
+            {card.hero.label}
           </h1>
+          {/* The slogan (not a heading). From 900px: exactly the homepage hero
+              heading's size (.hero-title) and line height. */}
+          <div className="m-0 mb-6 min-[1024px]:mb-7 font-manrope text-[clamp(40px,6.2vw,84px)] font-extrabold leading-[.98] max-md:leading-[1.04] tracking-[-0.035em] text-balance min-[900px]:text-[length:min(78px,calc((100vw_-_2*clamp(20px,4vw,48px)_-_clamp(48px,6vw,80px))/16.2))] min-[900px]:leading-[.96]">
+            <Headline text={card.hero.headline} />
+          </div>
           <p className="m-0 mb-8 max-w-[480px] text-[clamp(16px,1.35vw,19px)] leading-[1.5] text-[rgba(243,240,234,.6)] text-pretty min-[1024px]:mb-10 min-[1024px]:max-w-[460px] min-[1024px]:leading-[1.55]">
             {card.hero.subtext}
           </p>
