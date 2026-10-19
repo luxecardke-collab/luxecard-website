@@ -1,29 +1,55 @@
 import { FINISH_PRICES_BY_LABEL } from '../../api/_lib/pricing';
 import { cardPageFaqs, cardPageFor, type CardPage } from '../data/cardPages';
 import { CARD_FINISHES, FAQS, faqAnswerText, type Faq } from '../data/content';
+import { BUSINESS_ADDRESS, BUSINESS_GEO, OPENING_HOURS } from '../data/business';
 import { LINKS } from '../data/links';
-import { SITE_URL } from './pages';
+import { PAGES, SITE_URL } from './pages';
 
-// JSON-LD for the homepage (schema.org Organization, a Product with a KES
-// Offer per card finish, and FAQPage), built from the same data the page
-// shows: prices from the checkout's own price list, FAQ answers from FAQS.
-// scripts/prerender.mjs puts it in the homepage's <head>.
+// JSON-LD (schema.org) built from the same data the pages show. Every
+// public page has the business (an Organization that is also a Store, the
+// shop in Lavington); the homepage adds a Product with a KES Offer per card
+// finish and its FAQPage, each card page that card and its FAQ. Prices come
+// from the checkout's own price list, FAQ answers from FAQS.
+// scripts/prerender.mjs puts it in each page's <head>.
 
 const ORGANIZATION_ID = `${SITE_URL}/#organization`;
 
 // Social profile URLs without share/tracking query strings.
 const profileUrl = (url: string) => url.split('?')[0];
 
+// "KES 7,000–19,000": the cheapest and dearest card in the price list.
+function priceRange() {
+  const prices = Object.values(FINISH_PRICES_BY_LABEL);
+  const kes = (n: number) => n.toLocaleString('en-US');
+  return `KES ${kes(Math.min(...prices))}–${kes(Math.max(...prices))}`;
+}
+
+// The business: one entity (one @id), both the Organization and the Store.
 function organization() {
   return {
-    '@type': 'Organization',
+    '@type': ['Organization', 'Store'],
     '@id': ORGANIZATION_ID,
     name: 'LuxeCard',
     legalName: 'LuxeCard Limited',
     url: `${SITE_URL}/`,
     logo: `${SITE_URL}/icon-512.png`,
+    image: `${SITE_URL}/images/luxecard-hero-photo.webp`,
     email: LINKS.EMAIL,
     telephone: LINKS.PHONE_DISPLAY,
+    address: { '@type': 'PostalAddress', ...BUSINESS_ADDRESS },
+    geo: { '@type': 'GeoCoordinates', ...BUSINESS_GEO },
+    areaServed: { '@type': 'Country', name: 'Kenya' },
+    priceRange: priceRange(),
+    ...(OPENING_HOURS.length
+      ? {
+          openingHoursSpecification: OPENING_HOURS.map((h) => ({
+            '@type': 'OpeningHoursSpecification',
+            dayOfWeek: h.days,
+            opens: h.opens,
+            closes: h.closes,
+          })),
+        }
+      : {}),
     sameAs: Object.values(LINKS.SOCIAL).map(profileUrl),
     contactPoint: [LINKS.PHONE_DISPLAY, LINKS.PHONE2_DISPLAY].map((telephone) => ({
       '@type': 'ContactPoint',
@@ -100,10 +126,12 @@ function cardPageGraph(card: CardPage) {
 
 export function renderJsonLd(path: string): string {
   const card = cardPageFor(path);
-  if (path !== '/' && !card) return '';
+  const page = PAGES.find((p) => p.path === path);
+  // Pages kept out of search results (noindex) get none.
+  if (!page || page.noindex) return '';
   const graph = {
     '@context': 'https://schema.org',
-    '@graph': card ? cardPageGraph(card) : [organization(), ...products(), faqPage()],
+    '@graph': card ? cardPageGraph(card) : path === '/' ? [organization(), ...products(), faqPage()] : [organization()],
   };
   // "<" escaped so no string in the data can close the <script> early.
   return `<script type="application/ld+json">${JSON.stringify(graph).replace(/</g, '\\u003c')}</script>`;
