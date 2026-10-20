@@ -13,6 +13,7 @@ import { PAGES, SITE_URL } from './pages';
 // scripts/prerender.mjs puts it in each page's <head>.
 
 const ORGANIZATION_ID = `${SITE_URL}/#organization`;
+const GOOGLE_MAPS_URL = 'https://www.google.com/maps/place/?q=place_id:ChIJzc8o2GkbLxgRo6KtmHF-4k0';
 
 // Social profile URLs without share/tracking query strings.
 const profileUrl = (url: string) => url.split('?')[0];
@@ -31,6 +32,7 @@ function organization() {
     '@id': ORGANIZATION_ID,
     name: 'LuxeCard',
     legalName: 'LuxeCard Limited',
+    alternateName: 'LuxeCard Africa',
     url: `${SITE_URL}/`,
     logo: `${SITE_URL}/icon-512.png`,
     image: `${SITE_URL}/images/luxecard-hero-photo.webp`,
@@ -38,6 +40,7 @@ function organization() {
     telephone: LINKS.PHONE_DISPLAY,
     address: { '@type': 'PostalAddress', ...BUSINESS_ADDRESS },
     geo: { '@type': 'GeoCoordinates', ...BUSINESS_GEO },
+    hasMap: GOOGLE_MAPS_URL,
     areaServed: { '@type': 'Country', name: 'Kenya' },
     priceRange: priceRange(),
     ...(OPENING_HOURS.length
@@ -50,7 +53,7 @@ function organization() {
           })),
         }
       : {}),
-    sameAs: Object.values(LINKS.SOCIAL).map(profileUrl),
+    sameAs: [...Object.values(LINKS.SOCIAL).map(profileUrl), GOOGLE_MAPS_URL],
     contactPoint: [LINKS.PHONE_DISPLAY, LINKS.PHONE2_DISPLAY].map((telephone) => ({
       '@type': 'ContactPoint',
       contactType: 'sales',
