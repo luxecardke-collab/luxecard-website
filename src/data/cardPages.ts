@@ -291,7 +291,7 @@ const CHAIRMAN: CardPage = {
       {
         name: 'Chairman’s Card',
         priceLabel: "Chairman's Card",
-        blurb: 'A gold finish, with delivery included.',
+        blurb: 'A brushed gold finish, made to be noticed.',
         image: '/images/card-chairman.webp',
         alt: 'LuxeCard Chairman’s Card in gold',
         width: 912,
