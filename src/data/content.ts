@@ -349,7 +349,10 @@ export const FOOTER_LINKS = {
   // "Cards" to match the nav, where the card pages replaced "Products".
   columnOne: {
     title: 'Explore',
-    links: NAV_LINKS.map((link) => (link.href === '#products' ? { ...link, label: 'Cards' } : link)),
+    links: [
+      ...NAV_LINKS.map((link) => (link.href === '#products' ? { ...link, label: 'Cards' } : link)),
+      { label: 'Guides', href: '/guides' },
+    ],
   },
   columnTwo: {
     title: 'Connect',

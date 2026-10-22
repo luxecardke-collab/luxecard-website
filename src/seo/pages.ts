@@ -1,4 +1,5 @@
 import { CARD_PAGE_SEO } from '../data/cardPageSeo';
+import { GUIDES } from '../data/guides';
 import { LEGAL_DOCS } from '../data/legal';
 
 // Every URL the site serves as its own page, with the <head> each one gets.
@@ -41,6 +42,22 @@ export const AFFILIATE_PAGE: PageMeta = {
   title: 'Affiliate Program | LuxeCard',
   description: 'Join the LuxeCard affiliate program. Share your link and earn 10% on every sale made through it.',
 };
+
+export const GUIDES_LIST_PAGE: PageMeta = {
+  path: '/guides',
+  file: 'guides.html',
+  title: 'Business Card Guides | LuxeCard',
+  description: 'Practical guides on designing, ordering and printing business cards in Kenya — from paper to NFC.',
+};
+
+// One per article (src/data/guides.ts), title/description from its front
+// matter (seo_title/description).
+export const GUIDE_PAGES: PageMeta[] = GUIDES.map((guide) => ({
+  path: guide.path,
+  file: `${guide.path.slice(1)}.html`,
+  title: guide.seoTitle,
+  description: guide.description,
+}));
 
 const LEGAL_DESCRIPTIONS: Record<string, string> = {
   '/terms': 'The terms that govern ordering, purchasing and using LuxeCard products and digital profiles from LuxeCard Limited.',
@@ -104,6 +121,8 @@ export const NOT_FOUND_PAGE: PageMeta = {
 export const PAGES: PageMeta[] = [
   HOME_PAGE,
   AFFILIATE_PAGE,
+  GUIDES_LIST_PAGE,
+  ...GUIDE_PAGES,
   ...LEGAL_PAGES,
   ...CARD_LANDING_PAGES,
   ORDER_CONFIRMATION_PAGE,

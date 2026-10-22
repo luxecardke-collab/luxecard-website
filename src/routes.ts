@@ -1,4 +1,5 @@
 import { cardPageFor, type CardPage } from './data/cardPages';
+import { GUIDES, type Guide } from './data/guides';
 import { LEGAL_DOCS, type LegalDoc } from './data/legal';
 
 // Pages are picked by URL path; there's no client-side router, so moving
@@ -10,6 +11,8 @@ export type Route =
   | { kind: 'details' }
   | { kind: 'legal'; doc: LegalDoc }
   | { kind: 'card'; page: CardPage }
+  | { kind: 'guides' }
+  | { kind: 'guide'; guide: Guide }
   | { kind: 'not-found' };
 
 // "/affiliate/" and "/affiliate" are the same page.
@@ -22,6 +25,9 @@ export function routeFor(path: string): Route {
   if (path === '/affiliate') return { kind: 'affiliate' };
   if (path === '/order-confirmation') return { kind: 'order-confirmation' };
   if (path === '/details') return { kind: 'details' };
+  if (path === '/guides') return { kind: 'guides' };
+  const guide = GUIDES.find((g) => g.path === path);
+  if (guide) return { kind: 'guide', guide };
   const doc = LEGAL_DOCS.find((d) => d.path === path);
   if (doc) return { kind: 'legal', doc };
   const card = cardPageFor(path);
@@ -33,5 +39,11 @@ export function routeFor(path: string): Route {
 // markup that was rendered for the same page the browser is on.
 export function routeKey(path: string): string {
   const route = routeFor(path);
-  return route.kind === 'legal' ? route.doc.path : route.kind === 'card' ? route.page.path : route.kind;
+  return route.kind === 'legal'
+    ? route.doc.path
+    : route.kind === 'card'
+      ? route.page.path
+      : route.kind === 'guide'
+        ? route.guide.path
+        : route.kind;
 }

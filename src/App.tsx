@@ -31,6 +31,9 @@ import { WhatsAppButton } from './components/WhatsAppButton';
 const AffiliateProgram = lazy(() => import('./components/AffiliateProgram').then((m) => ({ default: m.AffiliateProgram })));
 // The card landing pages (/wood, …), reached from ads and the nav.
 const CardLandingPage = lazy(() => import('./components/CardLandingPage').then((m) => ({ default: m.CardLandingPage })));
+// The guides pages (/guides, /guides/…), reached from the footer and search.
+const GuidesListPage = lazy(() => import('./components/GuidesListPage').then((m) => ({ default: m.GuidesListPage })));
+const GuidePage = lazy(() => import('./components/GuidePage').then((m) => ({ default: m.GuidePage })));
 const OrderConfirmation = lazy(() =>
   import('./components/OrderConfirmation').then((m) => ({ default: m.OrderConfirmation })),
 );
@@ -206,6 +209,14 @@ function Page({ path }: { path: string }) {
               <BlurredContent>
                 {route.kind === 'legal' ? (
                   <LegalPage doc={route.doc} />
+                ) : route.kind === 'guides' ? (
+                  <Suspense fallback={null}>
+                    <GuidesListPage />
+                  </Suspense>
+                ) : route.kind === 'guide' ? (
+                  <Suspense fallback={null}>
+                    <GuidePage guide={route.guide} />
+                  </Suspense>
                 ) : route.kind === 'not-found' ? (
                   <NotFound />
                 ) : route.kind === 'card' ? (

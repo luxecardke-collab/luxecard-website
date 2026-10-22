@@ -80,6 +80,8 @@ for (const page of PAGES) {
     page.prerender === false
       ? ROOT
       : `<div id="root" data-route="${routeKey(page.path)}">${withoutHoistedLinks(await renderPage(page.path, offerId), head)}</div>`;
+  // page.file can nest (e.g. a guide article's guides/<slug>.html).
+  await fs.mkdir(path.dirname(path.join(dist, page.file)), { recursive: true });
   await fs.writeFile(path.join(dist, page.file), template.replace('<!--app-head-->', head).replace(ROOT, await render(null)));
   console.log(`prerendered ${page.path} -> dist/${page.file}`);
 

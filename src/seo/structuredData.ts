@@ -2,8 +2,9 @@ import { FINISH_PRICES_BY_LABEL } from '../../api/_lib/pricing';
 import { cardPageFaqs, cardPageFor, type CardPage } from '../data/cardPages';
 import { CARD_FINISHES, FAQS, faqAnswerText, type Faq } from '../data/content';
 import { BUSINESS_ADDRESS, BUSINESS_GEO, OPENING_HOURS } from '../data/business';
+import { GUIDES, type Guide } from '../data/guides';
 import { LINKS } from '../data/links';
-import { PAGES, SITE_URL } from './pages';
+import { OG_IMAGE, PAGES, SITE_URL } from './pages';
 
 // JSON-LD (schema.org) built from the same data the pages show. Every
 // public page has the business (an Organization that is also a Store, the
@@ -127,14 +128,54 @@ function cardPageGraph(card: CardPage) {
   ];
 }
 
+// A guide article: Article (author and publisher LuxeCard), a BreadcrumbList
+// (Home > Guides > the article) and its FAQ.
+function guideGraph(guide: Guide) {
+  const url = `${SITE_URL}${guide.path}`;
+  return [
+    {
+      '@type': 'Article',
+      headline: guide.title,
+      description: guide.description,
+      image: OG_IMAGE,
+      datePublished: guide.date,
+      dateModified: guide.date,
+      author: { '@type': 'Organization', name: guide.author, url: `${SITE_URL}/` },
+      publisher: {
+        '@type': 'Organization',
+        name: 'LuxeCard',
+        url: `${SITE_URL}/`,
+        logo: { '@type': 'ImageObject', url: `${SITE_URL}/icon-512.png` },
+      },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: 'Guides', item: `${SITE_URL}/guides` },
+        { '@type': 'ListItem', position: 3, name: guide.title, item: url },
+      ],
+    },
+    faqPage(guide.faqs),
+  ];
+}
+
 export function renderJsonLd(path: string): string {
   const card = cardPageFor(path);
+  const guide = GUIDES.find((g) => g.path === path);
   const page = PAGES.find((p) => p.path === path);
   // Pages kept out of search results (noindex) get none.
   if (!page || page.noindex) return '';
   const graph = {
     '@context': 'https://schema.org',
-    '@graph': card ? cardPageGraph(card) : path === '/' ? [organization(), ...products(), faqPage()] : [organization()],
+    '@graph': card
+      ? cardPageGraph(card)
+      : guide
+        ? guideGraph(guide)
+        : path === '/'
+          ? [organization(), ...products(), faqPage()]
+          : [organization()],
   };
   // "<" escaped so no string in the data can close the <script> early.
   return `<script type="application/ld+json">${JSON.stringify(graph).replace(/</g, '\\u003c')}</script>`;
