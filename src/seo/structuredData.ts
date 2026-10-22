@@ -65,6 +65,17 @@ function organization() {
   };
 }
 
+// The site itself (distinct from the Organization/Store): just the
+// homepage's identity for Search — its name and how else it's known.
+function website() {
+  return {
+    '@type': 'WebSite',
+    name: 'LuxeCard',
+    alternateName: 'LuxeCard Africa',
+    url: `${SITE_URL}/`,
+  };
+}
+
 // One Product per finish in the price list, with its description and photo
 // from the finish shown in the products section.
 function products() {
@@ -174,7 +185,7 @@ export function renderJsonLd(path: string): string {
       : guide
         ? guideGraph(guide)
         : path === '/'
-          ? [organization(), ...products(), faqPage()]
+          ? [website(), organization(), ...products(), faqPage()]
           : [organization()],
   };
   // "<" escaped so no string in the data can close the <script> early.
