@@ -75,21 +75,7 @@ export function CardLandingPage({ card }: { card: CardPage }) {
       <Testimonials />
       <Ecosystem
         id="card"
-        heading={
-          // Plastic's three-word first line ("BUILT FOR MODERN") doesn't fit
-          // this column's share of the row at the section's usual size on
-          // common desktop widths (the column shrinks to content, so no
-          // font-size fits it at the very narrowest two-column widths,
-          // ~900-1200px — this keeps it to the requested two lines from
-          // ~1280px up, where real desktop traffic overwhelmingly is).
-          card.slug === 'plastic' ? (
-            <span className="text-[clamp(34px,3.6vw,46px)]">
-              <Headline text={card.showcase.headline} />
-            </span>
-          ) : (
-            <Headline text={card.showcase.headline} />
-          )
-        }
+        heading={<Headline text={card.showcase.headline} />}
         label={card.showcase.label}
         items={card.showcase.items}
         onOrder={() => orderButtonTapped(card)}

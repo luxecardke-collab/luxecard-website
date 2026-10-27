@@ -105,7 +105,7 @@ const PLASTIC: CardPage = {
   cta: 'Get my Plastic LuxeCard',
   hero: {
     label: 'Plastic NFC Business Card',
-    headline: 'ONE CARD, [ENDLESS CONNECTIONS.]',
+    headline: 'ONE CARD, [ENDLESS]|CONNECTIONS.',
     subtext: 'Share your whole professional identity with a tap or a scan.',
   },
   finishes: null,
