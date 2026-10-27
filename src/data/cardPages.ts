@@ -105,15 +105,15 @@ const PLASTIC: CardPage = {
   cta: 'Get my Plastic LuxeCard',
   hero: {
     label: 'Plastic NFC Business Card',
-    headline: 'YOUR BRAND. [YOUR COLOURS.]',
-    subtext: 'Light, durable and branded in your colours. Made for NFC tap-to-share.',
+    headline: 'ONE CARD, [ENDLESS CONNECTIONS.]',
+    subtext: 'Share your whole professional identity with a tap or a scan.',
   },
   finishes: null,
   image: { label: 'Plastic', alt: 'LuxeCard in plastic', ...heroImage('plastic', 'hero', cardPhoto('card-plastic', 960)) },
   finishNote: 'Any colour you like. You choose it when we design your card.',
   showcaseCta: 'Get your Plastic LuxeCard',
   showcase: {
-    headline: 'BUILT FOR|[EVERY~DAY.]',
+    headline: 'BUILT FOR MODERN\n[PROFESSIONALS]',
     label: 'Any Colour. One Card.',
     items: [
       {
