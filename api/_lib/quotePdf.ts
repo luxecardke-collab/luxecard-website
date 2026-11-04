@@ -250,6 +250,7 @@ const PAYMENT_COLUMNS: { x: number; lines: string[] }[] = [
 ];
 
 const FOOTER = 'www.luxecard.co.ke   |   +254 114 914 989';
+const FOOTER_THANKS = 'Thank you for choosing LuxeCard. We look forward to working with you.';
 const FOOTER_TOP = 797;
 
 // Table columns (the template's positions).
@@ -311,9 +312,9 @@ export async function renderQuotePdf(input: QuoteInput): Promise<Uint8Array> {
     y.barBottom = y.barTop + 36;
     y.firstRow = y.barBottom + 30 * k;
     y.rule = y.firstRow + (lines.length - 1) * rowPitch + 15 + 30 * k;
-    y.subtotal = y.rule + 24 * k;
-    y.discount = y.subtotal + (discountLabel ? 18 : 0);
-    y.totalLabel = y.discount + 26 * k;
+    // The discount line (when there is one) directly above TOTAL.
+    y.discount = y.rule + 24 * k;
+    y.totalLabel = discountLabel ? y.discount + 26 * k : y.rule + 32 * k;
     y.totalAmount = y.totalLabel + 20;
     y.terms = y.totalAmount + 34 * k;
     y.payment = y.terms + (terms.length - 1) * 13 + 34 * k;
@@ -365,8 +366,6 @@ export async function renderQuotePdf(input: QuoteInput): Promise<Uint8Array> {
   });
 
   // ---- totals ----
-  text(page, 'Subtotal', COL_UNIT, y.subtotal, { font: fonts.regular, size: 10, color: GREY });
-  text(page, ksh(input.totals.subtotal), COL_TOTAL, y.subtotal, { font: fonts.semibold, size: 10 });
   if (discountLabel) {
     text(page, discountLabel, COL_UNIT, y.discount, { font: fonts.regular, size: 10, color: GREY });
     text(page, `–${ksh(input.totals.discount)}`, COL_TOTAL - fonts.semibold.widthOfTextAtSize('–', 10), y.discount, {
@@ -388,6 +387,7 @@ export async function renderQuotePdf(input: QuoteInput): Promise<Uint8Array> {
   }
 
   // ---- footer ----
+  text(page, FOOTER_THANKS, MARGIN_L, FOOTER_TOP, { font: fonts.regular, size: 9, color: GREY });
   text(page, FOOTER, MARGIN_R, FOOTER_TOP, { font: fonts.regular, size: 9, color: GREY, align: 'right' });
 
   return doc.save();
