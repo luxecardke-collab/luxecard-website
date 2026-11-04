@@ -13,6 +13,8 @@ const SEND_WITH_ATTACHMENT_TIMEOUT_MS = 10000;
 
 export type AlertRow = [label: string, value: string | number | null | undefined];
 
+export type SalesVersion = { subject?: string; heading?: string; rows?: AlertRow[]; note?: string | undefined };
+
 export type TeamEmail = {
   subject: string;
   heading: string;
@@ -22,6 +24,10 @@ export type TeamEmail = {
   replyTo?: string;
   // Files attached to the email (e.g. a quote request's PDF quotation).
   attachments?: { filename: string; content: Uint8Array }[];
+  // Also send the sales team (SALES_ALERT_EMAIL) a copy, as its own email:
+  // `true` for the same email, or the parts their version changes (e.g.
+  // a paid order's "start work" version, without any amounts).
+  salesCopy?: true | SalesVersion;
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -113,24 +119,53 @@ export function describeEmailResult(result: EmailResult): string {
   return result.status === 'sent' ? `sent (Resend id ${result.id ?? 'unknown'})` : `failed: ${result.reason}`.slice(0, 500);
 }
 
+// Comma-separated addresses from an environment variable.
+function addresses(value: string | undefined): string[] {
+  return (value ?? '')
+    .split(',')
+    .map((address) => address.trim())
+    .filter(Boolean);
+}
+
 // Sends an alert to the team through Resend. Never throws and never blocks
 // for long: an alert failing must not break saving an order, lead or signup,
 // so every problem is logged (and returned) instead.
+//
+// The result is the main alert's (to ORDER_ALERT_EMAIL). A sales copy
+// (email.salesCopy) goes as a separate email to SALES_ALERT_EMAIL, so
+// Resend refusing or failing it can never stop the main one; its problems
+// are only logged. Without SALES_ALERT_EMAIL set, no copy is sent.
 export async function sendTeamEmail(email: TeamEmail): Promise<EmailResult> {
+  const to = addresses(process.env.ORDER_ALERT_EMAIL);
+  // Addresses already getting the main alert don't get a second copy.
+  const mainSet = new Set(to.map((address) => address.toLowerCase()));
+  const salesTo = email.salesCopy
+    ? addresses(process.env.SALES_ALERT_EMAIL).filter((address) => !mainSet.has(address.toLowerCase()))
+    : [];
+
+  const [main] = await Promise.all([
+    deliver(email, to, 'ORDER_ALERT_EMAIL'),
+    salesTo.length
+      ? deliver(typeof email.salesCopy === 'object' ? { ...email, ...email.salesCopy } : email, salesTo, 'SALES_ALERT_EMAIL').then(
+          (result) => {
+            if (result.status === 'failed') console.error(`Sales copy of the alert not sent: ${result.reason}`);
+          }
+        )
+      : null,
+  ]);
+  return main;
+}
+
+async function deliver(email: TeamEmail, to: string[], toVariable: string): Promise<EmailResult> {
   try {
     const apiKey = process.env.RESEND_API_KEY;
-    const to = (process.env.ORDER_ALERT_EMAIL ?? '')
-      .split(',')
-      .map((address) => address.trim())
-      .filter(Boolean);
 
     if (!apiKey || to.length === 0) {
-      const missing = [!apiKey && 'RESEND_API_KEY', to.length === 0 && 'ORDER_ALERT_EMAIL'].filter(Boolean).join(' and ');
+      const missing = [!apiKey && 'RESEND_API_KEY', to.length === 0 && toVariable].filter(Boolean).join(' and ');
       const reason = `${missing} not set in this environment (${process.env.VERCEL_ENV ?? 'local'})`;
       console.error(`Alert email skipped: ${reason}.`);
       return { status: 'failed', reason };
     }
-
     const replyTo =
       email.replyTo && EMAIL_PATTERN.test(email.replyTo.trim())
         ? email.replyTo.trim()

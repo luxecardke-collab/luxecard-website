@@ -262,6 +262,22 @@ export async function recordPaidOrder(
         .filter(Boolean)
         .join(' ') || undefined,
     replyTo: customer_email,
+    // Sales gets a "start work" version: who, what and that it's paid, with
+    // no amounts or payment details. The reference is the one the customer
+    // was shown and the /details form matches on.
+    salesCopy: {
+      subject: `${isTest ? '[TEST] ' : ''}New paid order – start work: ${customer_name}`,
+      heading: 'New paid order – start work',
+      rows: [
+        ['Order reference', reference],
+        ['Customer', customer_name],
+        ['Phone', customer_phone],
+        ['Company', metadata.company],
+        ['Cards', describeItems(metadata.items)],
+        ['Status', 'PAID'],
+      ],
+      note: undefined,
+    },
   });
 
   await teamEmail;

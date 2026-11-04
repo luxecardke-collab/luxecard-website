@@ -256,6 +256,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // (same reasoning as the affiliate signup fix); the ordinary
       // enquiry keeps replyTo so the team can reply straight to them.
       ...(quoteRequested ? {} : { replyTo: email }),
+      // Not about a payment, so sales gets a copy too.
+      salesCopy: true,
       ...(quotation?.pdf ? { attachments: [{ filename: quotation.pdf.fileName, content: quotation.pdf.bytes }] } : {}),
     });
     alertStatus = `${describeEmailResult(alert)}, ${quotation?.pdf ? `with ${quotation.pdf.fileName}` : 'no PDF attached'}`;

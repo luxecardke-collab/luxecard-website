@@ -291,6 +291,27 @@ export async function recordPaymentLinkSale(
         .filter(Boolean)
         .join(' ') || undefined,
     ...(customerEmail ? { replyTo: customerEmail } : {}),
+    // Sales gets a "start work" version for a Full or Deposit payment (work
+    // starts once the deposit is in; a balance payment isn't new work), with
+    // no amounts or payment details. The cards were agreed on WhatsApp: the
+    // payment link doesn't say which.
+    ...(paymentType === 'full' || paymentType === 'deposit'
+      ? {
+          salesCopy: {
+            subject: `${isTest ? '[TEST] ' : ''}New WhatsApp sale – start work: ${customerName}`,
+            heading: 'New WhatsApp sale – start work',
+            rows: [
+              ['Order reference', reference],
+              ['WhatsApp reference', noMatch ? null : code],
+              ['Customer', customerName],
+              ['Phone', customerPhone],
+              ['Cards', 'See the WhatsApp chat'],
+              ['Status', paymentType === 'full' ? 'PAID' : 'DEPOSIT PAID'],
+            ],
+            note: undefined,
+          },
+        }
+      : {}),
   });
 
   return { ok: true, created: true, orderId };
