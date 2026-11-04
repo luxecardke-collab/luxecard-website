@@ -1,6 +1,11 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
+  "functions": {
+    "api/cart-leads.ts": {
+      "includeFiles": "api/_assets/**"
+    }
+  },
   "crons": [
     {
       "path": "/api/reconcile-orders",

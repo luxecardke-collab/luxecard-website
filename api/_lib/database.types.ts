@@ -124,6 +124,9 @@ export type Database = {
           kra_business_name: string | null;
           quote_requested: boolean;
           quote_requested_at: string | null;
+          quote_number: string | null;
+          quote_pdf_path: string | null;
+          quote_alert: string | null;
           utm_source: string | null;
           utm_medium: string | null;
           utm_campaign: string | null;
@@ -149,6 +152,9 @@ export type Database = {
           kra_business_name?: string | null;
           quote_requested?: boolean;
           quote_requested_at?: string | null;
+          quote_number?: string | null;
+          quote_pdf_path?: string | null;
+          quote_alert?: string | null;
           utm_source?: string | null;
           utm_medium?: string | null;
           utm_campaign?: string | null;
@@ -391,6 +397,12 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      // supabase/migrations/0013_quotations.sql
+      next_quote_number: {
+        Args: { is_test: boolean };
+        Returns: number;
+      };
+    };
   };
 };

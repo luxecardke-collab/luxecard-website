@@ -1,9 +1,11 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import { sendTeamEmail, describeDiscount, describeItems, formatEat, formatKes } from './_lib/email.js';
+import { sendTeamEmail, describeDiscount, describeEmailResult, describeItems, formatEat, formatKes } from './_lib/email.js';
 import { cleanString, isEmail, isHoneypotTripped, oneHourAgo, MAX_MESSAGE, MAX_SHORT } from './_lib/input.js';
 import { readEtims } from './_lib/kra.js';
 import { computeAuthoritativeTotals, MAX_ITEMS, type CheckoutItem, type ValidatedTotals } from './_lib/pricing.js';
 import { getClientIp, isRateLimited } from './_lib/rateLimit.js';
+import { makeQuotation, storeQuotation, QUOTATIONS_BUCKET } from './_lib/quotation.js';
+import { formatCalendarDay } from './_lib/quotePdf.js';
 import { getSupabaseAdmin } from './_lib/supabaseAdmin.js';
 import { attributionRows, isTestEnvironment, readAttribution } from './_lib/attribution.js';
 
@@ -52,6 +54,9 @@ const HOUR_MS = 60 * 60 * 1000;
 // reuses this same endpoint and its rate limits, saved as its own fresh row
 // (never an update to an earlier one, since the cart may have changed since)
 // — the cart drawer calls this one directly and awaits the result instead.
+// A quote request also gets a numbered PDF quotation (api/_lib/quotation.ts),
+// attached to the team's alert and kept in the private "quotations" bucket;
+// the team forwards it to the customer themselves.
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -121,19 +126,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }));
 
   // At today's prices by the server's clock, including any offer on now.
+  const requestedAt = new Date();
   let totals: ValidatedTotals;
   try {
-    totals = computeAuthoritativeTotals(items, new Date());
+    totals = computeAuthoritativeTotals(items, requestedAt);
   } catch (err) {
     res.status(400).json({ error: err instanceof Error ? err.message : 'Invalid items.' });
     return;
   }
 
   let saved = false;
+  let savedId: string | null = null;
   let sendAlert = type === 'business';
+  let supabase: ReturnType<typeof getSupabaseAdmin> | null = null;
 
   try {
-    const supabase = getSupabaseAdmin();
+    supabase = getSupabaseAdmin();
     const since = oneHourAgo();
 
     const { count: fromThisEmail } = await supabase
@@ -158,7 +166,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const { error } = await supabase.from('cart_leads').insert({
+    const { data, error } = await supabase.from('cart_leads').insert({
       type,
       full_name: fullName,
       job_title: jobTitle || null,
@@ -172,19 +180,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ...(isTest ? { is_test: true } : {}),
       // Only sent when requested, so ordinary leads don't depend on these columns.
       ...(etims ? { needs_etims: true, kra_pin: etims.kraPin, kra_business_name: etims.businessName } : {}),
-      ...(quoteRequested ? { quote_requested: true, quote_requested_at: new Date().toISOString() } : {}),
-    });
+      ...(quoteRequested ? { quote_requested: true, quote_requested_at: requestedAt.toISOString() } : {}),
+    }).select('id').single();
     if (error) {
       console.error('Failed to save cart lead:', error);
     } else {
       saved = true;
+      savedId = data.id;
     }
   } catch (err) {
     console.error('Failed to save cart lead:', err);
   }
 
+  // The PDF quotation, made even when the alert itself is skipped, so it's
+  // always in the bucket.
+  const preparedFor = company || fullName;
+  const quotation = quoteRequested
+    ? await makeQuotation(supabase, { quotedAt: requestedAt, isTest, preparedFor, items, totals })
+    : null;
+  const stored = quotation?.pdf && quotation.quoteNumber ? await storeQuotation(supabase, quotation.quoteNumber, quotation.pdf.bytes) : null;
+  const quoteNote = !quotation
+    ? ''
+    : quotation.pdf
+      ? `The PDF quotation ${quotation.quoteNumber} is attached: check it, then forward it to the customer at ${email}.` +
+        (stored && 'path' in stored
+          ? ` A copy is saved in Supabase Storage (${QUOTATIONS_BUCKET}/${stored.path}).`
+          : ` It could NOT be saved to Supabase Storage (${stored && 'error' in stored ? stored.error : 'unknown error'}), so this email has the only copy.`)
+      : `The PDF quotation could NOT be generated (${quotation.pdfError}), so none is attached: send them a written quotation for the items and total above.`;
+
+  let alertStatus = 'skipped: hourly alert limit reached';
   if (sendAlert) {
-    await sendTeamEmail({
+    const alert = await sendTeamEmail({
       subject: (isTest ? '[TEST] ' : '') + (quoteRequested
         ? `Quotation requested: ${company || fullName}${etims ? ' (eTIMS invoice requested)' : ''}`
         : `New business enquiry${etims ? ' (eTIMS invoice requested)' : ''}: ${company || fullName}`),
@@ -198,6 +224,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ['Discount', describeDiscount(totals)],
         ['Total', formatKes(totals.total)],
         ['Message', message],
+        ...(quotation
+          ? ([
+              ['Quote number', quotation.quoteNumber],
+              ['Valid until', formatCalendarDay(quotation.validUntil)],
+            ] as [string, string | null][])
+          : []),
         ...attributionRows(attribution),
         ...(etims
           ? ([
@@ -209,7 +241,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ],
       note:
         [
-          quoteRequested ? 'Send them a written quotation for the items and total above.' : '',
+          quoteNote,
           // The offer price is only good until the offer ends; checkout
           // charges whatever applies when they actually pay.
           totals.offer
@@ -224,7 +256,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // (same reasoning as the affiliate signup fix); the ordinary
       // enquiry keeps replyTo so the team can reply straight to them.
       ...(quoteRequested ? {} : { replyTo: email }),
+      ...(quotation?.pdf ? { attachments: [{ filename: quotation.pdf.fileName, content: quotation.pdf.bytes }] } : {}),
     });
+    alertStatus = `${describeEmailResult(alert)}, ${quotation?.pdf ? `with ${quotation.pdf.fileName}` : 'no PDF attached'}`;
+  }
+
+  // Links the quotation to its request: the number, where its PDF is, and
+  // what happened to the alert.
+  if (quotation && savedId && supabase) {
+    const { error } = await supabase
+      .from('cart_leads')
+      .update({
+        quote_number: quotation.quoteNumber,
+        quote_pdf_path: stored && 'path' in stored ? `${QUOTATIONS_BUCKET}/${stored.path}` : null,
+        quote_alert: alertStatus.slice(0, 500),
+      })
+      .eq('id', savedId);
+    if (error) console.error(`Quote request ${savedId}: couldn't record its quotation:`, error);
   }
 
   if (!saved) {
