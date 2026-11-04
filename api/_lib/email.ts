@@ -13,6 +13,8 @@ const SEND_WITH_ATTACHMENT_TIMEOUT_MS = 10000;
 
 export type AlertRow = [label: string, value: string | number | null | undefined];
 
+export type SalesVersion = { subject?: string; heading?: string; rows?: AlertRow[]; note?: string | undefined };
+
 export type TeamEmail = {
   subject: string;
   heading: string;
@@ -22,11 +24,10 @@ export type TeamEmail = {
   replyTo?: string;
   // Files attached to the email (e.g. a quote request's PDF quotation).
   attachments?: { filename: string; content: Uint8Array }[];
-  // Also send a copy to the sales team (SALES_ALERT_EMAIL), as its own
-  // email. Only for alerts that aren't about payments or paid orders:
-  // those stay with ORDER_ALERT_EMAIL alone. `{ rows }` gives the sales
-  // copy different rows (e.g. without an order's amount and status).
-  salesCopy?: true | { rows: AlertRow[] };
+  // Also send the sales team (SALES_ALERT_EMAIL) a copy, as its own email:
+  // `true` for the same email, or the parts their version changes (e.g.
+  // a paid order's "start work" version, without any amounts).
+  salesCopy?: true | SalesVersion;
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -145,7 +146,7 @@ export async function sendTeamEmail(email: TeamEmail): Promise<EmailResult> {
   const [main] = await Promise.all([
     deliver(email, to, 'ORDER_ALERT_EMAIL'),
     salesTo.length
-      ? deliver(typeof email.salesCopy === 'object' ? { ...email, rows: email.salesCopy.rows } : email, salesTo, 'SALES_ALERT_EMAIL').then(
+      ? deliver(typeof email.salesCopy === 'object' ? { ...email, ...email.salesCopy } : email, salesTo, 'SALES_ALERT_EMAIL').then(
           (result) => {
             if (result.status === 'failed') console.error(`Sales copy of the alert not sent: ${result.reason}`);
           }
