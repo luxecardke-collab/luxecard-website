@@ -134,6 +134,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ],
           // No replyTo on purpose: a reply must go to the team inbox, never to the
           // applicant with this alert (and their code) quoted underneath it.
+          // Not about a payment, so sales gets a copy too.
+          salesCopy: true,
           note: 'DO NOT SEND THIS LINK UNTIL ACTIVATED: set status to active in Supabase first (affiliates table). Until then it earns no commission. The applicant has not been sent their code or link.',
         });
       }

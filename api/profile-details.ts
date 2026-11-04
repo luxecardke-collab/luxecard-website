@@ -180,12 +180,16 @@ async function submit(req: VercelRequest, res: VercelResponse, body: Record<stri
   let orderId: string | null = null;
   let whatsappRef: string | null = null;
   let matchLine = ref ? `No order match (ref ${ref})` : 'No order match (no ref)';
+  // The sales team's copy of the alert names the order but never shows
+  // its amount or payment status (payments stay with ORDER_ALERT_EMAIL).
+  let salesMatchLine = matchLine;
   if (ref && WHATSAPP_REF_PATTERN.test(ref.toUpperCase())) {
     const code = ref.toUpperCase();
     const { data } = await supabase.from('whatsapp_refs').select('code').eq('code', code).maybeSingle();
     if (data) {
       whatsappRef = data.code;
       matchLine = `WhatsApp reference ${data.code}`;
+      salesMatchLine = matchLine;
     }
   } else if (ref) {
     const { data } = await supabase
@@ -196,6 +200,7 @@ async function submit(req: VercelRequest, res: VercelResponse, body: Record<stri
     if (data) {
       orderId = data.id;
       matchLine = `Order ${ref}: ${data.customer_name}, ${formatKes(data.total)}, ${data.payment_status}${data.order_source === 'whatsapp' ? ' (WhatsApp sale)' : ''}`;
+      salesMatchLine = `Order ${ref}`;
     }
   }
 
@@ -265,6 +270,7 @@ async function submit(req: VercelRequest, res: VercelResponse, body: Record<stri
     // Replies go to the customer, except on a gift: the email address is the
     // card owner's, who mustn't be contacted.
     ...(email && !isGift ? { replyTo: email } : {}),
+    salesCopy: { rows: rows.map(([label, value]): AlertRow => (label === 'Matched' ? [label, salesMatchLine] : [label, value])) },
   });
 
   // What happened to the email, on the row; a problem here is only logged.
