@@ -8,6 +8,8 @@ const DEFAULT_REPLY_TO = 'luxecardke@gmail.com';
 // Resend account owner's own address from this sender).
 const FALLBACK_FROM = 'LuxeCard <onboarding@resend.dev>';
 const SEND_TIMEOUT_MS = 5000;
+// An email carrying a file uploads more, so it gets longer.
+const SEND_WITH_ATTACHMENT_TIMEOUT_MS = 10000;
 
 export type AlertRow = [label: string, value: string | number | null | undefined];
 
@@ -18,6 +20,8 @@ export type TeamEmail = {
   note?: string;
   // Overrides the default reply-to (e.g. the customer's own address).
   replyTo?: string;
+  // Files attached to the email (e.g. a quote request's PDF quotation).
+  attachments?: { filename: string; content: Uint8Array }[];
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -143,8 +147,16 @@ export async function sendTeamEmail(email: TeamEmail): Promise<EmailResult> {
         subject: oneLine(email.subject),
         text,
         html,
+        ...(email.attachments?.length
+          ? {
+              attachments: email.attachments.map((file) => ({
+                filename: file.filename,
+                content: Buffer.from(file.content).toString('base64'),
+              })),
+            }
+          : {}),
       }),
-    }, SEND_TIMEOUT_MS);
+    }, email.attachments?.length ? SEND_WITH_ATTACHMENT_TIMEOUT_MS : SEND_TIMEOUT_MS);
 
     const body = await res.text().catch(() => '');
     if (!res.ok) {
